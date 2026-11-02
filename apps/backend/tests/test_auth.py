@@ -3,7 +3,9 @@ from tests.conftest import auth, create_member, onboard
 
 async def test_login_success_and_failures(client):
     acc = await onboard(client)
-    ok = await client.post("/auth/login", json={"email": acc.email.upper(), "password": acc.password})
+    ok = await client.post(
+        "/auth/login", json={"email": acc.email.upper(), "password": acc.password}
+    )
     assert ok.status_code == 200
     assert (await client.get("/me", headers=auth(ok.json()["access_token"]))).status_code == 200
 
@@ -46,7 +48,9 @@ async def test_access_token_cannot_be_used_as_refresh(client):
 
 async def test_logout_revokes_refresh(client):
     acc = await onboard(client)
-    assert (await client.post("/auth/logout", json={"refresh_token": acc.refresh})).status_code == 204
+    assert (
+        await client.post("/auth/logout", json={"refresh_token": acc.refresh})
+    ).status_code == 204
     r = await client.post("/auth/refresh", json={"refresh_token": acc.refresh})
     assert r.status_code == 401
 

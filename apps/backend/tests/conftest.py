@@ -63,7 +63,9 @@ class Account:
         return auth(self.access)
 
 
-async def onboard(client: httpx.AsyncClient, company: str = "Empresa", **company_extra: Any) -> Account:
+async def onboard(
+    client: httpx.AsyncClient, company: str = "Empresa", **company_extra: Any
+) -> Account:
     email, password = unique_email("owner"), "senha-forte-123"
     r = await client.post(
         "/onboarding",
@@ -75,8 +77,14 @@ async def onboard(client: httpx.AsyncClient, company: str = "Empresa", **company
     assert r.status_code == 201, r.text
     tokens = r.json()
     me = (await client.get("/me", headers=auth(tokens["access_token"]))).json()
-    return Account(email, password, tokens["access_token"], tokens["refresh_token"],
-                   me["user"]["id"], me["tenant"]["id"])
+    return Account(
+        email,
+        password,
+        tokens["access_token"],
+        tokens["refresh_token"],
+        me["user"]["id"],
+        me["tenant"]["id"],
+    )
 
 
 async def create_member(client: httpx.AsyncClient, owner: Account, role: str) -> Account:

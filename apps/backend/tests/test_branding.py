@@ -46,7 +46,9 @@ async def test_logo_rejects_invalid_files(client, tenant_a):
 
 
 async def test_branding_rejects_invalid_color(client, tenant_a):
-    r = await client.put("/tenant/branding", headers=tenant_a.headers, json={"primary_color": "blue"})
+    r = await client.put(
+        "/tenant/branding", headers=tenant_a.headers, json={"primary_color": "blue"}
+    )
     assert r.status_code == 422
 
 

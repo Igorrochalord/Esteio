@@ -6,7 +6,11 @@ async def test_onboarding_creates_company_and_owner(client):
     r = await client.post(
         "/onboarding",
         json={
-            "company": {"name": "Acme Ltda", "cnpj": "11.222.333/0001-81", "primary_color": "#ff0000"},
+            "company": {
+                "name": "Acme Ltda",
+                "cnpj": "11.222.333/0001-81",
+                "primary_color": "#ff0000",
+            },
             "owner": {"name": "Ana", "email": email.upper(), "password": "senha12345"},
         },
     )

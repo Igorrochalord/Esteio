@@ -17,7 +17,9 @@ async def test_plain_user_permissions(client, team):
     assert (await client.get("/me", headers=user.headers)).json()["permissions"] == {
         "settings": "read"
     }
-    r = await client.put("/tenant/branding", headers=user.headers, json={"primary_color": "#000000"})
+    r = await client.put(
+        "/tenant/branding", headers=user.headers, json={"primary_color": "#000000"}
+    )
     assert r.status_code == 403
     assert (await client.get("/users", headers=user.headers)).status_code == 403
     assert (await client.get("/audit", headers=user.headers)).status_code == 403
@@ -33,7 +35,9 @@ async def test_admin_permissions(client, team):
     owner, admin, _ = team
     assert (await client.get("/users", headers=admin.headers)).status_code == 200
     assert (await client.get("/audit", headers=admin.headers)).status_code == 200
-    r = await client.put("/tenant/branding", headers=admin.headers, json={"primary_color": "#123456"})
+    r = await client.put(
+        "/tenant/branding", headers=admin.headers, json={"primary_color": "#123456"}
+    )
     assert r.status_code == 200 and r.json()["primary_color"] == "#123456"
     r = await client.post(
         "/users",
@@ -63,9 +67,13 @@ async def test_owner_role_cannot_be_assigned(client, team):
 
 async def test_cannot_change_own_access(client, team):
     owner, _, _ = team
-    r = await client.patch(f"/users/{owner.user_id}", headers=owner.headers, json={"is_active": False})
+    r = await client.patch(
+        f"/users/{owner.user_id}", headers=owner.headers, json={"is_active": False}
+    )
     assert r.status_code == 422
-    r = await client.patch(f"/users/{owner.user_id}", headers=owner.headers, json={"name": "Novo Nome"})
+    r = await client.patch(
+        f"/users/{owner.user_id}", headers=owner.headers, json={"name": "Novo Nome"}
+    )
     assert r.status_code == 200 and r.json()["name"] == "Novo Nome"
 
 
@@ -75,7 +83,9 @@ async def test_role_change_is_audited(client, team):
     admin_id = next(u["id"] for u in users if u["email"] == admin.email)
     r = await client.patch(f"/users/{admin_id}", headers=owner.headers, json={"role": "user"})
     assert r.status_code == 200 and r.json()["role"] == "user"
-    page = (await client.get(f"/audit?entity=user&entity_id={admin_id}", headers=owner.headers)).json()
+    page = (
+        await client.get(f"/audit?entity=user&entity_id={admin_id}", headers=owner.headers)
+    ).json()
     upd = next(i for i in page["items"] if i["action"] == "user.update")
     assert upd["before"] == {"role": "admin"} and upd["after"] == {"role": "user"}
 

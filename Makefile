@@ -40,8 +40,8 @@ lint: ## ruff + mypy no backend; tsc + eslint no desktop
 	@$(MAKE) --no-print-directory web-lint
 
 fmt: ## formata o backend
-	$(API) ruff check --fix .
 	$(API) ruff format .
+	$(API) ruff check --fix .
 
 smoke: ## smoke test ponta a ponta via HTTP
 	./scripts/smoke.sh

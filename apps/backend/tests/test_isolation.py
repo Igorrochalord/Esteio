@@ -29,10 +29,14 @@ async def test_users_are_invisible_across_tenants(client, tenant_a, tenant_b):
 
 
 async def test_tenant_data_and_audit_are_scoped(client, tenant_a, tenant_b):
-    await client.put("/tenant/branding", headers=tenant_a.headers, json={"primary_color": "#aa0000"})
+    await client.put(
+        "/tenant/branding", headers=tenant_a.headers, json={"primary_color": "#aa0000"}
+    )
     b = (await client.get("/tenant/branding", headers=tenant_b.headers)).json()
     assert b["name"] == "Empresa B" and b["primary_color"] != "#aa0000"
-    assert (await client.get("/tenant", headers=tenant_b.headers)).json()["id"] == tenant_b.tenant_id
+    assert (await client.get("/tenant", headers=tenant_b.headers)).json()[
+        "id"
+    ] == tenant_b.tenant_id
 
     audit_b = (await client.get("/audit?limit=200", headers=tenant_b.headers)).json()["items"]
     assert audit_b and all(i["user_id"] != tenant_a.user_id for i in audit_b)
@@ -41,7 +45,7 @@ async def test_tenant_data_and_audit_are_scoped(client, tenant_a, tenant_b):
 async def test_refresh_token_of_other_tenant_cannot_be_forged(client, tenant_a, tenant_b):
     # o refresh de A vale só para A; mesmo trocando contexto não vira sessão de B
     r = await client.post("/auth/refresh", json={"refresh_token": tenant_a.refresh})
-    me = (await client.get("/me", headers={"Authorization": f"Bearer {r.json()['access_token']}"}))
+    me = await client.get("/me", headers={"Authorization": f"Bearer {r.json()['access_token']}"})
     assert me.json()["tenant"]["id"] == tenant_a.tenant_id
 
 
@@ -67,8 +71,12 @@ async def test_without_tenant_context_nothing_is_visible(tenant_a, tenant_b):
 
 async def test_tenant_context_limits_rows(tenant_a, tenant_b):
     async with engine.begin() as conn:
-        await conn.execute(text("SELECT set_config('app.tenant_id', :t, true)"), {"t": tenant_a.tenant_id})
-        tenant_ids = (await conn.execute(text("SELECT DISTINCT tenant_id::text FROM users"))).scalars().all()
+        await conn.execute(
+            text("SELECT set_config('app.tenant_id', :t, true)"), {"t": tenant_a.tenant_id}
+        )
+        tenant_ids = (
+            (await conn.execute(text("SELECT DISTINCT tenant_id::text FROM users"))).scalars().all()
+        )
         assert tenant_ids == [tenant_a.tenant_id]
         tenants = (await conn.execute(text("SELECT id::text FROM tenants"))).scalars().all()
         assert tenants == [tenant_a.tenant_id]
@@ -76,7 +84,9 @@ async def test_tenant_context_limits_rows(tenant_a, tenant_b):
 
 async def test_cannot_write_into_other_tenant(tenant_a, tenant_b):
     async with engine.begin() as conn:
-        await conn.execute(text("SELECT set_config('app.tenant_id', :t, true)"), {"t": tenant_a.tenant_id})
+        await conn.execute(
+            text("SELECT set_config('app.tenant_id', :t, true)"), {"t": tenant_a.tenant_id}
+        )
         # UPDATE em linhas de B não afeta nada (invisíveis)
         res = await conn.execute(
             text("UPDATE users SET name = 'hack' WHERE tenant_id = :b"), {"b": tenant_b.tenant_id}
