@@ -5,8 +5,8 @@ COMPOSE := docker compose --env-file .env -f infrastructure/docker/compose.yml
 API := $(COMPOSE) exec -T api
 # frontend roda num container node:22 (não depende do Node local)
 NODE_IMAGE := node:22-alpine
-NODE := docker run --rm -t -v "$(CURDIR)/apps/desktop":/app -v nucleo-npm-cache:/home/node/.npm \
-	-w /app -u $$(id -u):$$(id -g) -e npm_config_cache=/home/node/.npm $(NODE_IMAGE)
+NODE := docker run --rm -t -v "$(CURDIR)/apps/desktop":/app \
+	-w /app -u $$(id -u):$$(id -g) -e npm_config_cache=/tmp/.npm -e HOME=/tmp $(NODE_IMAGE)
 
 .PHONY: help env up down logs ps wait test lint fmt smoke seed reset shell psql migrate \
 	web-install web-lint web-build web-dev
@@ -71,5 +71,6 @@ web-lint: web-install ## typecheck + eslint do desktop
 web-build: web-install ## build de produção do frontend
 	$(NODE) npm run build
 
-web-dev: ## frontend no navegador (requer Node 20+ local): http://localhost:1420
-	cd apps/desktop && npm install && npm run dev
+web-dev: web-install ## frontend no navegador (container node:22): http://localhost:1420
+	docker run --rm -it -p 1420:1420 -v "$(CURDIR)/apps/desktop":/app -w /app -u $$(id -u):$$(id -g) \
+		-e HOME=/tmp $(NODE_IMAGE) npx vite --host 0.0.0.0
