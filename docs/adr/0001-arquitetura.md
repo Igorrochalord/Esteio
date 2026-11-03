@@ -1,6 +1,6 @@
 # ADR 0001: Arquitetura base
 
-- Status: aceita
+- Status: substituída parcialmente pelo [ADR 0002](0002-executavel-local.md)
 - Data: 2026-11-02
 
 ## Contexto
