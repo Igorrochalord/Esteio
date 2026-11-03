@@ -16,6 +16,9 @@ htmlcov/
 node_modules/
 dist/
 apps/desktop/src-tauri/target/
+
+# rust
+/target/
 apps/desktop/src-tauri/gen/
 
 # terraform

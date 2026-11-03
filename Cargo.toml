@@ -1,0 +1,26 @@
+[workspace]
+resolver = "2"
+members = ["crates/nucleo-core", "apps/desktop/src-tauri"]
+# `cargo test/clippy` na raiz só exige a toolchain Rust; o app Tauri precisa das libs do WebKit
+default-members = ["crates/nucleo-core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+
+[workspace.dependencies]
+nucleo-core = { path = "crates/nucleo-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "fs"] }
+
+# argon2 e sqlite ficam lentíssimos sem otimização: compila as dependências otimizadas
+# mesmo em debug (testes e `tauri dev` rápidos).
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+codegen-units = 1
+lto = true
+strip = true
