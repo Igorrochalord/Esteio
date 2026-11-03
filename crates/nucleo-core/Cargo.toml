@@ -1,0 +1,22 @@
+[package]
+name = "nucleo-core"
+description = "Núcleo ERP: regras de negócio e banco local (SQLite)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "migrate", "macros"] }
+thiserror = "2"
+uuid = { version = "1", features = ["v7"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+argon2 = "0.5"
+rand_core = { version = "0.6", features = ["getrandom"] }
+base64 = "0.22"
+log = "0.4"
+
+[dev-dependencies]
+tempfile = "3"
