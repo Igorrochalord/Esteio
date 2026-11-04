@@ -45,6 +45,7 @@ pub fn run() {
             commands::auth::login,
             commands::auth::logout,
             commands::auth::me,
+            commands::auth::plans_catalog,
             commands::company::company_get,
             commands::company::company_update,
             commands::company::branding_update,

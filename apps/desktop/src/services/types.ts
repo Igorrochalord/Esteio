@@ -314,3 +314,21 @@ export interface ImportResult {
   skipped: number;
   errors: { row: number; message: string }[];
 }
+
+export type PlanCode = "gratuito" | "starter" | "platinum" | "infinite";
+
+export interface PlanLimits {
+  bank_accounts: number | null;
+  nfse_per_month: number | null;
+  extra_cnpjs: number | null;
+  nfse: boolean;
+  service_orders: boolean;
+  bank_reconciliation: boolean;
+  advanced_reports: boolean;
+}
+
+export interface PlanItem {
+  plan: PlanCode;
+  price: Dec;
+  limits: PlanLimits;
+}

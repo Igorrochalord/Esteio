@@ -59,7 +59,7 @@ Arquivos servidos como estão (ex.: `icon.png`).
 |---|---|---|
 | `main.tsx` / `App.tsx` | ponto de entrada; rotas e quem pode abrir cada uma | `/login`, `/usuarios` |
 | `pages/` | uma tela por arquivo | `SalesPage`, `ProductsPage`, `CustomersPage`, `ReportsPage`, `LoginPage`, `UsersPage`… |
-| `components/` | peças usadas em várias telas | `DataGrid` (planilha), `charts` (gráficos), `PeriodPicker`, `Field`, `Dialog`, `AuthFrame` |
+| `components/` | peças usadas em várias telas | `DataGrid` (planilha), `charts` (gráficos), `Tour` (tutorial por papel), `PlansNudge` (lembrete de planos), `PeriodPicker`, `Field`, `Dialog`, `AuthFrame` |
 | `layouts/` | molduras: menu lateral do sistema e área de entrada | `AppLayout`, `AuthLayout` |
 | `hooks/` | lógica de React compartilhada | `useAuth` (sessão e permissões), `useAsync` (carregar dados) |
 | `services/` | chamadas ao núcleo, tipos, textos e formatos | `api.ts` (`call`), `endpoints.ts`, `types.ts`, `labels.ts`, `format.ts` (R$, datas), `period.ts`, `theme.ts` |

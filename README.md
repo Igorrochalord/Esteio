@@ -17,6 +17,48 @@ Instalador para Windows na página de versões:
 **[github.com/Igorrochalord/Esteio/releases/latest](https://github.com/Igorrochalord/Esteio/releases/latest)**
 (baixe o `…-setup.exe`). Passo a passo e atalhos em [distribuição](docs/distribuicao.md).
 
+## Como atualizar
+
+### Para quem usa o programa (clientes)
+
+1. **Faça uma cópia de segurança antes** (menu *Cópias de segurança* → *Salvar cópia em…*).
+2. Baixe a versão nova em **[Releases](https://github.com/Igorrochalord/Esteio/releases/latest)**
+   (arquivo `Nucleo ERP_<versão>_x64-setup.exe`).
+3. Feche o Núcleo ERP e execute o instalador **por cima** da versão atual. Não precisa desinstalar.
+4. Abra o programa. Seus dados continuam lá: ficam em
+   `%APPDATA%\br.com.nucleoerp.desktop\` (separados do programa), e o banco é atualizado
+   sozinho na primeira abertura (migrações automáticas).
+
+Não volte para uma versão mais antiga depois de abrir a nova: o banco já foi atualizado e
+o programa antigo recusa backups de versão mais nova. Em caso de problema, instale de novo a
+versão nova e, se preciso, restaure a cópia feita no passo 1.
+
+### Para você: publicar uma atualização
+
+```bash
+make check                       # tudo verde antes de publicar
+make version v=0.2.0             # sobe a versão nos 3 arquivos
+git commit -am "build: versão 0.2.0"
+git tag v0.2.0
+git push origin main --tags      # o CI gera o instalador e um release em rascunho
+```
+
+No GitHub, abra **Releases**, revise o rascunho, escreva as novidades e clique em
+**Publish release**. O link "latest" passa a apontar para a versão nova.
+Atualização automática dentro do programa (sem baixar à mão) está prevista: `tauri-plugin-updater`
+com chave de assinatura (ver [distribuição](docs/distribuicao.md)).
+
+### Para quem desenvolve: atualizar o código local
+
+```bash
+git pull
+make install     # se o package.json mudou
+make check       # fmt, lint, tipos e testes
+make dev         # migrações novas são aplicadas sozinhas ao abrir
+```
+
+Se a mudança trouxe dados de demonstração novos: `make reset-data && make seed`.
+
 ## Começando
 
 Pré-requisitos e instalação do ambiente: [docs/desenvolvimento.md](docs/desenvolvimento.md).

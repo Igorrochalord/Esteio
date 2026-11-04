@@ -72,6 +72,16 @@ Ctrl+C copia; clique no cabeçalho ordena; busca filtra todas as colunas; linha 
 "Exportar Excel" grava exatamente o que está visível (filtrado e ordenado). Cada célula
 editada chama o comando `*_update` do módulo com **só aquele campo**.
 
+## Tutorial e planos na interface
+
+- `components/Tour.tsx`: tutorial em tela cheia com passos por papel (proprietário,
+  administrador, usuário). Abre sozinho no primeiro acesso de cada pessoa neste computador
+  (`localStorage nucleo.tour.v1.<id>`) e pelo botão **Como usar** no menu.
+- `pages/PlansPage.tsx` (`/planos`, para proprietário e administrador): planos, simulador,
+  comparativo. Preços e limites vêm de `plans_catalog` (`core/src/plans.rs`); hoje tudo liberado.
+- `components/PlansNudge.tsx`: lembrete no canto a cada `PLAN_NUDGE_INTERVAL_MS` (5 min), só
+  para quem pode assinar, nunca sobre um diálogo aberto nem na própria página de planos.
+
 ## Gráficos
 
 `components/charts.tsx` (SVG próprio): `ColumnChart`, `BarList` (ranking), `StatTile` e

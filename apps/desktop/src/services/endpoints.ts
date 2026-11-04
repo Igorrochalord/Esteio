@@ -14,6 +14,7 @@ import type {
   Me,
   Movement,
   Page,
+  PlanItem,
   PaymentMethod,
   Product,
   ProductsReport,
@@ -37,6 +38,7 @@ export const authApi = {
   login: (email: string, password: string) => call<Me>("login", { email, password }),
   logout: () => call<void>("logout"),
   me: () => call<Me>("me"),
+  plans: () => call<PlanItem[]>("plans_catalog"),
 };
 
 export interface OnboardingInput {

@@ -8,6 +8,8 @@ import {
   Monitor,
   Moon,
   Building2,
+  CircleHelp,
+  Gem,
   ShoppingCart,
   Sparkles,
   Sun,
@@ -15,10 +17,12 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 
 import { BrandMark } from "../components/BrandMark";
+import { PlansNudge } from "../components/PlansNudge";
+import { Tour } from "../components/Tour";
 import { useAuth } from "../hooks/useAuth";
 import { ROLE_LABEL } from "../services/labels";
 import { initials } from "../services/theme";
@@ -39,7 +43,35 @@ export function AppLayout() {
   const { me, can, logout } = useAuth();
   const location = useLocation();
   const [theme, setTheme] = useState<ThemeMode>(getThemeMode);
+  const [tourOpen, setTourOpen] = useState(false);
+  const tourKey = me ? `nucleo.tour.v1.${me.user.id}` : "";
+
+  // tutorial abre sozinho no primeiro acesso de cada pessoa neste computador
+  useEffect(() => {
+    if (!tourKey) return;
+    let seen = true;
+    try {
+      seen = localStorage.getItem(tourKey) === "1";
+    } catch {
+      /* sem armazenamento: não insiste */
+    }
+    if (!seen) {
+      const t = window.setTimeout(() => setTourOpen(true), 700);
+      return () => window.clearTimeout(t);
+    }
+  }, [tourKey]);
+
+  const closeTour = () => {
+    setTourOpen(false);
+    try {
+      localStorage.setItem(tourKey, "1");
+    } catch {
+      /* ignora */
+    }
+  };
+
   if (!me) return null;
+  const canBuy = me.user.role === "owner" || me.user.role === "admin";
 
   const sections: { title?: string; links: Link[] }[] = [
     {
@@ -58,6 +90,7 @@ export function AppLayout() {
         { to: "/empresa", label: "Empresa", icon: Building2, show: can("settings") },
         { to: "/auditoria", label: "Histórico", icon: History, show: can("audit") },
         { to: "/backup", label: "Cópias de segurança", icon: DatabaseBackup, show: can("backup", "write") },
+        { to: "/planos", label: "Planos", icon: Gem, show: canBuy },
       ],
     },
   ];
@@ -91,14 +124,17 @@ export function AppLayout() {
             );
           })}
         </nav>
+        <button type="button" className="sidebar-help" onClick={() => setTourOpen(true)}>
+          <CircleHelp size={18} strokeWidth={1.9} aria-hidden /> Como usar
+        </button>
         {me.plan && (
-          <div className="plan-badge" title={me.plan.note}>
+          <NavLink to={canBuy ? "/planos" : "/"} className="plan-badge" title={me.plan.note}>
             <Sparkles size={16} aria-hidden />
             <span>
               <strong>{me.plan.label}</strong>
               {me.plan.unlimited ? "Tudo liberado no lançamento" : me.plan.note}
             </span>
-          </div>
+          </NavLink>
         )}
         <div className="sidebar-user">
           <span className="avatar" aria-hidden>{initials(me.user.name) || "?"}</span>
@@ -127,6 +163,8 @@ export function AppLayout() {
           </span>
         </div>
       </aside>
+      <Tour open={tourOpen} role={me.user.role} firstName={me.user.name.split(" ")[0]} company={me.company.name} onClose={closeTour} />
+      <PlansNudge enabled={canBuy} paused={tourOpen} />
       <main className="content">
         {/* a key reinicia a animação de entrada a cada troca de tela */}
         <div key={location.pathname}>

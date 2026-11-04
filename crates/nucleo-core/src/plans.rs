@@ -77,6 +77,44 @@ pub const fn limits(plan: Plan) -> Limits {
     }
 }
 
+/// Preço mensal de referência em centavos.
+pub const fn price_cents(plan: Plan) -> i64 {
+    match plan {
+        Plan::Gratuito => 0,
+        Plan::Starter => 4_900,
+        Plan::Platinum => 9_900,
+        Plan::Infinite => 19_900,
+    }
+}
+
+/// Custo mensal de cada CNPJ adicional, em centavos.
+pub const EXTRA_CNPJ_CENTS: i64 = 1_990;
+
+pub const ALL: [Plan; 4] = [
+    Plan::Gratuito,
+    Plan::Starter,
+    Plan::Platinum,
+    Plan::Infinite,
+];
+
+/// Um plano para a página "Planos" (preço e limites vêm daqui; textos ficam na interface).
+#[derive(Debug, Clone, Serialize)]
+pub struct CatalogItem {
+    pub plan: Plan,
+    pub price: rust_decimal::Decimal,
+    pub limits: Limits,
+}
+
+pub fn catalog() -> Vec<CatalogItem> {
+    ALL.iter()
+        .map(|&plan| CatalogItem {
+            plan,
+            price: crate::money::from_cents(price_cents(plan)),
+            limits: limits(plan),
+        })
+        .collect()
+}
+
 /// Situação de acesso desta instalação.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Access {
@@ -166,5 +204,7 @@ mod tests {
         assert_eq!(limits(Plan::Starter).nfse_per_month, Some(25));
         assert_eq!(limits(Plan::Platinum).nfse_per_month, Some(100));
         assert_eq!(limits(Plan::Infinite).extra_cnpjs, None);
+        assert_eq!(catalog().len(), 4);
+        assert_eq!(catalog()[2].price.to_string(), "99.00");
     }
 }

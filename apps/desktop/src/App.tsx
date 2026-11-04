@@ -11,6 +11,7 @@ import { CustomersPage } from "./pages/CustomersPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
+import { PlansPage } from "./pages/PlansPage";
 import { ProductsPage } from "./pages/ProductsPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { ReportsPage } from "./pages/ReportsPage";
@@ -36,6 +37,7 @@ export function App() {
             <Route path="/relatorios" element={<RequirePermission module="reports"><ReportsPage /></RequirePermission>} />
             <Route path="/usuarios" element={<RequirePermission module="users"><UsersPage /></RequirePermission>} />
             <Route path="/empresa" element={<RequirePermission module="settings"><CompanyPage /></RequirePermission>} />
+            <Route path="/planos" element={<PlansPage />} />
             <Route path="/backup" element={<RequirePermission module="backup" level="write"><BackupPage /></RequirePermission>} />
             <Route path="/auditoria" element={<RequirePermission module="audit"><AuditPage /></RequirePermission>} />
           </Route>
