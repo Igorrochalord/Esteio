@@ -4,7 +4,9 @@ pub mod backup;
 pub mod company;
 pub mod customers;
 pub mod products;
+pub mod reports;
 pub mod sales;
+pub mod spreadsheet;
 pub mod users;
 
 use serde::{Deserialize, Deserializer};
