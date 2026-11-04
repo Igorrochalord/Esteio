@@ -17,7 +17,13 @@ export function Dialog({ open, title, onClose, children, wide }: Props) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (open && !el.open) el.showModal();
+    if (open && !el.open) {
+      el.showModal();
+      // o navegador foca o primeiro botão (o ✕); para formulários, o certo é o primeiro campo
+      requestAnimationFrame(() =>
+        el.querySelector<HTMLElement>(".dialog-body input:not([type=hidden]), .dialog-body select, .dialog-body textarea")?.focus(),
+      );
+    }
     if (!open && el.open) el.close();
   }, [open]);
 
@@ -29,7 +35,7 @@ export function Dialog({ open, title, onClose, children, wide }: Props) {
           ✕
         </button>
       </header>
-      {children}
+      <div className="dialog-body">{children}</div>
     </dialog>
   );
 }

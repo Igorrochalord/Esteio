@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useSearchParams } from "react-router";
 
 import { DataGrid, type GridColumn } from "../components/DataGrid";
 import { Dialog } from "../components/Dialog";
@@ -22,7 +23,11 @@ export function SalesPage() {
   const canSell = can("sales", "write");
   const [period, setPeriod] = useState<Period>(() => presetPeriod("month"));
   const [status, setStatus] = useState("");
-  const [creating, setCreating] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const [creating, setCreating] = useState(() => params.get("nova") === "1" && canSell);
+  useEffect(() => {
+    if (params.has("nova")) setParams({}, { replace: true });
+  }, [params, setParams]);
   const [openSale, setOpenSale] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const { data, error, loading, reload } = useAsync(

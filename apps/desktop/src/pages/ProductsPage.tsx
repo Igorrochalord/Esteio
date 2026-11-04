@@ -1,5 +1,6 @@
 import { open } from "@tauri-apps/plugin-dialog";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router";
 
 import { DataGrid, type CellValue, type GridColumn } from "../components/DataGrid";
 import { Dialog } from "../components/Dialog";
@@ -29,7 +30,13 @@ export function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [onlyLow, setOnlyLow] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
-  const [dialog, setDialog] = useState<"new" | "stock" | "categories" | "import" | null>(null);
+  const [params, setParams] = useSearchParams();
+  const [dialog, setDialog] = useState<"new" | "stock" | "categories" | "import" | null>(() =>
+    params.get("novo") === "1" && canEdit ? "new" : null,
+  );
+  useEffect(() => {
+    if (params.has("novo")) setParams({}, { replace: true });
+  }, [params, setParams]);
   const [historyOf, setHistoryOf] = useState<Product | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 

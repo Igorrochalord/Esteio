@@ -1,4 +1,5 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router";
 
 import { DataGrid, type CellValue, type GridColumn } from "../components/DataGrid";
 import { Dialog } from "../components/Dialog";
@@ -18,7 +19,11 @@ export function CustomersPage() {
   const canEdit = can("customers", "write");
   const { data, error, loading, setData } = useAsync(customersApi.list);
   const [showInactive, setShowInactive] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const [creating, setCreating] = useState(() => params.get("novo") === "1" && canEdit);
+  useEffect(() => {
+    if (params.has("novo")) setParams({}, { replace: true });
+  }, [params, setParams]);
   const [notice, setNotice] = useState<string | null>(null);
 
   const rows = useMemo(() => (data ?? []).filter((c) => showInactive || c.active), [data, showInactive]);

@@ -1,3 +1,4 @@
+import { Printer } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { BarList, BrazilTileMap, ColumnChart, StatTile } from "../components/charts";
@@ -6,9 +7,17 @@ import { Notice } from "../components/Notice";
 import { PeriodPicker } from "../components/PeriodPicker";
 import { useAsync } from "../hooks/useAsync";
 import { reportsApi } from "../services/endpoints";
-import { date, int, money, moneyShort, pct, qty, toNum, tzOffset } from "../services/format";
+import { date, int, money, moneyShort, pct, pctChange, qty, toNum, tzOffset } from "../services/format";
 import { PAYMENT_LABEL } from "../services/labels";
-import { periodBounds, periodDays, presetPeriod, type Period } from "../services/period";
+import { useAuth } from "../hooks/useAuth";
+import {
+  comparePeriod,
+  periodBounds,
+  periodDays,
+  presetPeriod,
+  type CompareMode,
+  type Period,
+} from "../services/period";
 import type { PeriodRow, ProductRank, ReportQuery, SellerRow, StockRow } from "../services/types";
 
 type Tab = "sales" | "products" | "stock" | "customers" | "sellers";
@@ -36,12 +45,21 @@ export function ReportsPage() {
   const [period, setPeriod] = useState<Period>(() => presetPeriod("30d"));
   const [group, setGroup] = useState<Group>("auto");
   const [tab, setTab] = useState<Tab>("sales");
+  const [compareMode, setCompareMode] = useState<CompareMode>("previous");
+  const { me } = useAuth();
   const days = periodDays(period);
   const effective = group === "auto" ? (days <= 62 ? "day" : days <= 200 ? "week" : "month") : group;
   const query: ReportQuery = useMemo(
     () => ({ ...periodBounds(period), tz_offset_minutes: tzOffset(), group: effective }),
     [period, effective],
   );
+  const previous = comparePeriod(period, compareMode);
+  const prevQuery: ReportQuery | null = useMemo(
+    () => (previous ? { ...periodBounds(previous), tz_offset_minutes: tzOffset(), group: effective } : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [previous?.from, previous?.to, effective],
+  );
+  const tabLabel = TABS.find((t) => t.key === tab)?.label ?? "";
 
   return (
     <div className="page page--wide">
@@ -52,7 +70,15 @@ export function ReportsPage() {
             Vendas canceladas ficam fora dos totais. Toda tabela pode ser exportada para o Excel.
           </p>
         </div>
+        <button className="btn btn--ghost no-print" onClick={() => window.print()} title="Abre a impressão; escolha “Salvar como PDF” para gerar o arquivo">
+          <Printer size={16} aria-hidden /> Imprimir / PDF
+        </button>
       </header>
+      <div className="print-only print-header">
+        <strong>{me?.company.name}</strong> · Relatório de {tabLabel.toLowerCase()} ·{" "}
+        {date(`${period.from}T12:00:00`)} a {date(`${period.to}T12:00:00`)}
+        {previous && <> · comparado com {date(`${previous.from}T12:00:00`)} a {date(`${previous.to}T12:00:00`)}</>}
+      </div>
 
       <div className="filters">
         <PeriodPicker value={period} onChange={setPeriod} />
@@ -64,12 +90,22 @@ export function ReportsPage() {
             <option value="month">Por mês</option>
           </select>
         )}
+        {tab === "sales" && (
+          <select aria-label="Comparar com" value={compareMode} onChange={(e) => setCompareMode(e.target.value as CompareMode)}>
+            <option value="previous">Comparar: período anterior</option>
+            <option value="last_year">Comparar: mesmo período do ano passado</option>
+            <option value="none">Sem comparação</option>
+          </select>
+        )}
         <span className="muted small">
           {date(`${period.from}T12:00:00`)} a {date(`${period.to}T12:00:00`)} · {days} dia(s)
+          {tab === "sales" && previous && (
+            <> · vs. {date(`${previous.from}T12:00:00`)} a {date(`${previous.to}T12:00:00`)}</>
+          )}
         </span>
       </div>
 
-      <nav className="tabs" role="tablist" aria-label="Relatórios">
+      <nav className="tabs no-print" role="tablist" aria-label="Relatórios">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -85,7 +121,7 @@ export function ReportsPage() {
       </nav>
 
       <div role="tabpanel">
-        {tab === "sales" && <SalesTab query={query} />}
+        {tab === "sales" && <SalesTab query={query} prevQuery={prevQuery} />}
         {tab === "products" && <ProductsTab query={query} />}
         {tab === "stock" && <StockTab query={query} />}
         {tab === "customers" && <CustomersTab query={query} />}
@@ -108,10 +144,17 @@ function Loading({ loading, error, children }: { loading: boolean; error: string
 
 // ------------------------------------------------------------------ vendas
 
-function SalesTab({ query }: { query: ReportQuery }) {
+function SalesTab({ query, prevQuery }: { query: ReportQuery; prevQuery: ReportQuery | null }) {
   const { data, error, loading } = useAsync(() => reportsApi.sales(query), deps(query));
+  const { data: prev } = useAsync(
+    () => (prevQuery ? reportsApi.sales(prevQuery) : Promise.resolve(null)),
+    prevQuery ? deps(prevQuery) : [null],
+  );
   if (!data) return <Loading loading error={error}><p className="muted">Carregando…</p></Loading>;
   const t = data.totals;
+  const p = prev?.totals;
+  const delta = (cur: string | number, before: string | number | undefined, upIsGood = true) =>
+    p ? { pct: pctChange(toNum(cur), before == null ? null : toNum(before)), upIsGood } : undefined;
   const unit = query.group === "month" ? "mês" : query.group === "week" ? "semana" : "dia";
   const columns: GridColumn<PeriodRow>[] = [
     { key: "period", label: "Período", get: (r) => periodLabel(r.period) },
@@ -136,22 +179,26 @@ function SalesTab({ query }: { query: ReportQuery }) {
   return (
     <Loading loading={loading} error={error}>
       <div className="stats">
-        <StatTile label="Faturamento" value={money(t.total)} hint={toNum(t.discount) > 0 ? `${money(t.discount)} em descontos` : undefined} />
-        <StatTile label="Vendas" value={int(t.count)} />
-        <StatTile label="Ticket médio" value={money(t.avg_ticket)} />
-        <StatTile label="Lucro bruto" value={money(t.profit)} hint={`custo ${money(t.cost)}`} />
-        <StatTile label="Margem" value={pct(t.margin_pct)} />
-        <StatTile label="Canceladas" value={int(t.canceled_count)} hint={t.canceled_count ? money(t.canceled_total) : undefined} />
+        <StatTile label="Faturamento" count={toNum(t.total)} format={money} delta={delta(t.total, p?.total)}
+          hint={toNum(t.discount) > 0 ? `${money(t.discount)} em descontos` : undefined} />
+        <StatTile label="Vendas" count={t.count} format={(v) => int(Math.round(v))} delta={delta(t.count, p?.count)} />
+        <StatTile label="Ticket médio" count={toNum(t.avg_ticket)} format={money} delta={delta(t.avg_ticket, p?.avg_ticket)} />
+        <StatTile label="Lucro bruto" count={toNum(t.profit)} format={money} delta={delta(t.profit, p?.profit)} hint={`custo ${money(t.cost)}`} />
+        <StatTile label="Margem" count={toNum(t.margin_pct)} format={pct}
+          hint={p ? `antes: ${pct(p.margin_pct)}` : undefined} />
+        <StatTile label="Canceladas" count={t.canceled_count} format={(v) => int(Math.round(v))}
+          delta={delta(t.canceled_count, p?.canceled_count, false)} hint={t.canceled_count ? money(t.canceled_total) : undefined} />
       </div>
 
       <section className="panel">
         <h2>Faturamento por {unit}</h2>
         <ColumnChart
           ariaLabel={`Faturamento por ${unit}`}
-          data={data.series.map((r) => ({
+          data={data.series.map((r, i) => ({
             key: r.period,
             label: periodLabel(r.period),
             value: toNum(r.total),
+            previous: prev && prev.series.length === data.series.length ? toNum(prev.series[i]?.total) : undefined,
             detail: (
               <>
                 <span>{int(r.count)} venda(s)</span>

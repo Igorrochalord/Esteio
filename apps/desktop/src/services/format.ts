@@ -65,3 +65,7 @@ export function localIso(iso: string | null | undefined): string | null {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${isoDay(dt)}T${p(dt.getHours())}:${p(dt.getMinutes())}:${p(dt.getSeconds())}`;
 }
+
+/** Variação percentual entre atual e anterior (null se a base é zero). */
+export const pctChange = (current: number, previous: number | null | undefined) =>
+  previous == null || previous === 0 ? null : ((current - previous) / Math.abs(previous)) * 100;

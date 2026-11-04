@@ -1,3 +1,4 @@
+import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
@@ -7,22 +8,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
  * no hover e no foco do teclado; toda informação também está na tabela ao lado.
  */
 
-export const SEQ = {
-  100: "#cde2fb",
-  150: "#b7d3f6",
-  200: "#9ec5f4",
-  250: "#86b6ef",
-  300: "#6da7ec",
-  350: "#5598e7",
-  400: "#3987e5",
-  450: "#2a78d6",
-  500: "#256abf",
-  550: "#1c5cab",
-  600: "#184f95",
-  650: "#104281",
-  700: "#0d366b",
-} as const;
-export const SERIES = SEQ[450];
+// Cores: variáveis CSS --chart-* e --map-* (styles.css), com variantes clara e escura validadas.
 
 function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -73,6 +59,8 @@ export interface ColumnDatum {
   /** rótulo curto no eixo */
   label: string;
   value: number;
+  /** valor do período de comparação na mesma posição (barra cinza ao lado) */
+  previous?: number;
   /** linhas extras do tooltip */
   detail?: ReactNode;
 }
@@ -97,9 +85,11 @@ export function ColumnChart({
   const pad = { top: 12, right: 8, bottom: 26, left: 64 };
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
-  const { top, step } = niceMax(Math.max(0, ...data.map((d) => d.value)));
+  const compare = data.some((d) => d.previous != null);
+  const { top, step } = niceMax(Math.max(0, ...data.map((d) => Math.max(d.value, d.previous ?? 0))));
   const band = data.length ? plotW / data.length : plotW;
-  const barW = Math.max(2, Math.min(24, band * 0.62));
+  // com comparação: duas barras finas lado a lado (≤ 12px cada, 2px de respiro)
+  const barW = compare ? Math.max(2, Math.min(12, band * 0.32)) : Math.max(2, Math.min(24, band * 0.62));
   const y = (v: number) => pad.top + plotH - (v / top) * plotH;
   const ticks: number[] = [];
   for (let t = 0; t <= top + step / 2; t += step) ticks.push(t);
@@ -117,6 +107,7 @@ export function ColumnChart({
         <>
           <strong>{format(d.value)}</strong>
           <span>{d.label}</span>
+          {d.previous != null && <span>anterior: {format(d.previous)}</span>}
           {d.detail}
         </>
       ),
@@ -153,10 +144,18 @@ export function ColumnChart({
             >
               {/* área de toque maior que a barra */}
               <rect x={pad.left + band * i} y={pad.top} width={band} height={plotH} fill="transparent" />
+              {compare && (
+                <path
+                  className="chart-ghost"
+                  d={columnPath(cx - barW - 1, y(d.previous ?? 0), barW, y(0) - y(d.previous ?? 0), 3)}
+                  style={{ animationDelay: `${Math.min(i * 12, 360)}ms` }}
+                />
+              )}
               <path
-                d={columnPath(cx - barW / 2, y(d.value), barW, y(0) - y(d.value), 4)}
-                fill={SERIES}
+                className="chart-bar"
+                d={columnPath(compare ? cx + 1 : cx - barW / 2, y(d.value), barW, y(0) - y(d.value), compare ? 3 : 4)}
                 opacity={hover == null || hover === i ? 1 : 0.55}
+                style={{ animationDelay: `${Math.min(i * 12, 360)}ms` }}
               />
               {i % every === 0 && (
                 <text className="chart-axis" x={cx} y={height - 8} textAnchor="middle">
@@ -168,6 +167,12 @@ export function ColumnChart({
         })}
         <line className="chart-base" x1={pad.left} x2={width - pad.right} y1={y(0)} y2={y(0)} />
       </svg>
+      {compare && (
+        <div className="chart-legend" aria-hidden>
+          <span><i className="swatch swatch--series" /> Período atual</span>
+          <span><i className="swatch swatch--ghost" /> Período anterior</span>
+        </div>
+      )}
       <Tooltip tip={tip} />
     </div>
   );
@@ -198,7 +203,7 @@ export function BarList({
   if (!data.length || max <= 0) return <p className="muted">{empty}</p>;
   return (
     <ol className="barlist" aria-label={ariaLabel}>
-      {data.map((d) => (
+      {data.map((d, i) => (
         <li key={d.key} tabIndex={0} aria-label={`${d.label}: ${format(d.value)}${d.note ? `, ${d.note}` : ""}`}>
           <span className="barlist-label">
             <span className="barlist-name">{d.label}</span>
@@ -206,7 +211,7 @@ export function BarList({
           </span>
           <span className="barlist-track">
             {/* escala até 70% da trilha: o resto fica para o valor na ponta, mantendo a proporção */}
-            <span className="barlist-bar" style={{ width: `${Math.max(0.5, (d.value / max) * 70)}%`, background: SERIES }} />
+            <span className="barlist-bar" style={{ width: `${Math.max(0.5, (d.value / max) * 70)}%`, animationDelay: `${Math.min(i * 40, 400)}ms` }} />
             <span className="barlist-value">{format(d.value)}</span>
           </span>
         </li>
@@ -215,12 +220,88 @@ export function BarList({
   );
 }
 
-/** Indicador: rótulo, valor e uma linha de contexto opcional. */
-export function StatTile({ label, value, hint, tone }: { label: string; value: string; hint?: ReactNode; tone?: "warn" }) {
+const reducedMotion = () =>
+  typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+/** Número que conta de 0 até o valor (700 ms, desacelerando); respeita "reduzir movimento". */
+export function CountUp({ value, format }: { value: number; format: (v: number) => string }) {
+  const [shown, setShown] = useState(reducedMotion() ? value : 0);
+  const from = useRef(0);
+  useEffect(() => {
+    if (reducedMotion()) {
+      setShown(value);
+      return;
+    }
+    const start = performance.now();
+    const origin = from.current;
+    let frame = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / 700);
+      const eased = 1 - (1 - t) ** 3;
+      setShown(origin + (value - origin) * eased);
+      if (t < 1) frame = requestAnimationFrame(tick);
+      else from.current = value;
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value]);
+  return <>{format(shown)}</>;
+}
+
+export interface Delta {
+  /** variação em % (null = sem base de comparação) */
+  pct: number | null;
+  /** subir é bom? (faturamento sim; cancelamentos não) */
+  upIsGood?: boolean;
+  label?: string;
+}
+
+/** Variação com seta + texto (nunca só cor) e cor de status conforme subir ser bom ou ruim. */
+export function DeltaBadge({ delta }: { delta: Delta }) {
+  const { pct, upIsGood = true, label = "vs. anterior" } = delta;
+  if (pct == null || !Number.isFinite(pct)) return <span className="delta delta--flat">sem comparação</span>;
+  const flat = Math.abs(pct) < 0.05;
+  const up = pct > 0;
+  const tone = flat ? "flat" : up === upIsGood ? "good" : "bad";
+  const Icon = flat ? Minus : up ? ArrowUpRight : ArrowDownRight;
+  const text = `${up ? "+" : ""}${pct.toLocaleString("pt-BR", { maximumFractionDigits: 1, minimumFractionDigits: 1 })}%`;
+  return (
+    <span className={`delta delta--${tone}`}>
+      <Icon size={14} aria-hidden />
+      {text} <span className="delta-label">{label}</span>
+    </span>
+  );
+}
+
+/** Indicador: rótulo, valor (contando, se numérico), contexto e variação opcionais. */
+export function StatTile({
+  label,
+  value,
+  count,
+  format,
+  hint,
+  tone,
+  delta,
+  icon,
+}: {
+  label: string;
+  value?: string;
+  /** número animado (usa `format`) */
+  count?: number;
+  format?: (v: number) => string;
+  hint?: ReactNode;
+  tone?: "warn";
+  delta?: Delta;
+  icon?: ReactNode;
+}) {
   return (
     <div className={tone === "warn" ? "stat stat--warn" : "stat"}>
-      <span className="stat-label">{label}</span>
-      <span className="stat-value">{value}</span>
+      <span className="stat-label">
+        {icon}
+        {label}
+      </span>
+      <span className="stat-value">{count != null && format ? <CountUp value={count} format={format} /> : value}</span>
+      {delta && <DeltaBadge delta={delta} />}
       {hint && <span className="stat-hint">{hint}</span>}
     </div>
   );
@@ -240,15 +321,14 @@ const TILES: Record<string, [number, number]> = {
   RS: [2, 7],
 };
 
-// rampa ordinal validada (validate_palette --ordinal): começa no tom 250 para não sumir no fundo
-const RAMP = [SEQ[250], SEQ[350], SEQ[450], SEQ[550], SEQ[700]];
-const NO_DATA = "#f0efec";
+// rampa ordinal de 5 faixas (validate_palette --ordinal, claro e escuro): --map-1 … --map-5
+const STEPS = 5;
 
-/** Cor sequencial pelo valor relativo; texto branco nos tons escuros. */
+/** Faixa pelo valor relativo; texto da faixa vem de --map-ink-N (contraste garantido). */
 function rampColor(v: number, max: number) {
-  if (v <= 0 || max <= 0) return { fill: NO_DATA, ink: "#52514e" };
-  const i = Math.min(RAMP.length - 1, Math.floor((v / max) * RAMP.length - 1e-9));
-  return { fill: RAMP[i], ink: i >= 2 ? "#ffffff" : "#0b0b0b" };
+  if (v <= 0 || max <= 0) return { fill: "var(--chart-nodata)", ink: "var(--muted)" };
+  const i = Math.min(STEPS - 1, Math.floor((v / max) * STEPS - 1e-9)) + 1;
+  return { fill: `var(--map-${i})`, ink: `var(--map-ink-${i})` };
 }
 
 export interface StateDatum {
@@ -322,11 +402,9 @@ export function BrazilTileMap({
                   width={size}
                   height={size}
                   rx={4}
-                  fill={fill}
-                  stroke={hover === uf ? "#0b0b0b" : "none"}
-                  strokeWidth={hover === uf ? 2 : 0}
+                  style={{ fill, stroke: hover === uf ? "var(--ink-strong)" : "none", strokeWidth: hover === uf ? 2 : 0 }}
                 />
-                <text x={x + size / 2} y={y + size / 2} dy="0.35em" textAnchor="middle" className="tile-label" fill={ink}>
+                <text x={x + size / 2} y={y + size / 2} dy="0.35em" textAnchor="middle" className="tile-label" style={{ fill: ink }}>
                   {uf}
                 </text>
               </g>
@@ -337,11 +415,11 @@ export function BrazilTileMap({
       </div>
       <div className="scale-legend" aria-hidden>
         <span className="muted small">menos</span>
-        {RAMP.map((c) => (
-          <span key={c} className="scale-step" style={{ background: c }} />
+        {Array.from({ length: STEPS }, (_, k) => (
+          <span key={k} className="scale-step" style={{ background: `var(--map-${k + 1})` }} />
         ))}
         <span className="muted small">mais · máx. {format(max)}</span>
-        <span className="scale-step" style={{ background: NO_DATA, marginLeft: "0.75rem" }} />
+        <span className="scale-step" style={{ background: "var(--chart-nodata)", marginLeft: "0.75rem" }} />
         <span className="muted small">sem vendas</span>
       </div>
     </div>

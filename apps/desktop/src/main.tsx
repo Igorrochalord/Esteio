@@ -9,8 +9,10 @@ import { createRoot } from "react-dom/client";
 
 import { App } from "./App";
 import { applyBranding } from "./services/theme";
+import { applyThemeMode, getThemeMode } from "./services/themeMode";
 
 applyBranding(null);
+applyThemeMode(getThemeMode());
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
