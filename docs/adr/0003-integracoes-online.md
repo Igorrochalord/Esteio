@@ -69,3 +69,16 @@ essas funções enquanto estiver desconectado.
    legado 3DES dos A1) e monta um cliente rustls com identidade. Serve para a Efí e a NFS-e.
 9. **Simulador.** Provedor embutido, só no ambiente de teste, que finge o PIX sem rede. Permite
    testar e demonstrar o fluxo sem conta nos serviços reais.
+
+## Complemento (6b, PIX, 2026-11-04)
+
+10. **Provedores de PIX**: Mercado Pago (API `/v1/payments`, token Bearer, `X-Idempotency-Key`),
+    Asaas (cobrança `billingType=PIX` + `pixQrCode`, chave no cabeçalho `access_token`; exige
+    cliente com CPF/CNPJ) e Efí (API Pix do Banco Central `/v2/cob/{txid}`, OAuth
+    `client_credentials` + certificado `.p12`). Todos funcionam só por consulta: a confirmação
+    chega em até ~5 s com a tela aberta e em até ~15 s pela fila.
+11. **Venda PIX cobrada = a receber.** O dinheiro só entra no caixa quando o serviço confirma
+    (baixa automática, auditada sem usuário). "Já recebi" mantém o comportamento antigo (entra no
+    caixa na hora). Pagamento depois do cancelamento fica registrado na cobrança para devolução manual.
+12. **QR local.** O QR Code é desenhado no núcleo (crate `qrcode`, SVG) a partir do copia-e-cola;
+    nenhuma imagem é baixada e a interface continua sem rede.

@@ -83,6 +83,7 @@ precisar migrar dados depois, desde já:
 | `service_order_events` | negócio (só inclusão) | linha do tempo: abertura, mudanças de situação, anotações, faturamento |
 | `integrations` | negócio | um serviço on-line por linha: provedor, ambiente (teste/produção), ativada, configuração (JSON) e credenciais cifradas (BLOB) |
 | `integration_jobs` | negócio | fila de envios: tipo, dados (JSON), situação, falhas seguidas, próxima tentativa, erro, resultado e vínculo (ex.: `sales`) |
+| `pix_charges` | negócio | cobrança PIX da venda: venda, título a receber, serviço, valor, situação (gerando → aguardando → pago/expirado/cancelado/erro), txid (26–35 letras/números), id no serviço, copia-e-cola, validade e pagamento |
 | `audit_logs` | infra | histórico append-only |
 | `change_log` | infra | outbox do sync |
 

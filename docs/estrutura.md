@@ -101,7 +101,8 @@ aprovação), `audit` (histórico), `backup` (cópias), `products` (catálogo, c
 `customers`, `sales` (vendas e cancelamento), `reports` (relatórios) e `spreadsheet`
 (exportar .xlsx, importar produtos), `finance`, `service_orders` e `integrations` (serviços on-line:
 `provider.rs` é o contrato de cada API, `http.rs` o cliente e o mTLS, `service.rs` a configuração e
-a fila, `providers/` os provedores embutidos, como o `simulador.rs`). `docs/oauth/` é a página estática de
+a fila, `providers/` os provedores embutidos: `simulador.rs`, `mercadopago.rs`, `asaas.rs`, `efi.rs`)
+e `pix` (cobrança PIX da venda, QR em SVG e baixa automática). `docs/oauth/` é a página estática de
 retorno da autorização (GitHub Pages) e `docs/contas-de-teste.md` explica como criar as contas.
 `src/money.rs` converte dinheiro e quantidades; `src/secrets.rs` cifra as credenciais das integrações.
 

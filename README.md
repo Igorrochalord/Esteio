@@ -63,15 +63,16 @@ traz a versão mais recente.
 | **Relatórios** | painel inicial, curva ABC, vendedores, comparar períodos, Excel e PDF |
 | **Pessoas e segurança** | usuários com papéis (dono, administrador, usuário), histórico de alterações |
 | **Cópias de segurança** | automáticas, mais cópia manual e restauração |
-| **Integrações** | conexão com serviços on-line, fila que espera a internet voltar; PIX, NFS-e e marketplaces a caminho |
+| **Integrações** | conexão com serviços on-line e fila que espera a internet voltar |
+| **PIX na venda** | QR Code na tela pelo Mercado Pago, Asaas ou Efí, com baixa automática quando o cliente paga |
 
 Tudo com modo claro e escuro, grades tipo planilha e um tutorial guiado na primeira vez.
 
 ## Próximos passos
 
-✅ Comercial, financeiro, ordens de serviço e base de integrações on-line prontos.
-⏭️ A seguir: **PIX na venda** com baixa automática, **NFS-e** pelo Emissor Nacional e **pedidos de
-marketplaces**. Roteiro completo em [docs/roteiro.md](docs/roteiro.md).
+✅ Comercial, financeiro, ordens de serviço, integrações on-line e PIX na venda prontos.
+⏭️ A seguir: **pedidos de marketplaces** (Mercado Livre, Nuvemshop, Shopee, Amazon) e **NFS-e** pelo
+Emissor Nacional. Roteiro completo em [docs/roteiro.md](docs/roteiro.md).
 
 ## Como é feito
 

@@ -35,6 +35,7 @@
 | finance (contas, a pagar/receber, DRE) | manage | manage | — |
 | service_orders (ordens de serviço) | manage | manage | write (abre, atualiza, fatura) |
 | integrations (serviços on-line, credenciais, fila) | manage | manage | — |
+| PIX na venda (gerar, conferir, cancelar cobrança) | via sales | via sales | write (vende) |
 
 Detalhes do comercial: quem não pode editar produtos não recebe o custo; lucro/custo da venda
 só para quem vê relatórios; alterar preço unitário na venda e lançar venda com data passada

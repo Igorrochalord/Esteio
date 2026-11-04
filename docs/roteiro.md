@@ -12,7 +12,7 @@ O projeto avança em fases. Ao fim de cada fase, `make check` precisa estar verd
 | 4 | Financeiro: contas bancárias, a pagar/receber (fiado vira conta a receber), fluxo de caixa, DRE, extrato OFX | em validação |
 | 5 | Ordens de serviço: quadro (arrastar entre etapas) e lista, serviços e peças, técnico e prazos, linha do tempo, faturar (venda + estoque + financeiro), imprimir OS | em validação |
 | 6a | Base de integrações online (ADR 0003): fila tolerante a falta de internet, credenciais cifradas, tela Integrações, indicador de conexão | em validação |
-| 6b | PIX na venda: QR Code e baixa automática ao confirmar o pagamento (provedor a definir na pesquisa) | próxima |
+| 6b | PIX na venda (Mercado Pago, Asaas, Efí): QR Code e baixa automática ao confirmar o pagamento | em validação |
 | 6c | NFS-e pelo Emissor Nacional (gov.br; certificado A1) | — |
 | 6d | Marketplaces e loja virtual: pedidos viram vendas e baixam o estoque | — |
 | 7 | Planos e cobrança (limites já definidos em `plans.rs`; servidor de licença) | — |
@@ -40,8 +40,14 @@ abrindo e vendendo sem ela. Cada subfase termina com `make check` verde e valida
       estado (`Wait` + payload), `run_job` (rodar agora), campos de arquivo + certificado `.p12` (mTLS),
       autorização pelo navegador (OAuth + `docs/oauth/`), **Simulador** e o guia
       [contas de teste](contas-de-teste.md).
-- [ ] **6b, PIX**: Mercado Pago, Asaas e Efí. QR na tela da venda (gerado localmente), conta a
-      receber até o pagamento cair e baixa automática no financeiro.
+- [x] **6b, PIX**: Mercado Pago (`/v1/payments`), Asaas (cobrança PIX + QR dinâmico) e Efí (API Pix
+      do Banco Central com mTLS). Na venda em Pix, escolhe-se o serviço (ou "já recebi"); a venda vira
+      **a receber** e a cobrança (`pix_charges`) entra na fila. O QR é desenhado no núcleo a partir do
+      copia-e-cola; a tela confere a cada 4 s e a fila continua em segundo plano. Pago → baixa
+      automática na conta padrão; vencido → cancela no serviço e permite gerar outro; venda
+      cancelada → cancela a cobrança. Aguardando validação com as contas de teste.
+- [ ] Depois da validação: escolher a conta que recebe cada serviço (hoje é a conta padrão) e
+      devolução (estorno) do PIX pela tela.
 - [ ] **6c, NFS-e**: Emissor Nacional (API, certificado A1 com mTLS, homologação), emissão a partir
       da OS/venda, cancelamento, limites do plano (`plans::ensure_within`).
 - [ ] **6d, marketplaces**: Mercado Livre, Nuvemshop, Shopee e Amazon; pedidos por consulta viram

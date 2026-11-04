@@ -83,6 +83,16 @@ Base em `crates/nucleo-core/src/modules/integrations/` ([ADR 0003](adr/0003-inte
 4. Quem gera o trabalho chama `integrations::service::enqueue(&mut tx, …)` **dentro da própria
    transação**, para nunca depender da internet na hora da ação.
 5. Teste com um provedor falso, como em `tests/integrations.rs`; nada de rede nos testes.
+   A tradução pedido/resposta de cada API fica em funções puras (`payment_body`, `poll_outcome`…)
+   com testes unitários no próprio arquivo.
+
+### Provedor de PIX
+
+Declare `capabilities: vec!["pix"]` e trate os trabalhos do contrato descrito em
+`modules/pix/mod.rs` (`pix.create`, `pix.poll`, `pix.cancel`). Use `providers/pix_common.rs`
+(`CreateReq`, `not_paid_yet`, `paid`). O efeito local (cobrança, baixa no financeiro) é do
+`modules/pix/service.rs`, chamado pela fila para todo trabalho `pix.*`; o provedor não mexe no banco.
+Prefira chaves de idempotência (txid) para que uma nova tentativa não duplique a cobrança.
 
 ## Regras de código
 

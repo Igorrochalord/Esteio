@@ -41,7 +41,9 @@ computador. Serve para testar o fluxo e para demonstrações.
 5. Documentação do teste de PIX:
    [testar a integração com Pix](https://www.mercadopago.com.br/developers/pt/docs/checkout-api-v2/integration-test/pix).
 
-No Núcleo: Integrações → Mercado Pago → ambiente **Teste** → cole o Access Token.
+No Núcleo: Integrações → Mercado Pago → ambiente **Teste** → cole o Access Token e informe o
+**e-mail do pagador padrão** (usado quando o cliente da venda não tem e-mail; não pode ser o da
+sua conta). Para "pagar" no teste, siga o guia de teste de PIX do Mercado Pago com o usuário comprador.
 
 ### Asaas
 
@@ -54,6 +56,11 @@ No Núcleo: Integrações → Mercado Pago → ambiente **Teste** → cole o Acc
 
 Limitações: descontos/juros/multa em Pix e alguns layouts não são simulados.
 
+No Núcleo: Integrações → Asaas → ambiente **Teste** → cole a chave de API. O Asaas exige CPF/CNPJ
+de quem paga: cadastre o documento no cliente da venda ou preencha o **CPF/CNPJ padrão** na
+integração. No sandbox, a cobrança pode ser paga pelo painel do Asaas (opção de confirmar o
+recebimento da cobrança).
+
 ### Efí (Efí Bank)
 
 1. Abra uma conta Efí (PJ).
@@ -64,7 +71,18 @@ Limitações: descontos/juros/multa em Pix e alguns layouts não são simulados.
 5. Documentação: [credenciais, certificado e autorização](https://dev.efipay.com.br/docs/api-pix/credenciais/).
    Homologação: `pix-h.api.efipay.com.br`; produção: `pix.api.efipay.com.br`.
 
-No Núcleo: envie o arquivo `.p12` no campo do certificado (ele fica cifrado neste computador).
+No Núcleo: preencha Client ID, Client Secret, a **chave Pix** da conta e envie o arquivo `.p12` no
+campo do certificado (ele fica cifrado neste computador; os da Efí normalmente não têm senha).
+Em homologação, cobranças de até R$ 10,00 são confirmadas sozinhas; acima disso ficam ativas sem
+pagamento, então teste com valores pequenos.
+
+### Testando o PIX na venda
+
+1. Ative o serviço em **Integrações** e clique em **Testar conexão**.
+2. **Vendas → Nova venda** → pagamento **Pix** → escolha "QR Code pelo …" → finalize.
+3. A janela **Receber com PIX** mostra o QR e o copia-e-cola e confere o pagamento a cada 4 s.
+   Pode fechá-la: a fila continua conferindo e dá baixa sozinha (veja em Integrações → fila).
+4. Pago: a venda some de **Financeiro → A receber** e aparece no extrato da conta padrão.
 
 ## Marketplaces e loja virtual
 
