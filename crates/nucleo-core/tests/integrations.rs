@@ -177,9 +177,18 @@ async fn catalog_lists_available_and_planned() {
     assert!(saved.secrets_readable);
     assert_eq!(saved.config["conta"], "Loja 1");
     // planejados aparecem como "em breve"
-    let pix = items.iter().find(|i| i.info.id == "pix").unwrap();
-    assert!(!pix.info.available);
-    assert_eq!(pix.info.phase, Some("6b"));
+    let nfse = items.iter().find(|i| i.info.id == "nfse_nacional").unwrap();
+    assert!(!nfse.info.available);
+    assert_eq!(nfse.info.phase, Some("6c"));
+    // PIX já tem provedores reais: o "em breve" some
+    assert!(items.iter().all(|i| i.info.id != "pix"));
+    for id in ["mercadopago", "asaas", "efi"] {
+        let p = items.iter().find(|i| i.info.id == id).unwrap();
+        assert!(
+            p.info.available && p.info.capabilities.contains(&"pix"),
+            "{id}"
+        );
+    }
 }
 
 #[tokio::test]
