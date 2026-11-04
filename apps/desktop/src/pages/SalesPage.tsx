@@ -9,11 +9,12 @@ import { PeriodPicker } from "../components/PeriodPicker";
 import { useAsync } from "../hooks/useAsync";
 import { useAuth } from "../hooks/useAuth";
 import { ApiError } from "../services/api";
-import { customersApi, productsApi, salesApi } from "../services/endpoints";
+import { PixPanel } from "../components/PixPanel";
+import { customersApi, pixApi, productsApi, salesApi } from "../services/endpoints";
 import { dateTime, decimalInput, money, parseDecimal, qty, toNum, tzOffset } from "../services/format";
 import { PAYMENT_LABEL } from "../services/labels";
 import { periodBounds, presetPeriod, type Period } from "../services/period";
-import type { Customer, PaymentMethod, Product, Sale, SaleItem } from "../services/types";
+import type { Customer, PaymentMethod, PixProviderOption, Product, Sale, SaleItem } from "../services/types";
 import { CustomerForm } from "./CustomersPage";
 
 const PAYMENTS: PaymentMethod[] = ["dinheiro", "pix", "debito", "credito", "fiado", "outro"];
@@ -29,6 +30,7 @@ export function SalesPage() {
     if (params.has("nova")) setParams({}, { replace: true });
   }, [params, setParams]);
   const [openSale, setOpenSale] = useState<string | null>(null);
+  const [pixSale, setPixSale] = useState<Sale | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const { data, error, loading, reload } = useAsync(
     () => salesApi.list({ ...periodBounds(period), status: status || undefined, limit: 5000 }),
@@ -100,12 +102,32 @@ export function SalesPage() {
       <Dialog wide open={creating} title="Nova venda" onClose={() => setCreating(false)}>
         {creating && (
           <NewSaleForm
-            onDone={async (s) => {
+            onDone={async (s, pixCharged) => {
               setCreating(false);
-              setNotice(`Venda nº ${s.number} registrada: ${money(s.total)} (${PAYMENT_LABEL[s.payment_method]}).`);
+              setNotice(
+                pixCharged
+                  ? `Venda nº ${s.number} registrada: ${money(s.total)}. Aguardando o PIX; a baixa é automática.`
+                  : `Venda nº ${s.number} registrada: ${money(s.total)} (${PAYMENT_LABEL[s.payment_method]}).`,
+              );
+              if (pixCharged) setPixSale(s);
               await reload();
             }}
           />
+        )}
+      </Dialog>
+      <Dialog wide open={!!pixSale} title="Receber com PIX" onClose={() => setPixSale(null)}>
+        {pixSale && (
+          <div className="stack">
+            <PixPanel
+              saleId={pixSale.id}
+              onPaid={(c) => setNotice(`PIX da venda nº ${c.sale_number} recebido: ${money(c.amount)}.`)}
+            />
+            <div className="row row--end">
+              <button type="button" className="btn btn--ghost" onClick={() => setPixSale(null)}>
+                Fechar
+              </button>
+            </div>
+          </div>
         )}
       </Dialog>
       <Dialog wide open={!!openSale} title="Detalhes da venda" onClose={() => setOpenSale(null)}>
@@ -140,7 +162,7 @@ function lineCents(l: Line): number {
   return Math.floor((q * p + 500) / 1000) - d;
 }
 
-function NewSaleForm({ onDone }: { onDone: (s: Sale) => Promise<void> }) {
+function NewSaleForm({ onDone }: { onDone: (s: Sale, pixCharged: boolean) => Promise<void> }) {
   const { me, can } = useAuth();
   const canSetPrice = can("sales", "manage");
   const { data: products } = useAsync(productsApi.list);
@@ -148,6 +170,10 @@ function NewSaleForm({ onDone }: { onDone: (s: Sale) => Promise<void> }) {
     can("customers", "read") ? customersApi.list() : Promise.resolve([] as Customer[]),
   );
   const { data: sellers } = useAsync(salesApi.sellers);
+  const { data: pixProviders } = useAsync(() => pixApi.providers().catch(() => [] as PixProviderOption[]));
+  // "" = PIX já conferido no app do banco (entra direto no caixa)
+  const [pixProvider, setPixProvider] = useState<string | null>(null);
+  const pixChoice = pixProvider ?? pixProviders?.[0]?.id ?? "";
   const [lines, setLines] = useState<Line[]>([]);
   const [search, setSearch] = useState("");
   const [highlight, setHighlight] = useState(0);
@@ -235,12 +261,13 @@ function NewSaleForm({ onDone }: { onDone: (s: Sale) => Promise<void> }) {
         customer_id: customerId || null,
         seller_id: sellerId || null,
         payment_method: payment,
+        pix_provider: payment === "pix" && pixChoice ? pixChoice : null,
         discount: discount.trim() ? parseDecimal(discount) : null,
         notes: notes.trim() || null,
         tz_offset_minutes: tzOffset(),
         items,
       });
-      await onDone(sale);
+      await onDone(sale, payment === "pix" && !!pixChoice);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Não foi possível registrar a venda.");
     } finally {
@@ -387,6 +414,17 @@ function NewSaleForm({ onDone }: { onDone: (s: Sale) => Promise<void> }) {
               </label>
             ))}
           </div>
+          {payment === "pix" && !!pixProviders?.length && (
+            <select className="pix-choice" aria-label="Como receber o PIX" value={pixChoice}
+              onChange={(e) => setPixProvider(e.target.value)}>
+              {pixProviders.map((p) => (
+                <option key={p.id} value={p.id}>
+                  QR Code pelo {p.name}{p.sandbox ? " (teste)" : ""}
+                </option>
+              ))}
+              <option value="">Já recebi (conferi no app do banco)</option>
+            </select>
+          )}
         </div>
         <Field label="Desconto na venda (R$)" inputMode="decimal" placeholder="0,00" value={discount} onChange={(e) => setDiscount(e.target.value)} />
         <Field label="Observação" value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -420,6 +458,7 @@ function NewSaleForm({ onDone }: { onDone: (s: Sale) => Promise<void> }) {
 function SaleDetail({ id, onCanceled }: { id: string; onCanceled: (s: Sale) => Promise<void> }) {
   const { can } = useAuth();
   const { data: sale, error, setData } = useAsync(() => salesApi.get(id), [id]);
+  const { data: pixCharge } = useAsync(() => pixApi.forSale(id).catch(() => null), [id]);
   const [reason, setReason] = useState("");
   const [canceling, setCanceling] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -467,6 +506,7 @@ function SaleDetail({ id, onCanceled }: { id: string; onCanceled: (s: Sale) => P
         <Notice tone="error">Cancelada em {dateTime(sale.canceled_at)}: {sale.cancel_reason}</Notice>
       )}
       {sale.notes && <p className="muted">Obs.: {sale.notes}</p>}
+      {pixCharge && sale.status === "concluida" && <PixPanel saleId={sale.id} />}
       <DataGrid rows={sale.items ?? []} columns={itemColumns} rowKey={(i) => i.id} maxHeight="40vh" exportName={`Venda-${sale.number}`} />
       {toNum(sale.discount) > 0 && <p className="muted">Desconto na venda: {money(sale.discount)}</p>}
 

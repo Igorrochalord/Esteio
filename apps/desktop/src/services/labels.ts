@@ -137,6 +137,15 @@ export const PAYMENT_LABEL: Record<string, string> = {
   outro: "Outro",
 };
 
+export const PIX_STATUS_LABEL: Record<string, string> = {
+  gerando: "Gerando",
+  aguardando: "Aguardando pagamento",
+  pago: "Pago",
+  expirado: "Expirado",
+  cancelado: "Cancelado",
+  erro: "Erro",
+};
+
 export const MOVEMENT_LABEL: Record<string, string> = {
   entrada: "Entrada",
   saida: "Saída",

@@ -65,7 +65,7 @@ function stepsFor(role: Role, firstName: string, company: string): Step[] {
     title: "Registrar uma venda",
     text: "Em Vendas → Nova venda, busque o produto pelo nome ou código (o leitor de código de barras funciona direto), ajuste a quantidade, escolha o pagamento e finalize.",
     chips: ["Nova venda", "Código de barras", "Pix", "Fiado"],
-    tip: "Fiado exige um cliente cadastrado.",
+    tip: "Fiado exige um cliente cadastrado. Com um serviço de PIX ativado, a venda em Pix mostra o QR Code e dá baixa sozinha quando o cliente paga.",
   };
   const serviceOrders: Step = {
     icon: ClipboardList,

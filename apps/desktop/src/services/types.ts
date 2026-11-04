@@ -591,3 +591,33 @@ export interface TickReport {
   retrying: number;
   failed: number;
 }
+
+// ------------------------------------------------------------------ PIX na venda
+
+export type PixStatus = "gerando" | "aguardando" | "pago" | "expirado" | "cancelado" | "erro";
+
+export interface PixCharge {
+  id: string;
+  sale_id: string;
+  sale_number: number;
+  provider: string;
+  provider_name: string;
+  amount: Dec;
+  status: PixStatus;
+  /** copia-e-cola; só enquanto aguarda pagamento */
+  copy_paste: string | null;
+  /** QR desenhado no núcleo (SVG) */
+  qr_svg: string | null;
+  expires_at: string | null;
+  paid_at: string | null;
+  error: string | null;
+  sandbox: boolean;
+  created_at: string;
+}
+
+export interface PixProviderOption {
+  id: string;
+  name: string;
+  sandbox: boolean;
+  checked: boolean;
+}

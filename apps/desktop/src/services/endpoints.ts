@@ -1,5 +1,7 @@
 import { call } from "./api";
 import type {
+  PixCharge,
+  PixProviderOption,
   IntegrationCatalogItem,
   IntegrationJob,
   IntegrationOut,
@@ -168,6 +170,8 @@ export interface SaleInput {
   notes?: string | null;
   sold_at?: string | null;
   tz_offset_minutes?: number;
+  /** serviço que cobra o PIX (baixa automática); ausente = PIX já recebido */
+  pix_provider?: string | null;
   items: { product_id: string; qty: Dec; unit_price?: Dec | null; discount?: Dec | null }[];
 }
 
@@ -178,6 +182,14 @@ export const salesApi = {
   create: (data: SaleInput) => call<Sale>("sales_create", { data }),
   cancel: (id: string, reason: string) => call<Sale>("sales_cancel", { id, reason }),
   sellers: () => call<SellerOption[]>("sellers_list"),
+};
+
+export const pixApi = {
+  providers: () => call<PixProviderOption[]>("pix_providers"),
+  forSale: (sale_id: string) => call<PixCharge | null>("pix_for_sale", { sale_id }),
+  check: (id: string) => call<PixCharge>("pix_check", { id }),
+  cancel: (id: string) => call<PixCharge>("pix_cancel", { id }),
+  create: (sale_id: string, provider: string) => call<PixCharge>("pix_new", { sale_id, provider }),
 };
 
 export const reportsApi = {
