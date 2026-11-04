@@ -1,76 +1,44 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-COMPOSE := docker compose --env-file .env -f infrastructure/docker/compose.yml
-API := $(COMPOSE) exec -T api
-# frontend roda num container node:22 (não depende do Node local)
-NODE_IMAGE := node:22-alpine
-NODE := docker run --rm -t -v "$(CURDIR)/apps/desktop":/app \
-	-w /app -u $$(id -u):$$(id -g) -e npm_config_cache=/tmp/.npm -e HOME=/tmp $(NODE_IMAGE)
+# Ferramentas locais: Rust (rustup) e Node >= 18. Não há servidor, banco externo nem Docker.
+CARGO := $(shell command -v cargo || echo $(HOME)/.cargo/bin/cargo)
+DESKTOP := apps/desktop
+# pasta de dados usada em desenvolvimento (o app instalado usa a pasta de dados do SO)
+DEV_DATA ?= $(CURDIR)/.dev-data
 
-.PHONY: help env up down logs ps wait test lint fmt smoke seed reset shell psql migrate \
-	web-install web-lint web-build web-dev
+.PHONY: help install test lint fmt check seed reset-data dev build web-build
 
 help: ## lista os comandos
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-env:
-	@test -f .env || (cp .env.example .env && echo ".env criado a partir de .env.example")
+install: ## instala dependências do frontend
+	cd $(DESKTOP) && npm ci
 
-up: env ## sobe db, storage e api; espera a api ficar saudável
-	$(COMPOSE) up -d --build --wait --wait-timeout 180
-	@$(MAKE) --no-print-directory ps
+test: ## testes do núcleo (SQLite em pasta temporária)
+	$(CARGO) test -p nucleo-core $(args)
 
-down: ## para os containers (mantém volumes)
-	$(COMPOSE) down
+lint: ## fmt + clippy (núcleo e app) + tsc + eslint
+	$(CARGO) fmt --all --check
+	$(CARGO) clippy --workspace --all-targets -- -D warnings
+	cd $(DESKTOP) && npm run lint
 
-logs: ## segue os logs (ex.: make logs s=api)
-	$(COMPOSE) logs -f --tail=200 $(s)
+fmt: ## formata o código Rust
+	$(CARGO) fmt --all
 
-ps:
-	@$(COMPOSE) ps
+check: lint test ## tudo que precisa estar verde antes de um commit
 
-test: ## pytest dentro do container da api (banco nucleo_test)
-	$(API) pytest $(args)
+seed: ## cria empresa de demonstração em .dev-data (ex.: make seed empresa=techparts)
+	$(CARGO) run -q -p nucleo-core --bin seed -- $(DEV_DATA) $(empresa)
 
-lint: ## ruff + mypy no backend; tsc + eslint no desktop
-	$(API) ruff check .
-	$(API) ruff format --check .
-	$(API) mypy app
-	@$(MAKE) --no-print-directory web-lint
+reset-data: ## APAGA os dados de desenvolvimento (.dev-data)
+	rm -rf $(DEV_DATA)
 
-fmt: ## formata o backend
-	$(API) ruff format .
-	$(API) ruff check --fix .
+dev: ## abre o app em modo desenvolvimento usando .dev-data
+	cd $(DESKTOP) && NUCLEO_DATA_DIR=$(DEV_DATA) npm run tauri dev
 
-smoke: ## smoke test ponta a ponta via HTTP
-	./scripts/smoke.sh
+build: ## gera o instalador da plataforma atual (Windows: .msi/.exe; Linux: .deb/.AppImage)
+	cd $(DESKTOP) && npm run tauri build
 
-seed: ## popula duas empresas fictícias
-	$(API) python - < scripts/seed.py
-
-reset: env ## APAGA volumes e recria o ambiente do zero
-	$(COMPOSE) down -v --remove-orphans
-	@$(MAKE) --no-print-directory up
-
-migrate: ## roda alembic upgrade head
-	$(API) alembic upgrade head
-
-shell: ## shell no container da api
-	$(COMPOSE) exec api bash
-
-psql: ## psql como superusuário
-	$(COMPOSE) exec db psql -U postgres -d nucleo
-
-web-install: ## npm ci do desktop (container node:22)
-	$(NODE) sh -c 'test -d node_modules || npm ci'
-
-web-lint: web-install ## typecheck + eslint do desktop
-	$(NODE) npm run lint
-
-web-build: web-install ## build de produção do frontend
-	$(NODE) npm run build
-
-web-dev: web-install ## frontend no navegador (container node:22): http://localhost:1420
-	docker run --rm -it -p 1420:1420 -v "$(CURDIR)/apps/desktop":/app -w /app -u $$(id -u):$$(id -g) \
-		-e HOME=/tmp $(NODE_IMAGE) npx vite --host 0.0.0.0
+web-build: ## só o build do frontend
+	cd $(DESKTOP) && npm run build

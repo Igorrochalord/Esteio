@@ -1,31 +1,15 @@
-# env
-.env
-*.env.local
-
-# python
-__pycache__/
-*.py[cod]
-.venv/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.coverage
-htmlcov/
-
-# node / desktop
-node_modules/
-dist/
-apps/desktop/src-tauri/target/
-
 # rust
 /target/
 apps/desktop/src-tauri/gen/
 
-# terraform
-.terraform/
-*.tfstate*
+# node / desktop
+node_modules/
+dist/
 
-# editors / os
+# dados locais de desenvolvimento (make seed / make dev)
+.dev-data/
+
+# editores / SO
 .idea/
 .vscode/*
 !.vscode/extensions.json
