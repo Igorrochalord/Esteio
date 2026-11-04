@@ -9,6 +9,7 @@ import {
   Moon,
   Building2,
   ShoppingCart,
+  Sparkles,
   Sun,
   UserRound,
   Users,
@@ -90,6 +91,15 @@ export function AppLayout() {
             );
           })}
         </nav>
+        {me.plan && (
+          <div className="plan-badge" title={me.plan.note}>
+            <Sparkles size={16} aria-hidden />
+            <span>
+              <strong>{me.plan.label}</strong>
+              {me.plan.unlimited ? "Tudo liberado no lançamento" : me.plan.note}
+            </span>
+          </div>
+        )}
         <div className="sidebar-user">
           <span className="avatar" aria-hidden>{initials(me.user.name) || "?"}</span>
           <span>

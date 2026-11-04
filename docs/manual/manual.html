@@ -104,7 +104,7 @@
       computador do cliente. Sem servidor e sem internet.
     </p>
     <div class="cover-meta">
-      <div><b>Versão</b>0.1.0 · fase 2</div>
+      <div><b>Versão</b>0.1.0 · fase 3</div>
       <div><b>Data</b>4 de novembro de 2026</div>
       <div><b>Repositório</b>github.com/Igorrochalord/Esteio</div>
     </div>
@@ -171,8 +171,9 @@
     <div class="card"><h4>Dados protegidos</h4>Backup automático diário (7 cópias), backup manual e restauração com cópia de segurança.</div>
   </div>
 
-  <h3>Funcionalidades atuais (fases 1b e 2)</h3>
+  <h3>Funcionalidades atuais (fases 1b a 3)</h3>
   <ul>
+    <li><strong>Visual:</strong> modo claro/escuro (automático ou escolhido no menu), ícones, animações curtas (desligadas em "reduzir movimento"); Início como painel com comparação hoje×ontem e mês×mês anterior, atalhos e alertas.</li>
     <li><strong>Vendas:</strong> nova venda com busca por nome/código/código de barras, desconto por item e na venda, vendedor, 6 formas de pagamento (fiado exige cliente), F9 finaliza; cancelamento devolve o estoque.</li>
     <li><strong>Produtos:</strong> planilha editável (código, nome, categoria, unidade, preço, custo, margem, estoque, mínimo), categorias, entrada/saída/ajuste de estoque, histórico por produto, importação de Excel/CSV.</li>
     <li><strong>Clientes:</strong> planilha editável com CPF/CNPJ validado, cidade e UF.</li>
@@ -403,7 +404,8 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td><code>services/types.ts</code></td><td class="wrap">Tipos espelhando o núcleo (<code>User, Me, Branding, Company, AuditEntry, BackupInfo, Module…</code>).</td><td class="wrap when">campo/tipo novo; módulo novo</td></tr>
       <tr><td><code>services/labels.ts</code></td><td class="wrap">Textos: nomes de papéis, ações do histórico, nomes de campos; formatação de data e CNPJ.</td><td class="wrap when">ação nova na auditoria; texto</td></tr>
       <tr><td><code>services/format.ts</code></td><td class="wrap">R$, quantidades, %, datas no padrão brasileiro; <code>parseDecimal</code> lê o que a pessoa digita ("1.234,56").</td><td class="wrap when">formato de exibição</td></tr>
-      <tr><td><code>services/period.ts</code></td><td class="wrap">Períodos em dias locais e limites para a API.</td><td class="wrap when">novo atalho de período</td></tr>
+      <tr><td><code>services/period.ts</code></td><td class="wrap">Períodos em dias locais, limites para a API e período de comparação (anterior / ano passado).</td><td class="wrap when">novo atalho de período</td></tr>
+      <tr><td><code>services/themeMode.ts</code></td><td class="wrap">Tema automático/claro/escuro, guardado só neste computador.</td><td class="wrap when">—</td></tr>
       <tr><td><code>services/theme.ts</code></td><td class="wrap">Cores padrão, <code>applyBranding()</code>, contraste automático do texto, iniciais.</td><td class="wrap when">cores padrão</td></tr>
     </tbody>
   </table>
@@ -450,6 +452,7 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td><code>src/lib.rs</code></td><td class="wrap"><code>Core</code> (banco, instalação, sessão, trava), <code>Ctx</code> (banco + usuário logado), <code>current()</code> e <code>require()</code>.</td><td class="wrap when">raramente</td></tr>
       <tr><td><code>src/db.rs</code></td><td class="wrap">Abre o SQLite (WAL, foreign keys, busy timeout), roda migrações, <code>new_id()</code> (UUID v7), <code>now()</code>, identidade da instalação.</td><td class="wrap when">raramente</td></tr>
       <tr><td><code>src/error.rs</code></td><td class="wrap"><code>CoreError</code> e sua serialização; <code>Validator</code> (acumula erros por campo).</td><td class="wrap when">novo tipo de erro</td></tr>
+      <tr><td><code>src/plans.rs</code></td><td class="wrap"><strong>Planos (futuro).</strong> Gratuito/Starter/Platinum/Infinite e seus limites. Hoje <code>access()</code> = acesso completo de lançamento: nada é bloqueado. Pontos onde limites valerão levam <code>// PLANO:</code>.</td><td class="wrap when">quando a cobrança existir</td></tr>
       <tr><td><code>src/permissions.rs</code></td><td class="wrap"><code>Role</code>, <code>Module</code>, <code>Action</code>, <strong>matriz</strong> <code>granted()</code>, mapa para o menu.</td><td class="wrap when">módulo novo; mudar permissões</td></tr>
       <tr><td><code>src/audit.rs</code></td><td class="wrap"><code>snapshot</code>, <code>diff</code>, <code>record</code>, <code>record_changes</code> (só grava se mudou).</td><td class="wrap when">raramente</td></tr>
       <tr><td><code>src/security.rs</code></td><td class="wrap">Hash/verificação argon2 em thread separada; hash "falso" para tempo constante.</td><td class="wrap when">política de senha</td></tr>
@@ -520,7 +523,9 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td class="wrap">mudar um texto de tela</td><td class="wrap">a página em <code>front/pages/*.tsx</code></td></tr>
       <tr><td class="wrap">mudar nome de papel, ação do histórico ou campo exibido</td><td class="wrap"><code>front/services/labels.ts</code></td></tr>
       <tr><td class="wrap">mudar uma mensagem de erro/validação</td><td class="wrap">o <code>service.rs</code> do módulo em <code>core/src/modules/</code> (ou <code>core/src/error.rs</code> para as genéricas)</td></tr>
-      <tr><td class="wrap">mudar cores, espaçamentos, fontes</td><td class="wrap"><code>front/styles.css</code> (tokens no topo); cores da marca vêm da empresa</td></tr>
+      <tr><td class="wrap">mudar cores, espaçamentos, fontes</td><td class="wrap"><code>front/styles.css</code>: tokens no topo, com bloco do modo escuro logo abaixo (mude os dois); cores da marca vêm da empresa</td></tr>
+      <tr><td class="wrap">animações</td><td class="wrap">bloco "Acabamento e animações" no fim de <code>front/styles.css</code></td></tr>
+      <tr><td class="wrap">limites dos planos</td><td class="wrap"><code>core/src/plans.rs</code> (tabela em <code>docs/assinatura.md</code>)</td></tr>
       <tr><td class="wrap">mudar cores padrão de empresa nova</td><td class="wrap"><code>front/services/theme.ts</code> e <code>default_primary/secondary</code> em <code>core/src/modules/company/models.rs</code></td></tr>
       <tr><td class="wrap">mudar a tela de login / cadastro</td><td class="wrap"><code>front/pages/LoginPage.tsx</code>, <code>RegisterPage.tsx</code>, moldura em <code>front/components/AuthFrame.tsx</code></td></tr>
       <tr><td class="wrap">adicionar item no menu lateral</td><td class="wrap"><code>front/layouts/AppLayout.tsx</code> (lista <code>links</code>)</td></tr>
@@ -890,7 +895,8 @@ pub async fn products_list(core: State&lt;'_, Core&gt;) -&gt; Res&lt;Vec&lt;Prod
       <tr><td>1</td><td class="wrap">Fundação SaaS (FastAPI + Postgres), preservada na tag <code>v0.1-saas</code></td><td>substituída</td></tr>
       <tr><td>1b</td><td class="wrap">Fundação local: núcleo Rust + SQLite, login, autocadastro, pessoas, empresa, histórico, backup, CI</td><td>em andamento</td></tr>
       <tr><td>2</td><td class="wrap">Comercial: produtos, estoque, clientes, vendas, relatórios, grade tipo planilha, Excel</td><td>em validação</td></tr>
-      <tr><td>3 · 4 · 5</td><td class="wrap">PDV de balcão e compras · Financeiro · Relatórios comparativos</td><td>—</td></tr>
+      <tr><td>3</td><td class="wrap">Design moderno, modo escuro, animações, painel, comparação de períodos, PDF</td><td>em validação</td></tr>
+      <tr><td>4 · 5 · 6 · 7</td><td class="wrap">Financeiro · Ordens de serviço · NFS-e (Emissor Nacional) · Planos e cobrança</td><td>próximas</td></tr>
       <tr><td>6</td><td class="wrap">Sincronização entre filiais (servidor + consumo do <code>change_log</code>)</td><td>—</td></tr>
       <tr><td>7</td><td class="wrap">Release: assinatura de código, atualização automática</td><td>—</td></tr>
       <tr><td>—</td><td class="wrap">Assinatura e licenciamento</td><td>proposta</td></tr>
@@ -903,6 +909,7 @@ pub async fn products_list(core: State&lt;'_, Core&gt;) -&gt; Res&lt;Vec&lt;Prod
     <li>Primeiro instalador gerado pelo CI (exige <code>git push</code>) e testado numa máquina Windows limpa.</li>
   </ul>
 
+  <div class="note"><strong>Planos:</strong> hoje tudo está liberado ("Acesso completo" no menu). Gratuito (R$ 0), Starter (R$ 49), Platinum (R$ 99) e Infinite (R$ 199) já estão definidos em <code>plans.rs</code> e entram em vigor só quando a cobrança existir.</div>
   <h3>Assinatura: resumo da proposta (<code>docs/assinatura.md</code>)</h3>
   <ul>
     <li><strong>Planos por módulos</strong> com limite de usuários; depois, adicional por filial quando houver sync.</li>

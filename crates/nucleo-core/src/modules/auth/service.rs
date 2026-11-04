@@ -32,6 +32,8 @@ pub struct Me {
     pub user: User,
     pub company: MeCompany,
     pub permissions: BTreeMap<String, String>,
+    /// situação do plano (hoje: acesso completo de lançamento)
+    pub plan: crate::plans::PlanInfo,
 }
 
 pub(crate) fn me_of(user: User, company: &Company) -> Me {
@@ -43,6 +45,7 @@ pub(crate) fn me_of(user: User, company: &Company) -> Me {
             branding: company.branding(),
         },
         permissions,
+        plan: crate::plans::info(),
     }
 }
 

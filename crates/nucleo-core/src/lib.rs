@@ -11,6 +11,7 @@ pub mod error;
 pub mod modules;
 pub mod money;
 pub mod permissions;
+pub mod plans;
 pub mod security;
 pub mod validate;
 

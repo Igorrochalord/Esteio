@@ -33,6 +33,8 @@ export interface Me {
   user: User;
   company: Branding & { id: string };
   permissions: Partial<Record<Module, Level>>;
+  /** hoje: acesso completo de lançamento; no futuro, o plano contratado */
+  plan: { code: string; label: string; unlimited: boolean; note: string };
 }
 
 export interface Company {

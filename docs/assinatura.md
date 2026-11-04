@@ -1,7 +1,34 @@
 # Plano de assinatura: pesquisa e recomendação
 
-Status: **proposta** (nada implementado). Quando os planos e preços forem decididos, a decisão
-vira um ADR e o licenciamento entra como fase própria no [roteiro](roteiro.md).
+Status: **tudo liberado no lançamento.** Os planos abaixo estão definidos no código
+(`crates/nucleo-core/src/plans.rs`), mas `access()` devolve "acesso completo" e nenhum limite é
+aplicado. O app mostra "Acesso completo · Tudo liberado no lançamento" no menu lateral.
+
+## Planos previstos (definidos em 2026-11-04)
+
+| | Gratuito | Starter | Platinum | Infinite |
+|---|---|---|---|---|
+| Preço de referência | R$ 0 | R$ 49/mês | R$ 99/mês | R$ 199/mês |
+| Gestão financeira, cadastros, comercial e estoque | sim | sim | sim | sim |
+| Contas bancárias | até 3 | ilimitadas | ilimitadas | ilimitadas |
+| NFS-e | — | 25/mês | 100/mês | 1.000/mês |
+| Ordens de serviço | — | ilimitadas | ilimitadas | ilimitadas |
+| Conciliação bancária | — | sim | sim | sim |
+| Relatórios avançados (DRE) | — | — | sim | sim |
+| CNPJs adicionais | — | até 5 | até 10 | ilimitados |
+| Usuários | ilimitados | ilimitados | ilimitados | ilimitados |
+
+Referências comerciais observadas no mercado: teste/garantia de 7 dias, sem cartão para o
+gratuito, cancelamento a qualquer momento, upgrade proporcional e downgrade no próximo vencimento.
+
+**Regra para quem desenvolve:** todo recurso novo que estiver na tabela acima recebe um comentário
+`// PLANO:` no ponto onde o limite vai valer e, quando fizer sentido, já chama
+`plans::ensure_within(...)`. Hoje essa chamada nunca bloqueia; quando `access()` passar a ler a
+licença, os limites entram sem caçar o código.
+
+---
+
+O restante deste documento é a pesquisa que embasou a proposta.
 
 ## O desafio específico do Núcleo
 

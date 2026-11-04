@@ -51,4 +51,10 @@ assinatura, roteiro).
   Excel prontos e testados; aguardando validação do usuário na interface.
 - Dinheiro em centavos e quantidades em milésimos no banco; `Decimal` (texto) na API (`src/money.rs`).
 - Gráficos: seguir a skill dataviz (série única, rampa sequencial validada, tabela junto).
+- **Fase 3 (design)**: tokens claro/escuro, ícones (lucide-react), animações com reduzir-movimento,
+  Início como painel, comparação de períodos, imprimir/PDF; aguardando validação.
+- **Planos: tudo liberado hoje.** `src/plans.rs` define Gratuito/Starter/Platinum/Infinite; recurso
+  novo da tabela de `docs/assinatura.md` ganha `// PLANO:` e, se couber, `plans::ensure_within`.
+- Roteiro aprovado: Financeiro → Ordens de serviço → NFS-e (Emissor Nacional, A1) → Planos/cobrança.
+- Cores: só variáveis CSS de `styles.css` (há modo escuro); nada de hex em componentes.
 - O código SaaS antigo (FastAPI/Postgres) está na tag `v0.1-saas`.
