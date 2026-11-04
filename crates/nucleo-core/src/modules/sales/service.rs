@@ -7,6 +7,7 @@ use crate::db;
 use crate::error::{CoreError, CoreResult, Validator};
 use crate::modules::customers::service as customers;
 use crate::modules::finance::service as finance;
+use crate::modules::pix::service as pix;
 use crate::modules::products::repository::{self as products_repo, NewMovement};
 use crate::modules::products::service as products;
 use crate::modules::users::repository as users_repo;
@@ -94,6 +95,17 @@ pub(crate) async fn create_in(tx: &mut db::Conn, ctx: &Ctx, data: SaleInput) -> 
         !data.items.is_empty(),
         "items",
         "Adicione pelo menos um produto",
+    );
+    let pix_provider = data
+        .pix_provider
+        .as_deref()
+        .map(str::trim)
+        .filter(|p| !p.is_empty())
+        .map(str::to_owned);
+    v.check(
+        pix_provider.is_none() || data.payment_method == "pix",
+        "pix_provider",
+        "Cobrança PIX só vale para pagamento em PIX",
     );
     v.check(
         data.payment_method != "fiado" || data.customer_id.is_some(),
@@ -274,17 +286,47 @@ pub(crate) async fn create_in(tx: &mut db::Conn, ctx: &Ctx, data: SaleInput) -> 
     let local_date = DateTime::parse_from_rfc3339(&sold_at)
         .map(|d| (d.with_timezone(&Utc) + offset).date_naive())
         .unwrap_or_else(|_| (Utc::now() + offset).date_naive());
-    finance::on_sale_created(
-        tx,
-        &ctx.inst,
-        &id,
-        number,
-        &data.payment_method,
-        total,
-        data.customer_id.as_deref(),
-        local_date,
-    )
-    .await?;
+    match &pix_provider {
+        // PIX cobrado pelo serviço: a receber até a confirmação (baixa automática)
+        Some(provider) if total > 0 => {
+            let entry = finance::open_sale_receivable(
+                tx,
+                &ctx.inst,
+                &id,
+                &format!("Venda nº {number} (PIX)"),
+                total,
+                data.customer_id.as_deref(),
+                local_date,
+                local_date,
+            )
+            .await?;
+            pix::start_in(
+                tx,
+                &ctx.inst,
+                Some(&ctx.user.id),
+                &id,
+                number,
+                &entry,
+                provider,
+                total,
+                data.customer_id.as_deref(),
+            )
+            .await?;
+        }
+        _ => {
+            finance::on_sale_created(
+                tx,
+                &ctx.inst,
+                &id,
+                number,
+                &data.payment_method,
+                total,
+                data.customer_id.as_deref(),
+                local_date,
+            )
+            .await?;
+        }
+    }
 
     let entry = Entry {
         actor_id: Some(&ctx.user.id),
@@ -296,6 +338,7 @@ pub(crate) async fn create_in(tx: &mut db::Conn, ctx: &Ctx, data: SaleInput) -> 
             "number": number,
             "total": money::from_cents(total),
             "payment_method": data.payment_method,
+            "pix_provider": pix_provider,
             "items": lines.len(),
         })),
     };
@@ -420,6 +463,7 @@ pub async fn cancel(ctx: &Ctx, id: &str, reason: &str) -> CoreResult<Sale> {
     }
 
     finance::on_sale_canceled(&mut tx, id).await?;
+    pix::on_sale_canceled(&mut tx, &ctx.inst, id).await?;
 
     let entry = Entry {
         actor_id: Some(&ctx.user.id),

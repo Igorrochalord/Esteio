@@ -87,6 +87,7 @@ async fn sell(
             notes: None,
             sold_at: Some(when.into()),
             tz_offset_minutes: Some(-180),
+            pix_provider: None,
             items: items
                 .iter()
                 .map(|(p, q)| SaleItemInput {

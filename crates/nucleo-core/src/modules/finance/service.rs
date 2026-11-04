@@ -1300,25 +1300,16 @@ pub(crate) async fn on_sale_created(
         let due = local_date
             .checked_add_days(chrono::Days::new(30))
             .unwrap_or(local_date);
-        let now = db::now();
-        sqlx::query(
-            "INSERT INTO fin_entries (id, kind, description, category_id, customer_id, amount_cents, issue_date,
-                due_date, sale_id, branch_id, device_id, created_at, updated_at)
-             VALUES (?, 'receber', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        open_sale_receivable(
+            tx,
+            inst,
+            sale_id,
+            &format!("Venda nº {number} (fiado)"),
+            total_cents,
+            customer_id,
+            local_date,
+            due,
         )
-        .bind(db::new_id())
-        .bind(format!("Venda nº {number} (fiado)"))
-        .bind(&category)
-        .bind(customer_id)
-        .bind(total_cents)
-        .bind(&date)
-        .bind(fmt(due))
-        .bind(sale_id)
-        .bind(&inst.branch_id)
-        .bind(&inst.device_id)
-        .bind(&now)
-        .bind(&now)
-        .execute(&mut *tx)
         .await?;
     } else {
         let account = default_account(tx, inst).await?;
@@ -1342,6 +1333,118 @@ pub(crate) async fn on_sale_created(
         .await?;
     }
     Ok(())
+}
+
+/// Título a receber nascido de uma venda (fiado, ou PIX aguardando o pagamento). Devolve o id.
+#[allow(clippy::too_many_arguments)]
+pub(crate) async fn open_sale_receivable(
+    tx: &mut Conn,
+    inst: &Installation,
+    sale_id: &str,
+    description: &str,
+    total_cents: i64,
+    customer_id: Option<&str>,
+    issue: NaiveDate,
+    due: NaiveDate,
+) -> CoreResult<String> {
+    ensure_default_categories(tx, inst).await?;
+    let category = system_category(tx, "vendas").await?;
+    let id = db::new_id();
+    let now = db::now();
+    sqlx::query(
+        "INSERT INTO fin_entries (id, kind, description, category_id, customer_id, amount_cents, issue_date,
+            due_date, sale_id, branch_id, device_id, created_at, updated_at)
+         VALUES (?, 'receber', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    )
+    .bind(&id)
+    .bind(description)
+    .bind(&category)
+    .bind(customer_id)
+    .bind(total_cents)
+    .bind(fmt(issue))
+    .bind(fmt(due))
+    .bind(sale_id)
+    .bind(&inst.branch_id)
+    .bind(&inst.device_id)
+    .bind(&now)
+    .bind(&now)
+    .execute(&mut *tx)
+    .await?;
+    Ok(id)
+}
+
+/// Baixa automática (sem usuário, ex.: PIX confirmado pelo provedor) na conta padrão.
+/// Devolve `false` se o título já não estava em aberto (alguém baixou à mão): nada muda.
+pub(crate) async fn receive_automatically(
+    tx: &mut Conn,
+    inst: &Installation,
+    entry_id: &str,
+    date: NaiveDate,
+    payment_method: &str,
+    origin: &str,
+) -> CoreResult<bool> {
+    let cur = load_entry(tx, entry_id).await?;
+    if cur.status != "aberto" {
+        return Ok(false);
+    }
+    let account = default_account(tx, inst).await?;
+    let date = fmt(date);
+    let desc = match &cur.customer_name {
+        Some(w) => format!("{} · {w}", cur.description),
+        None => cur.description.clone(),
+    };
+    let signed = if cur.kind == "receber" {
+        cur.amount_cents
+    } else {
+        -cur.amount_cents
+    };
+    insert_tx(
+        tx,
+        inst,
+        NewTx {
+            account_id: &account,
+            date: &date,
+            amount_cents: signed,
+            description: &desc,
+            category_id: Some(&cur.category_id),
+            entry_id: Some(entry_id),
+            sale_id: None,
+            transfer_group: None,
+            fitid: None,
+            reconciled: false,
+        },
+    )
+    .await?;
+    sqlx::query(
+        "UPDATE fin_entries SET status = 'pago', paid_date = ?, paid_amount_cents = ?, bank_account_id = ?,
+            payment_method = ?, updated_at = ? WHERE id = ?",
+    )
+    .bind(&date)
+    .bind(cur.amount_cents)
+    .bind(&account)
+    .bind(payment_method)
+    .bind(db::now())
+    .bind(entry_id)
+    .execute(&mut *tx)
+    .await?;
+    crate::audit::record(
+        tx,
+        inst,
+        crate::audit::Entry {
+            actor_id: None,
+            action: "fin_entry.receive",
+            entity: "fin_entry",
+            entity_id: Some(entry_id),
+            before: None,
+            after: Some(serde_json::json!({
+                "amount": from_cents(cur.amount_cents),
+                "date": date,
+                "origem": origin,
+            })),
+        },
+    )
+    .await?;
+    Ok(true)
 }
 
 /// Venda cancelada: tira a entrada do extrato e cancela o fiado em aberto.

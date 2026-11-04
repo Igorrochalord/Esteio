@@ -5,6 +5,7 @@ pub mod company;
 pub mod customers;
 pub mod finance;
 pub mod integrations;
+pub mod pix;
 pub mod products;
 pub mod reports;
 pub mod sales;

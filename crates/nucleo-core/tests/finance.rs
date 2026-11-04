@@ -241,6 +241,7 @@ async fn sales_feed_finance() {
         notes: None,
         sold_at: Some("2026-10-02T01:30:00Z".into()), // 01/10 22:30 em Brasília
         tz_offset_minutes: Some(-180),
+        pix_provider: None,
         items: vec![SaleItemInput {
             product_id: p.id.clone(),
             qty: d("2"),
@@ -475,6 +476,7 @@ async fn cash_flow_and_dre() {
             notes: None,
             sold_at: Some("2026-10-10T15:00:00Z".into()),
             tz_offset_minutes: Some(-180),
+            pix_provider: None,
             items: vec![SaleItemInput {
                 product_id: p.id.clone(),
                 qty: d("1"),

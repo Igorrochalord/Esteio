@@ -51,6 +51,7 @@ fn sale(items: Vec<(&Product, &str)>, payment: &str) -> SaleInput {
         notes: None,
         sold_at: None,
         tz_offset_minutes: None,
+        pix_provider: None,
         items: items
             .into_iter()
             .map(|(p, q)| SaleItemInput {

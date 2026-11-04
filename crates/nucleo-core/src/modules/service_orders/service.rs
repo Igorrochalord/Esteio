@@ -537,6 +537,7 @@ pub async fn invoice(ctx: &Ctx, id: &str, data: InvoiceInput) -> CoreResult<Serv
         notes: Some(format!("OS nº {}", cur.number)),
         sold_at: None,
         tz_offset_minutes: data.tz_offset_minutes,
+        pix_provider: None,
         items: it
             .iter()
             .map(|i| SaleItemInput {

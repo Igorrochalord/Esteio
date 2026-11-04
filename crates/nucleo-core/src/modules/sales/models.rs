@@ -25,6 +25,10 @@ pub struct SaleInput {
     pub sold_at: Option<String>,
     /// fuso da tela (minutos a somar ao UTC); define a data local no financeiro. Padrão: Brasília
     pub tz_offset_minutes: Option<i32>,
+    /// PIX cobrado por um serviço (ex.: "mercadopago"): a venda fica a receber até o pagamento
+    /// cair. Ausente = PIX já recebido (conferido no app do banco), entra direto no caixa.
+    #[serde(default)]
+    pub pix_provider: Option<String>,
     pub items: Vec<SaleItemInput>,
 }
 

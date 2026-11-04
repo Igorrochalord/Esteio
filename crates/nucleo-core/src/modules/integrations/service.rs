@@ -687,6 +687,9 @@ async fn process_one(core: &Core, job: Job) -> CoreResult<Option<Step>> {
             {
                 p.on_done(&mut tx, &inst, &job, &result).await?;
             }
+            if job.kind.starts_with("pix.") {
+                crate::modules::pix::service::on_job_done(&mut tx, &inst, &job, &result).await?;
+            }
             repo::update_job(
                 &mut tx,
                 &job.id,
@@ -743,6 +746,9 @@ async fn process_one(core: &Core, job: Job) -> CoreResult<Option<Step>> {
                 },
             )
             .await?;
+            if give_up && job.kind.starts_with("pix.") {
+                crate::modules::pix::service::on_job_failed(&mut tx, &job, &message).await?;
+            }
             if give_up {
                 Step::Failed
             } else {
