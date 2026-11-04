@@ -56,3 +56,9 @@ pub struct UserUpdate {
     pub role: Option<String>,
     pub is_active: Option<bool>,
 }
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct SellerOption {
+    pub id: String,
+    pub name: String,
+}

@@ -5,6 +5,11 @@ pub mod audit;
 pub mod auth;
 pub mod backup;
 pub mod company;
+pub mod customers;
+pub mod products;
+pub mod reports;
+pub mod sales;
+pub mod spreadsheet;
 pub mod users;
 
 pub type Res<T> = Result<T, nucleo_core::CoreError>;

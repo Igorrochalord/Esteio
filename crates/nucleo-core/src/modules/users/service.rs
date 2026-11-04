@@ -321,3 +321,14 @@ pub async fn reset_password(ctx: &Ctx, user_id: &str, password: String) -> CoreR
     tx.commit().await?;
     Ok(())
 }
+
+/// Pessoas ativas que podem constar como vendedor (só nome e id: quem vende não vê Pessoas).
+pub async fn sellers(ctx: &Ctx) -> CoreResult<Vec<super::models::SellerOption>> {
+    let mut conn = ctx.db.acquire().await?;
+    Ok(sqlx::query_as(
+        "SELECT id, name FROM users WHERE is_active = 1 AND pending = 0 AND deleted_at IS NULL
+         ORDER BY name COLLATE NOCASE",
+    )
+    .fetch_all(&mut *conn)
+    .await?)
+}
