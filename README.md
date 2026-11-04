@@ -67,6 +67,12 @@ traz a versão mais recente.
 
 Tudo com modo claro e escuro, grades tipo planilha e um tutorial guiado na primeira vez.
 
+## Próximos passos
+
+✅ Comercial, financeiro, ordens de serviço e base de integrações on-line prontos.
+⏭️ A seguir: **PIX na venda** com baixa automática, **NFS-e** pelo Emissor Nacional e **pedidos de
+marketplaces**. Roteiro completo em [docs/roteiro.md](docs/roteiro.md).
+
 ## Como é feito
 
 | Parte | Tecnologia |
@@ -74,6 +80,7 @@ Tudo com modo claro e escuro, grades tipo planilha e um tutorial guiado na prime
 | Interface | React 19 + TypeScript + Vite, dentro do Tauri v2 |
 | Regras de negócio | Rust (`crates/nucleo-core`) |
 | Dados | SQLite local (sqlx), com backup automático |
+| Integrações on-line | chamadas de saída (reqwest + rustls), fila que espera a internet voltar, credenciais cifradas |
 | Instaladores | Tauri bundler, gerados no CI: `.exe`/`.msi` (Windows), `.AppImage`/`.deb`/`.rpm` (Linux) |
 
 ```
