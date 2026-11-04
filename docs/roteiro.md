@@ -16,6 +16,7 @@ O projeto avança em fases. Ao fim de cada fase, `make check` precisa estar verd
 
 ## Fase 1b: pendências
 
-- [ ] Compilar o app Tauri no WSL (falta instalar as libs do WebKit) e conferir o roteiro manual:
-      onboarding → login → pessoas → cores/logo → histórico → backup/restauração → fechar e reabrir.
+- [x] Compilar o app Tauri no WSL (`make check` verde, `make dev` abre).
+- [ ] Roteiro manual na interface: onboarding → login → pessoas → cores/logo → histórico →
+      backup/restauração → fechar e reabrir.
 - [ ] Primeiro instalador gerado pelo CI e testado numa máquina Windows limpa.

@@ -42,8 +42,8 @@ Sem servidor, sem HTTP e com uma empresa por instalação. Decisão em `docs/adr
 - Instalador Windows: CI (`.github/workflows/ci.yml`, runner windows-latest).
 
 ## Estado
-- **Fase 1b (fundação local)**: núcleo, comandos, frontend e CI escritos; núcleo testado e commitado.
-- Pendente: instalar as libs do WebKit no WSL para compilar o app (`make lint` / `make dev`) e
-  testar o roteiro manual; primeiro instalador pelo CI.
+- **Fase 1b (fundação local)**: núcleo, comandos, frontend e CI prontos; `make check` verde e o app
+  abre no WSL (`make dev`).
+- Pendente: roteiro manual completo na interface; primeiro instalador pelo CI (requer push).
 - Próxima: Fase 2, estoque.
 - O código SaaS antigo (FastAPI/Postgres) está na tag `v0.1-saas`.
