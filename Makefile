@@ -9,7 +9,7 @@ DESKTOP := apps/desktop
 # pasta de dados usada em desenvolvimento (o app instalado usa a pasta de dados do SO)
 DEV_DATA ?= $(CURDIR)/.dev-data
 
-.PHONY: help install test lint fmt check seed reset-data dev build web-build manual version
+.PHONY: help install test lint fmt check seed reset-data dev build web-build manual version next-version
 
 help: ## lista os comandos
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -56,10 +56,9 @@ manual: ## gera o PDF da documentação master a partir de docs/manual/manual.ht
 		"file:///$$(wslpath -w $(CURDIR)/docs/manual/manual.html | tr '\\' '/')"
 	@echo "PDF: $(MANUAL_PDF)"
 
-version: ## sobe a versão nos 3 arquivos (ex.: make version v=0.2.0)
-	@test -n "$(v)" || (echo "uso: make version v=0.2.0" && exit 1)
-	sed -i 's/^version = ".*"/version = "$(v)"/' Cargo.toml
-	sed -i '0,/"version": ".*"/s//"version": "$(v)"/' apps/desktop/src-tauri/tauri.conf.json
-	sed -i '0,/"version": ".*"/s//"version": "$(v)"/' apps/desktop/package.json
-	@grep -h '"version"\|^version' Cargo.toml apps/desktop/src-tauri/tauri.conf.json apps/desktop/package.json | head -3
-	@echo "Agora: git commit -am 'build: versão $(v)' && git tag v$(v) && git push origin main --tags"
+version: ## grava uma versão nos 3 arquivos (o CI já faz isso sozinho ao publicar; ex.: make version v=0.3.0)
+	@test -n "$(v)" || (echo "uso: make version v=0.3.0" && exit 1)
+	node scripts/set-version.mjs $(v)
+
+next-version: ## mostra a versão que o próximo push na main vai publicar
+	@bash scripts/next-version.sh && rm -f notes.md

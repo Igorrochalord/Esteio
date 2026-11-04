@@ -104,18 +104,31 @@ Se a mudança trouxe dados de demonstração novos: `make reset-data && make see
 
 ## Publicar uma versão nova (mantenedor)
 
+**É automático.** A cada push na `main`, o CI (`.github/workflows/ci.yml`) olha os commits
+desde a última versão (`vX.Y.Z`) e decide pela mensagem (Conventional Commits):
+
+| Commits desde a última versão | Versão nova |
+|---|---|
+| algum `feat(...)` | sobe o meio: 0.3.0 → 0.4.0 |
+| só `fix(...)`/`perf(...)` | sobe o final: 0.3.0 → 0.3.1 |
+| `feat!:`/`BREAKING CHANGE` | sobe o primeiro (enquanto for 0.x, sobe o meio) |
+| só `docs`, `build`, `test`, `chore`… | nenhuma (não gera instalador) |
+
+Com versão nova, o CI grava o número nos 3 arquivos (`scripts/set-version.mjs`), gera Windows e
+Linux, cria a tag `vX.Y.Z` e **publica** a release com as notas (novidades e correções tiradas
+dos commits). Os links "latest" do README passam a baixar a versão nova, porque os arquivos têm
+sempre o mesmo nome (`NucleoERP-Windows-Instalador.exe`, `NucleoERP-Linux.AppImage`, …).
+
 ```bash
-make check                       # tudo verde antes de publicar
-make version v=0.2.0             # sobe a versão nos 3 arquivos
-git commit -am "build: versão 0.2.0"
-git tag v0.2.0
-git push origin main --tags      # o CI gera Windows + Linux e um release em rascunho
+make check          # tudo verde antes de enviar
+make next-version   # mostra qual versão o próximo push vai publicar
+git push origin main
 ```
 
-No GitHub, abra **Releases**, revise o rascunho, escreva as novidades e clique em
-**Publish release**. Os links "latest" do README passam a baixar a versão nova, porque o
-CI publica os arquivos sempre com o mesmo nome (`NucleoERP-Windows-Instalador.exe`,
-`NucleoERP-Linux.AppImage`, …).
+Para forçar uma versão (ex.: só correções de texto que você quer distribuir): GitHub →
+**Actions → ci → Run workflow** e escolha `patch`, `minor` ou `major`. Não crie tags à mão: a
+release cria a tag. Os arquivos do repositório podem continuar com a versão antiga; quem manda é
+a última tag `vX.Y.Z`.
 
 Atualização automática dentro do programa (sem baixar à mão) está prevista:
 `tauri-plugin-updater` com chave de assinatura (ver [distribuição](distribuicao.md)).

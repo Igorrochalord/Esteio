@@ -80,7 +80,9 @@ assinatura, roteiro).
   via `finance::receive_automatically`. QR em SVG no núcleo (crate `qrcode`); tela `PixPanel`.
 - Página `/planos`, lembrete a cada 5 min (`PlansNudge`, dono/admin) e tutorial por papel (`Tour`):
   ao criar telas novas, acrescente o passo correspondente em `stepsFor()` do `Tour.tsx`.
-- Publicar versão: `make version v=X.Y.Z` → commit → tag → push (`docs/executar.md`).
+- Release automática: push na `main` com `feat`/`fix` desde a última tag `vX.Y.Z` → o CI calcula a
+  versão (`scripts/next-version.sh`), grava (`scripts/set-version.mjs`), gera Windows/Linux e publica
+  a release (cria a tag). Não criar tags à mão; `make next-version` mostra a próxima (`docs/executar.md`).
 - README é vitrine (propósito, banners SVG animados em `docs/assets/`, download); instruções de
   execução/instalação/atualização vão em `docs/executar.md`. O CI gera Windows e Linux com nomes
   fixos (`NucleoERP-Windows-Instalador.exe`, `NucleoERP-Linux.AppImage`/`.deb`/`.rpm`) para os
