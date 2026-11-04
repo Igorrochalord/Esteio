@@ -68,6 +68,11 @@ assinatura, roteiro).
   `src-tauri/src/lib.rs`), credenciais cifradas por `secrets::Vault` (chave `integracoes.key` fora do
   banco/backup; nunca na auditoria nem na interface), tela `/integracoes`. Próximas: 6b PIX (pesquisar
   provedores antes), 6c NFS-e, 6d marketplaces. Só chamadas de saída; webhook exigiria novo ADR.
+  **6b-0 pronta**: `Field::{text,secret,file}`, `Call::set_secrets` (token renovado), `Outcome::Wait{payload}`,
+  `run_job`, `Http::with_pkcs12` (mTLS), OAuth via `docs/oauth/` + `integrations_authorize`, Simulador
+  (`providers/simulador.rs`, só teste). Provedores novos em `providers/` + `register_builtin`.
+  Ordem aprovada: 6b PIX (Mercado Pago, Asaas, Efí) → 6d (Mercado Livre, Nuvemshop, Shopee, Amazon)
+  → 6c NFS-e. Guia: `docs/contas-de-teste.md`.
   Testes de integração usam provedor falso, sem rede.
 - Página `/planos`, lembrete a cada 5 min (`PlansNudge`, dono/admin) e tutorial por papel (`Tour`):
   ao criar telas novas, acrescente o passo correspondente em `stepsFor()` do `Tour.tsx`.

@@ -65,14 +65,21 @@ Os testes do núcleo (`make test`) só precisam do Rust. As libs do WebKit são 
 
 Base em `crates/nucleo-core/src/modules/integrations/` ([ADR 0003](adr/0003-integracoes-online.md)).
 
-1. Crie um tipo que implemente `provider::Provider`:
-   - `info()`: id, nome, tipo (`Kind`) e os campos da tela (`Field`; `secret: true` vai cifrado);
+1. Crie um tipo em `modules/integrations/providers/` que implemente `provider::Provider`:
+   - `info()`: `ProviderInfo::new(id, nome, Kind, descrição)` + `fields` (`Field::text`,
+     `Field::secret`, `Field::file`; segredo e arquivo vão cifrados), `capabilities`
+     (`"pix"`, `"marketplace"`, `"nfse"`), `sandbox_only`, `oauth`;
    - `check(call)`: chamada leve que confirma as credenciais (botão "Testar conexão");
    - `run(call, job)`: executa um trabalho da fila e devolve `Outcome::Done`, `Wait` ou `Error`;
    - `on_done(conn, inst, job, result)`: efeito local, na transação que marca o trabalho como feito.
+   - OAuth: `authorize_url(call)` e `exchange_code(call, code)`; o código chega pela página
+     `docs/oauth/` (Shopee: `code:shop_id`; Amazon: `spapi_oauth_code:selling_partner_id`).
 2. Use `call.http.send(...)`: ele separa sem internet, credencial recusada e erro da API.
-3. Registre com `core.register_provider(Arc::new(...))` em `src-tauri/src/lib.rs` (o
-   provedor sai da lista "em breve" de `catalog.rs`).
+   Certificado: `call.http.with_pkcs12(&call.file("certificado")?, &senha)`. Token renovado:
+   `call.set_secrets(map)` (o serviço grava cifrado). Trabalho recorrente: `Outcome::Wait` com
+   `payload` novo (cursor).
+3. Registre em `providers::register_builtin` (roda no `Core::open`); o provedor sai da lista
+   "em breve" de `catalog.rs`. Para o usuário não esperar a rodada, `service::run_job(core, id)`.
 4. Quem gera o trabalho chama `integrations::service::enqueue(&mut tx, …)` **dentro da própria
    transação**, para nunca depender da internet na hora da ação.
 5. Teste com um provedor falso, como em `tests/integrations.rs`; nada de rede nos testes.

@@ -65,6 +65,9 @@ Regras de pessoas (`users::service`):
 - **Credenciais das integrações**: cifradas (ChaCha20-Poly1305) no banco, com a chave em
   `<pasta de dados>/integracoes.key`, fora do banco e fora do backup. Nunca voltam para a
   interface nem entram no histórico (que registra só "credenciais: alteradas").
+- **Navegador**: o `tauri-plugin-opener` é chamado só pelo núcleo (autorização das
+  integrações, apenas `https://`); a interface não recebe permissão para abrir endereços.
+- **Certificados** (`.p12/.pfx`): cifrados como os demais segredos; a senha é um segredo à parte.
 - **Capabilities** (`src-tauri/capabilities/default.json`): `core:default` mais os diálogos
   de abrir, salvar e confirmar.
 - **Logo**: só PNG e JPEG, conferidos pela assinatura dos bytes, até 2 MB. SVG é recusado

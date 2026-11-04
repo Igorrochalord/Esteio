@@ -36,10 +36,13 @@ abrindo e vendendo sem ela. Cada subfase termina com `make check` verde e valida
       falha que pede ação), credenciais cifradas com a chave fora do banco e do backup, contrato
       `Provider`, tela **Integrações** (serviços, testar conexão, fila com tentar de novo/cancelar),
       aviso de conexão no menu e passo no tutorial.
-- [ ] **6b, PIX**: pesquisar provedores (Mercado Pago, Efí, Asaas, Inter etc.): taxa, exigência de
-      CNPJ, ambiente de teste, consulta de status sem webhook. Depois: QR na tela da venda e baixa
-      automática (venda/financeiro) quando o pagamento cair.
+- [x] **6b-0, infraestrutura comum**: tokens renovados gravados cifrados, trabalho recorrente com
+      estado (`Wait` + payload), `run_job` (rodar agora), campos de arquivo + certificado `.p12` (mTLS),
+      autorização pelo navegador (OAuth + `docs/oauth/`), **Simulador** e o guia
+      [contas de teste](contas-de-teste.md).
+- [ ] **6b, PIX**: Mercado Pago, Asaas e Efí. QR na tela da venda (gerado localmente), conta a
+      receber até o pagamento cair e baixa automática no financeiro.
 - [ ] **6c, NFS-e**: Emissor Nacional (API, certificado A1 com mTLS, homologação), emissão a partir
       da OS/venda, cancelamento, limites do plano (`plans::ensure_within`).
-- [ ] **6d, marketplaces**: escolher os canais (Mercado Livre, Shopee, Nuvemshop…), importar pedidos
-      por consulta, mapear produtos e baixar estoque.
+- [ ] **6d, marketplaces**: Mercado Livre, Nuvemshop, Shopee e Amazon; pedidos por consulta viram
+      vendas (estoque + a receber), correspondência por SKU. Vem antes da 6c (não depende de A1).

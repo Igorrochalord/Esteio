@@ -108,6 +108,7 @@ arquivo por arquivo, e onde alterar cada coisa (fonte: `docs/manual/manual.html`
 | [Banco de dados](docs/banco-de-dados.md) | SQLite, migrações, regras de tabela, sync, auditoria |
 | [Segurança e permissões](docs/seguranca-e-permissoes.md) | login, sessão, papéis, CSP |
 | [Backup e restauração](docs/backup.md) | cópias automáticas e manuais, restauração |
+| [Contas de teste](docs/contas-de-teste.md) | como testar PIX, marketplaces e NFS-e (e o Simulador, sem conta) |
 | [Distribuição](docs/distribuicao.md) | instaladores, atalhos, CI e release no GitHub |
 | [Assinatura](docs/assinatura.md) | pesquisa: modelos de plano, cobrança e licença offline |
 | [Roteiro](docs/roteiro.md) | fases concluídas e próximas |

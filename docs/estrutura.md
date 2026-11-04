@@ -100,7 +100,9 @@ Módulos atuais: `auth` (login), `company` (empresa e marca), `users` (pessoas, 
 aprovação), `audit` (histórico), `backup` (cópias), `products` (catálogo, categorias, estoque),
 `customers`, `sales` (vendas e cancelamento), `reports` (relatórios) e `spreadsheet`
 (exportar .xlsx, importar produtos), `finance`, `service_orders` e `integrations` (serviços on-line:
-`provider.rs` é o contrato de cada API, `http.rs` o cliente, `service.rs` a configuração e a fila).
+`provider.rs` é o contrato de cada API, `http.rs` o cliente e o mTLS, `service.rs` a configuração e
+a fila, `providers/` os provedores embutidos, como o `simulador.rs`). `docs/oauth/` é a página estática de
+retorno da autorização (GitHub Pages) e `docs/contas-de-teste.md` explica como criar as contas.
 `src/money.rs` converte dinheiro e quantidades; `src/secrets.rs` cifra as credenciais das integrações.
 
 ## `docs/`

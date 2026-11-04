@@ -51,3 +51,21 @@ essas funções enquanto estiver desconectado.
   Se um provedor essencial exigir webhook, será preciso um serviço na nuvem; isso pede um novo ADR.
 - A fila gera linhas no `change_log` a cada mudança de situação. O sync futuro pode ignorar
   `integration_jobs`, que é estado local de cada instalação.
+
+## Complemento (6b-0, 2026-11-04)
+
+6. **Tokens que mudam.** O provedor pode renovar credenciais durante uma chamada
+   (`Call::set_secrets`, ex.: refresh de OAuth). O serviço cifra e grava logo depois, sem
+   auditar valores.
+7. **OAuth sem servidor.** O endereço de retorno dos aplicativos é uma página estática
+   (`docs/oauth/index.html`, servida pelo GitHub Pages) que só mostra o código para copiar.
+   O núcleo abre o navegador (`tauri-plugin-opener`, chamado só pelo Rust, sem permissão na
+   interface), a pessoa cola o código e o provedor troca por tokens.
+   **Limitação aceita:** por enquanto o client_id/secret do aplicativo de cada marketplace é
+   digitado na tela. Quando existir o servidor de licença (Fase 7), a troca de código passa por
+   ele e o segredo do aplicativo sai das instalações.
+8. **Certificados (mTLS).** Campos do tipo arquivo (`FieldKind::File`) guardam `.p12/.pfx` cifrados;
+   `Http::with_pkcs12` converte para PEM (crate `p12-keystore`, Rust puro, aceita o formato
+   legado 3DES dos A1) e monta um cliente rustls com identidade. Serve para a Efí e a NFS-e.
+9. **Simulador.** Provedor embutido, só no ambiente de teste, que finge o PIX sem rede. Permite
+   testar e demonstrar o fluxo sem conta nos serviços reais.

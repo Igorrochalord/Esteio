@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Núcleo ERP · Autorização</title>
+<style>
+  :root { --bg: #f5f7fb; --card: #ffffff; --ink: #14213d; --muted: #4a5568; --brand: #1d4ed8; --ok: #15803d; --line: #dde3ee; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f172a; --card: #172033; --ink: #e8edf7; --muted: #a9b4c8; --brand: #60a5fa; --ok: #4ade80; --line: #2a3650; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
+         background: var(--bg); color: var(--ink); font: 16px/1.5 "Segoe UI", Roboto, Arial, sans-serif; }
+  main { width: 100%; max-width: 560px; background: var(--card); border: 1px solid var(--line);
+         border-radius: 16px; padding: 28px; }
+  h1 { margin: 0 0 8px; font-size: 1.4rem; }
+  p { margin: 0 0 16px; color: var(--muted); }
+  .code { display: block; width: 100%; padding: 14px; border-radius: 10px; border: 1px dashed var(--brand);
+          font: 600 1rem/1.4 ui-monospace, Consolas, monospace; color: var(--ink); background: transparent;
+          word-break: break-all; text-align: left; }
+  button { margin-top: 12px; width: 100%; padding: 12px; border: 0; border-radius: 10px; cursor: pointer;
+           background: var(--brand); color: #fff; font-weight: 700; font-size: 1rem; }
+  .done { color: var(--ok); font-weight: 600; min-height: 1.5em; margin-top: 8px; }
+  .err { color: #dc2626; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">Autorização recebida</h1>
+  <p id="lead">Copie o código abaixo e cole no Núcleo ERP, em <b>Integrações → Código de autorização</b>.</p>
+  <output class="code" id="code" aria-live="polite"></output>
+  <button type="button" id="copy">Copiar código</button>
+  <p class="done" id="done" role="status"></p>
+  <p>Esta página não guarda nem envia nada: o código só aparece aqui, no seu navegador.</p>
+</main>
+<script>
+  // Página estática: lê o código da URL e mostra para copiar. Formatos:
+  // Mercado Livre / Nuvemshop: ?code=…   Shopee: ?code=…&shop_id=…   Amazon: ?spapi_oauth_code=…&selling_partner_id=…
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var value = "";
+    if (q.get("spapi_oauth_code")) value = q.get("spapi_oauth_code") + ":" + (q.get("selling_partner_id") || "");
+    else if (q.get("code") && q.get("shop_id")) value = q.get("code") + ":" + q.get("shop_id");
+    else if (q.get("code")) value = q.get("code");
+    var code = document.getElementById("code");
+    if (!value) {
+      document.getElementById("title").textContent = "Nenhum código encontrado";
+      document.getElementById("lead").innerHTML = 'A autorização não foi concluída ou foi recusada. Volte ao Núcleo ERP e clique em <b>Autorizar no navegador</b> de novo.';
+      code.textContent = q.get("error_description") || q.get("error") || "—";
+      code.classList.add("err");
+      document.getElementById("copy").hidden = true;
+      return;
+    }
+    code.textContent = value;
+    document.getElementById("copy").addEventListener("click", function () {
+      var done = document.getElementById("done");
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(value).then(function () { done.textContent = "Copiado! Agora cole no Núcleo ERP."; },
+          function () { done.textContent = "Selecione o código acima e copie com Ctrl+C."; });
+      } else {
+        done.textContent = "Selecione o código acima e copie com Ctrl+C.";
+      }
+    });
+  })();
+</script>
+</body>
+</html>
