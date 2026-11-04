@@ -7,8 +7,8 @@ export const ROLE_LABEL: Record<Role, string> = {
 };
 
 export const ACTION_LABEL: Record<string, string> = {
-  "tenant.create": "Empresa criada",
-  "tenant.update": "Dados da empresa alterados",
+  "company.create": "Empresa criada",
+  "company.update": "Dados da empresa alterados",
   "branding.update": "Cores alteradas",
   "branding.logo_upload": "Logo enviado",
   "branding.logo_remove": "Logo removido",
@@ -16,6 +16,8 @@ export const ACTION_LABEL: Record<string, string> = {
   "user.update": "Pessoa alterada",
   "user.deactivate": "Pessoa desativada",
   "auth.login": "Entrou no sistema",
+  "backup.create": "Cópia de segurança criada",
+  "backup.restore": "Cópia de segurança restaurada",
 };
 
 const dateTime = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -35,7 +37,8 @@ export const FIELD_LABEL: Record<string, string> = {
   cnpj: "CNPJ",
   primary_color: "cor principal",
   secondary_color: "cor do menu",
-  plan: "plano",
+  file: "arquivo",
+  safety_copy: "cópia do estado anterior",
 };
 
 export function formatValue(field: string, value: unknown): string {

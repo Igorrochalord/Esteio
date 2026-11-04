@@ -7,7 +7,7 @@ import { Notice } from "../components/Notice";
 import { useAsync } from "../hooks/useAsync";
 import { useAuth } from "../hooks/useAuth";
 import { ApiError } from "../services/api";
-import { tenantApi } from "../services/endpoints";
+import { companyApi } from "../services/endpoints";
 import { formatCnpj } from "../services/labels";
 import { isHex } from "../services/theme";
 
@@ -16,7 +16,7 @@ const message = (e: unknown, fallback: string) => (e instanceof ApiError ? e.mes
 export function CompanyPage() {
   const { me, can, reloadMe } = useAuth();
   const canManage = can("settings", "manage");
-  const { data: tenant, error: loadError, setData } = useAsync(tenantApi.get);
+  const { data: company, error: loadError, setData } = useAsync(companyApi.get);
   const [info, setInfo] = useState({ name: "", cnpj: "" });
   const [colors, setColors] = useState({ primary: "", secondary: "" });
   const [error, setError] = useState<string | null>(null);
@@ -25,10 +25,10 @@ export function CompanyPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (tenant) setInfo({ name: tenant.name, cnpj: formatCnpj(tenant.cnpj).replace("—", "") });
-  }, [tenant]);
+    if (company) setInfo({ name: company.name, cnpj: formatCnpj(company.cnpj).replace("—", "") });
+  }, [company]);
   useEffect(() => {
-    if (me) setColors({ primary: me.tenant.primary_color, secondary: me.tenant.secondary_color });
+    if (me) setColors({ primary: me.company.primary_color, secondary: me.company.secondary_color });
   }, [me]);
 
   async function run(action: () => Promise<unknown>, done: string, fallback: string) {
@@ -51,7 +51,7 @@ export function CompanyPage() {
   const saveInfo = (e: FormEvent) => {
     e.preventDefault();
     void run(
-      async () => setData(await tenantApi.update({ name: info.name, cnpj: info.cnpj.trim() || null })),
+      async () => setData(await companyApi.update({ name: info.name, cnpj: info.cnpj.trim() || null })),
       "Dados da empresa salvos.",
       "Não foi possível salvar os dados.",
     );
@@ -61,7 +61,7 @@ export function CompanyPage() {
     e.preventDefault();
     if (!isHex(colors.primary) || !isHex(colors.secondary)) return;
     void run(
-      () => tenantApi.updateBranding({ primary_color: colors.primary, secondary_color: colors.secondary }),
+      () => companyApi.updateBranding({ primary_color: colors.primary, secondary_color: colors.secondary }),
       "Cores salvas.",
       "Não foi possível salvar as cores.",
     );
@@ -102,21 +102,21 @@ export function CompanyPage() {
       <section className="panel">
         <h2>Identidade visual</h2>
         <div className="logo-row">
-          <BrandMark name={me.tenant.name} logoUrl={me.tenant.logo_url} size={72} />
+          <BrandMark name={me.company.name} logoUrl={me.company.logo_url} size={72} />
           {canManage && (
             <div className="stack stack--tight">
               <label className="btn btn--ghost file-btn">
-                {me.tenant.logo_url ? "Trocar logo" : "Enviar logo"}
+                {me.company.logo_url ? "Trocar logo" : "Enviar logo"}
                 <input type="file" accept="image/png,image/jpeg" disabled={busy}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     e.target.value = "";
-                    if (file) void run(() => tenantApi.uploadLogo(file), "Logo atualizado.", "Não foi possível enviar o logo.");
+                    if (file) void run(() => companyApi.uploadLogo(file), "Logo atualizado.", "Não foi possível enviar o logo.");
                   }} />
               </label>
-              {me.tenant.logo_url && (
+              {me.company.logo_url && (
                 <button type="button" className="link-btn" disabled={busy}
-                  onClick={() => void run(tenantApi.removeLogo, "Logo removido.", "Não foi possível remover o logo.")}>
+                  onClick={() => void run(companyApi.removeLogo, "Logo removido.", "Não foi possível remover o logo.")}>
                   Remover logo
                 </button>
               )}

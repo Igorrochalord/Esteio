@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 import { BrandMark } from "../components/BrandMark";
 import { ColorField } from "../components/ColorField";
@@ -7,7 +7,7 @@ import { Field } from "../components/Field";
 import { Notice } from "../components/Notice";
 import { useAuth } from "../hooks/useAuth";
 import { ApiError } from "../services/api";
-import { tenantApi } from "../services/endpoints";
+import { companyApi } from "../services/endpoints";
 import { DEFAULT_PRIMARY, DEFAULT_SECONDARY, inkFor, isHex } from "../services/theme";
 
 const STEPS = ["Empresa", "Identidade visual", "Seu acesso"] as const;
@@ -46,7 +46,7 @@ export function OnboardingPage() {
     setBusy(true);
     setFieldErrors({});
     try {
-      const pair = await tenantApi.onboard({
+      const me = await companyApi.onboard({
         company: {
           name: company.name,
           cnpj: company.cnpj.trim() || null,
@@ -55,11 +55,11 @@ export function OnboardingPage() {
         },
         owner: { name: owner.name, email: owner.email, password: owner.password },
       });
-      await startSession(pair);
+      startSession(me);
       if (logo) {
         // a empresa já existe; se o logo falhar, dá para reenviar em Empresa
         try {
-          await tenantApi.uploadLogo(logo);
+          await companyApi.uploadLogo(logo);
           await reloadMe();
         } catch {
           /* segue sem logo */
@@ -155,9 +155,6 @@ export function OnboardingPage() {
             </button>
           </div>
         </form>
-        <p className="auth-alt">
-          Já tem conta? <Link to="/login">Entrar</Link>
-        </p>
       </section>
 
       <Preview name={company.name || "Sua empresa"} logoUrl={logoPreview}

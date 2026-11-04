@@ -5,13 +5,14 @@ import { RequireAnonymous, RequireAuth, RequirePermission } from "./components/g
 import { AppLayout } from "./layouts/AppLayout";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { AuditPage } from "./pages/AuditPage";
+import { BackupPage } from "./pages/BackupPage";
 import { CompanyPage } from "./pages/CompanyPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { UsersPage } from "./pages/UsersPage";
 
-// HashRouter: no app Tauri não há servidor para fazer fallback de rotas ao recarregar.
+// HashRouter: o app carrega arquivos locais; não há servidor para fallback de rotas.
 export function App() {
   return (
     <AuthProvider>
@@ -25,6 +26,7 @@ export function App() {
             <Route index element={<DashboardPage />} />
             <Route path="/usuarios" element={<RequirePermission module="users"><UsersPage /></RequirePermission>} />
             <Route path="/empresa" element={<RequirePermission module="settings"><CompanyPage /></RequirePermission>} />
+            <Route path="/backup" element={<RequirePermission module="backup" level="write"><BackupPage /></RequirePermission>} />
             <Route path="/auditoria" element={<RequirePermission module="audit"><AuditPage /></RequirePermission>} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

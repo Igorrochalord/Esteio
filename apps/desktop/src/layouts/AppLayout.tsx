@@ -13,14 +13,15 @@ export function AppLayout() {
     { to: "/usuarios", label: "Pessoas", show: can("users") },
     { to: "/empresa", label: "Empresa", show: can("settings") },
     { to: "/auditoria", label: "Histórico", show: can("audit") },
+    { to: "/backup", label: "Cópias de segurança", show: can("backup", "write") },
   ];
 
   return (
     <div className="shell">
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <BrandMark name={me.tenant.name} logoUrl={me.tenant.logo_url} size={44} />
-          <span className="sidebar-company">{me.tenant.name}</span>
+          <BrandMark name={me.company.name} logoUrl={me.company.logo_url} size={44} />
+          <span className="sidebar-company">{me.company.name}</span>
         </div>
         <nav aria-label="Principal">
           <ul className="sidebar-nav">

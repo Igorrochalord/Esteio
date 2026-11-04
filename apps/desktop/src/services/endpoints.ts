@@ -1,12 +1,11 @@
-import { api } from "./api";
-import type { AuditEntry, Branding, Me, Page, Role, Tenant, TokenPair, User } from "./types";
+import { call } from "./api";
+import type { AuditEntry, BackupInfo, Branding, Company, Me, Page, Role, User } from "./types";
 
 export const authApi = {
-  login: (email: string, password: string) =>
-    api<TokenPair>("/auth/login", { method: "POST", body: { email, password }, auth: false }),
-  logout: (refresh_token: string) =>
-    api<void>("/auth/logout", { method: "POST", body: { refresh_token }, auth: false }),
-  me: () => api<Me>("/me"),
+  setupStatus: () => call<{ configured: boolean }>("setup_status"),
+  login: (email: string, password: string) => call<Me>("login", { email, password }),
+  logout: () => call<void>("logout"),
+  me: () => call<Me>("me"),
 };
 
 export interface OnboardingInput {
@@ -14,34 +13,42 @@ export interface OnboardingInput {
   owner: { name: string; email: string; password: string };
 }
 
-export const tenantApi = {
-  onboard: (data: OnboardingInput) =>
-    api<TokenPair>("/onboarding", { method: "POST", body: data, auth: false }),
-  get: () => api<Tenant>("/tenant"),
-  update: (data: { name?: string; cnpj?: string | null }) =>
-    api<Tenant>("/tenant", { method: "PUT", body: data }),
+/** Lê o arquivo como data URL (o núcleo confere se é PNG/JPEG de verdade). */
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+export const companyApi = {
+  onboard: (data: OnboardingInput) => call<Me>("onboard", { data }),
+  get: () => call<Company>("company_get"),
+  update: (data: { name?: string; cnpj?: string | null }) => call<Company>("company_update", { data }),
   updateBranding: (data: { primary_color?: string; secondary_color?: string }) =>
-    api<Branding>("/tenant/branding", { method: "PUT", body: data }),
-  uploadLogo: (file: File) => {
-    const form = new FormData();
-    form.append("file", file);
-    return api<Branding>("/tenant/branding/logo", { method: "POST", form });
-  },
-  removeLogo: () => api<Branding>("/tenant/branding/logo", { method: "DELETE" }),
+    call<Branding>("branding_update", { data }),
+  uploadLogo: async (file: File) => call<Branding>("logo_upload", { content: await readAsDataUrl(file) }),
+  removeLogo: () => call<Branding>("logo_remove"),
 };
 
 export const usersApi = {
-  list: () => api<User[]>("/users"),
+  list: () => call<User[]>("users_list"),
   create: (data: { name: string; email: string; password: string; role: Exclude<Role, "owner"> }) =>
-    api<User>("/users", { method: "POST", body: data }),
+    call<User>("users_create", { data }),
   update: (id: string, data: { name?: string; role?: Exclude<Role, "owner">; is_active?: boolean }) =>
-    api<User>(`/users/${id}`, { method: "PATCH", body: data }),
+    call<User>("users_update", { user_id: id, data }),
 };
 
 export const auditApi = {
-  list: (params: { limit: number; offset: number; entity?: string }) => {
-    const q = new URLSearchParams({ limit: String(params.limit), offset: String(params.offset) });
-    if (params.entity) q.set("entity", params.entity);
-    return api<Page<AuditEntry>>(`/audit?${q}`);
-  },
+  list: (query: { limit: number; offset: number; entity?: string }) =>
+    call<Page<AuditEntry>>("audit_list", { query }),
+};
+
+export const backupApi = {
+  list: () => call<BackupInfo[]>("backup_list"),
+  /** sem `dest`, salva na pasta de backups do app */
+  create: (dest?: string) => call<BackupInfo>("backup_create", { dest: dest ?? null }),
+  restore: (path: string) => call<BackupInfo>("backup_restore", { path }),
 };

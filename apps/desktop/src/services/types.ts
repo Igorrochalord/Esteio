@@ -1,13 +1,6 @@
 export type Role = "owner" | "admin" | "user";
 export type Level = "read" | "write" | "manage";
-export type Module = "settings" | "users" | "audit";
-
-export interface TokenPair {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-  expires_in: number;
-}
+export type Module = "settings" | "users" | "audit" | "backup";
 
 export interface User {
   id: string;
@@ -28,27 +21,25 @@ export interface Branding {
 
 export interface Me {
   user: User;
-  tenant: Branding & { id: string; plan: string; subscription_status: string };
+  company: Branding & { id: string };
   permissions: Partial<Record<Module, Level>>;
 }
 
-export interface Tenant {
+export interface Company {
   id: string;
   name: string;
   cnpj: string | null;
-  plan: string;
-  subscription_status: string;
 }
 
 export interface AuditEntry {
   id: string;
   user_id: string | null;
+  user_name: string | null;
   action: string;
   entity: string;
   entity_id: string | null;
   before: Record<string, unknown> | null;
   after: Record<string, unknown> | null;
-  ip: string | null;
   created_at: string;
 }
 
@@ -57,4 +48,12 @@ export interface Page<T> {
   total: number;
   limit: number;
   offset: number;
+}
+
+export interface BackupInfo {
+  name: string;
+  path: string;
+  size_bytes: number;
+  created_at: string;
+  kind: "auto" | "manual" | "pre-restore";
 }

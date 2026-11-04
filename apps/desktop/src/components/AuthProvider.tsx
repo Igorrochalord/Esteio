@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { AuthContext, type AuthState, type AuthStatus } from "../hooks/authContext";
-import { onSessionExpired, refreshSession } from "../services/api";
+import { onSessionExpired } from "../services/api";
 import { authApi } from "../services/endpoints";
 import { applyBranding } from "../services/theme";
-import { tokens } from "../services/tokens";
-import type { Level, Me, Module, TokenPair } from "../services/types";
+import type { Level, Me, Module } from "../services/types";
 
 const RANK: Record<Level, number> = { read: 1, write: 2, manage: 3 };
 
@@ -13,44 +12,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [me, setMe] = useState<Me | null>(null);
 
-  const signOutLocally = useCallback(() => {
-    tokens.clear();
-    setMe(null);
-    setStatus("anonymous");
-    applyBranding(null);
-  }, []);
-
-  const loadMe = useCallback(async () => {
-    const data = await authApi.me();
+  const startSession = useCallback((data: Me) => {
     setMe(data);
     setStatus("authenticated");
-    applyBranding(data.tenant);
+    applyBranding(data.company);
   }, []);
 
-  // ao abrir o app: tenta retomar a sessão com o refresh salvo
+  /** Sem sessão: vai para o login, ou para o onboarding se ainda não há empresa. */
+  const endSession = useCallback(() => {
+    setMe(null);
+    applyBranding(null);
+    setStatus("loading");
+    authApi
+      .setupStatus()
+      .then((s) => setStatus(s.configured ? "anonymous" : "setup"))
+      .catch(() => setStatus("anonymous"));
+  }, []);
+
+  const loadMe = useCallback(async () => startSession(await authApi.me()), [startSession]);
+
+  // ao abrir: a sessão vive no processo do app, então sobrevive a recarregar a tela
   useEffect(() => {
-    (async () => {
-      if (tokens.refresh && (await refreshSession())) {
-        try {
-          await loadMe();
-          return;
-        } catch {
-          /* cai para anônimo */
-        }
-      }
-      signOutLocally();
-    })();
-  }, [loadMe, signOutLocally]);
+    authApi.me().then(startSession, endSession);
+  }, [startSession, endSession]);
 
-  useEffect(() => onSessionExpired(signOutLocally), [signOutLocally]);
-
-  const startSession = useCallback(
-    async (pair: TokenPair) => {
-      tokens.set(pair.access_token, pair.refresh_token);
-      await loadMe();
-    },
-    [loadMe],
-  );
+  useEffect(() => onSessionExpired(endSession), [endSession]);
 
   const login = useCallback(
     async (email: string, password: string) => startSession(await authApi.login(email, password)),
@@ -58,10 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    const refresh = tokens.refresh;
-    signOutLocally();
-    if (refresh) await authApi.logout(refresh).catch(() => undefined);
-  }, [signOutLocally]);
+    await authApi.logout().catch(() => undefined);
+    endSession();
+  }, [endSession]);
 
   const can = useCallback(
     (module: Module, level: Level = "read") => {
@@ -72,8 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<AuthState>(
-    () => ({ status, me, login, startSession, logout, reloadMe: loadMe, can }),
-    [status, me, login, startSession, logout, loadMe, can],
+    () => ({ status, me, login, startSession, logout, reloadMe: loadMe, endSession, can }),
+    [status, me, login, startSession, logout, loadMe, endSession, can],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

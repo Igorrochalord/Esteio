@@ -2,8 +2,7 @@ import { useState } from "react";
 
 import { Notice } from "../components/Notice";
 import { useAsync } from "../hooks/useAsync";
-import { useAuth } from "../hooks/useAuth";
-import { auditApi, usersApi } from "../services/endpoints";
+import { auditApi } from "../services/endpoints";
 import { ACTION_LABEL, FIELD_LABEL, formatDateTime, formatValue } from "../services/labels";
 
 const PAGE_SIZE = 25;
@@ -21,11 +20,8 @@ function describeChanges(before: Record<string, unknown> | null, after: Record<s
 }
 
 export function AuditPage() {
-  const { can } = useAuth();
   const [offset, setOffset] = useState(0);
   const { data, error, loading } = useAsync(() => auditApi.list({ limit: PAGE_SIZE, offset }), [offset]);
-  const { data: users } = useAsync(() => (can("users") ? usersApi.list() : Promise.resolve([])), []);
-  const names = new Map(users?.map((u) => [u.id, u.name]));
 
   return (
     <div className="page">
@@ -56,7 +52,7 @@ export function AuditPage() {
                 {data?.items.map((i) => (
                   <tr key={i.id}>
                     <td className="num nowrap">{formatDateTime(i.created_at)}</td>
-                    <td>{(i.user_id && names.get(i.user_id)) || "—"}</td>
+                    <td>{i.user_name ?? "—"}</td>
                     <td>{ACTION_LABEL[i.action] ?? i.action}</td>
                     <td className="details">{describeChanges(i.before, i.after)}</td>
                   </tr>

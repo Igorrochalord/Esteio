@@ -550,27 +550,6 @@ select:disabled {
   font-size: var(--t-xxl);
   letter-spacing: -0.02em;
 }
-.auth-alt {
-  font-size: var(--t-s);
-  color: var(--muted);
-}
-.server-line {
-  font-size: var(--t-xs);
-  color: var(--muted);
-  border-top: 1px solid var(--line);
-  padding-top: 1rem;
-}
-.server-url {
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-}
-.server-form {
-  border-top: 1px solid var(--line);
-  padding-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
 
 .onboarding {
   width: min(64rem, 100%);
