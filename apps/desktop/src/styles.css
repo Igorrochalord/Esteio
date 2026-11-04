@@ -714,6 +714,14 @@ select:disabled {
 .sale-suggest button:hover {
   background: color-mix(in srgb, var(--brand) 10%, var(--surface));
 }
+.row--fill {
+  flex-wrap: nowrap;
+}
+.row--fill select,
+.row--fill input {
+  flex: 1;
+  min-width: 0;
+}
 .sale-items .cell-input {
   width: 6.5rem;
   min-height: 2.1rem;
@@ -861,7 +869,7 @@ select:disabled {
 }
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
   gap: 0.75rem;
 }
 .stat {
@@ -883,12 +891,11 @@ select:disabled {
   font-weight: 600;
 }
 .stat-value {
-  font-size: var(--t-xl);
+  font-size: 1.45rem;
   font-weight: 650;
   letter-spacing: -0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+  overflow-wrap: anywhere; /* número nunca é cortado: quebra de linha se precisar */
 }
 .stat-hint {
   font-size: var(--t-xs);
@@ -974,9 +981,21 @@ select:disabled {
   box-shadow: 0 0 0 2px var(--brand);
 }
 .barlist-label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.barlist-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.barlist-note {
+  font-size: var(--t-xs);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .barlist-track {
   display: flex;

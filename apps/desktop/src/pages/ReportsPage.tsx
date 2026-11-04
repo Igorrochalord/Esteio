@@ -137,7 +137,7 @@ function SalesTab({ query }: { query: ReportQuery }) {
     <Loading loading={loading} error={error}>
       <div className="stats">
         <StatTile label="Faturamento" value={money(t.total)} hint={toNum(t.discount) > 0 ? `${money(t.discount)} em descontos` : undefined} />
-        <StatTile label="Vendas" value={int(t.count)} hint={`${qty(t.items_qty)} itens`} />
+        <StatTile label="Vendas" value={int(t.count)} />
         <StatTile label="Ticket médio" value={money(t.avg_ticket)} />
         <StatTile label="Lucro bruto" value={money(t.profit)} hint={`custo ${money(t.cost)}`} />
         <StatTile label="Margem" value={pct(t.margin_pct)} />
@@ -213,7 +213,8 @@ function ProductsTab({ query }: { query: ReportQuery }) {
     { key: "code", label: "Código", get: (p) => p.code },
     { key: "name", label: "Produto", get: (p) => p.name, width: 200 },
     { key: "category", label: "Categoria", get: (p) => p.category },
-    { key: "qty", label: "Qtd. vendida", kind: "number", get: (p) => p.qty, total: "sum" },
+    { key: "qty", label: "Qtd. vendida", kind: "number", get: (p) => p.qty },
+    { key: "unit", label: "Un.", get: (p) => p.unit },
     { key: "revenue", label: "Faturamento", kind: "money", get: (p) => p.revenue, total: "sum" },
     { key: "cost", label: "Custo", kind: "money", get: (p) => p.cost, total: "sum" },
     { key: "profit", label: "Lucro", kind: "money", get: (p) => p.profit, total: "sum" },
@@ -245,7 +246,7 @@ function ProductsTab({ query }: { query: ReportQuery }) {
               key: p.product_id,
               label: p.name,
               value: toNum(p.revenue),
-              note: `${qty(p.qty)} un. · curva ${p.abc}`,
+              note: `${qty(p.qty)} ${p.unit} · curva ${p.abc}`,
             }))}
             format={money}
           />
@@ -426,7 +427,6 @@ function SellersTab({ query }: { query: ReportQuery }) {
     { key: "profit", label: "Lucro", kind: "money", get: (s) => s.profit, total: "sum" },
     { key: "margin", label: "Margem", kind: "percent", get: (s) => s.margin_pct },
     { key: "customers", label: "Clientes atendidos", kind: "number", get: (s) => s.customers_served },
-    { key: "items", label: "Itens", kind: "number", get: (s) => s.items_qty, total: "sum" },
     { key: "canceled", label: "Canceladas", kind: "number", get: (s) => s.canceled_count, total: "sum" },
   ];
   const best = data[0];

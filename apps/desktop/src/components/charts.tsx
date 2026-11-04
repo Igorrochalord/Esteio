@@ -199,15 +199,15 @@ export function BarList({
   return (
     <ol className="barlist" aria-label={ariaLabel}>
       {data.map((d) => (
-        <li key={d.key} tabIndex={0} title={`${d.label}: ${format(d.value)}${d.note ? ` (${d.note})` : ""}`}>
-          <span className="barlist-label">{d.label}</span>
+        <li key={d.key} tabIndex={0} aria-label={`${d.label}: ${format(d.value)}${d.note ? `, ${d.note}` : ""}`}>
+          <span className="barlist-label">
+            <span className="barlist-name">{d.label}</span>
+            {d.note && <span className="barlist-note">{d.note}</span>}
+          </span>
           <span className="barlist-track">
-            {/* escala até 62% da trilha: o resto fica para o valor na ponta, mantendo a proporção */}
-            <span className="barlist-bar" style={{ width: `${Math.max(0.5, (d.value / max) * 62)}%`, background: SERIES }} />
-            <span className="barlist-value">
-              {format(d.value)}
-              {d.note && <span className="muted"> · {d.note}</span>}
-            </span>
+            {/* escala até 70% da trilha: o resto fica para o valor na ponta, mantendo a proporção */}
+            <span className="barlist-bar" style={{ width: `${Math.max(0.5, (d.value / max) * 70)}%`, background: SERIES }} />
+            <span className="barlist-value">{format(d.value)}</span>
           </span>
         </li>
       ))}

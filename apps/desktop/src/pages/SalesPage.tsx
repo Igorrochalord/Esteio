@@ -351,7 +351,7 @@ function NewSaleForm({ onDone }: { onDone: (s: Sale) => Promise<void> }) {
         {error && <Notice tone="error">{error}</Notice>}
         <div className="field">
           <label htmlFor="ns-customer">Cliente</label>
-          <div className="row">
+          <div className="row row--fill">
             <select id="ns-customer" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
               <option value="">Consumidor (sem cadastro)</option>
               {(customers ?? []).filter((c) => c.active).map((c) => (

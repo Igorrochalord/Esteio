@@ -82,7 +82,6 @@ export function ProductsPage() {
         ) : (
           <span className="grid-blank">não controla</span>
         ),
-      total: "sum",
     },
     { key: "min_stock", label: "Mínimo", kind: "number", get: (p) => p.min_stock, editable: canEdit },
     {

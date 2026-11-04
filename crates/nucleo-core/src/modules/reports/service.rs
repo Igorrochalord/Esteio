@@ -246,12 +246,13 @@ pub async fn products(ctx: &Ctx, q: ReportQuery) -> CoreResult<ProductsReport> {
         Option<String>,
         String,
         Option<String>,
+        String,
         i64,
         i64,
         i64,
     );
     let rows: Vec<Row> = sqlx::query_as(&format!(
-        "SELECT i.product_id, p.code, max(i.product_name), c.name,
+        "SELECT i.product_id, p.code, max(i.product_name), c.name, coalesce(p.unit, 'un'),
                 sum(i.qty_milli), sum(i.total_cents), sum({LINE_COST})
          FROM sale_items i
          JOIN sales s ON s.id = i.sale_id
@@ -265,11 +266,11 @@ pub async fn products(ctx: &Ctx, q: ReportQuery) -> CoreResult<ProductsReport> {
     .fetch_all(&mut *conn)
     .await?;
 
-    let grand: i64 = rows.iter().map(|r| r.5).sum();
+    let grand: i64 = rows.iter().map(|r| r.6).sum();
     let mut cumulative = 0i64;
     let mut categories: BTreeMap<String, (i64, i64, i64)> = BTreeMap::new();
     let mut products = Vec::with_capacity(rows.len());
-    for (product_id, code, name, category, qty, revenue, cost) in rows {
+    for (product_id, code, name, category, unit, qty, revenue, cost) in rows {
         // classe pelo acumulado ANTES do item: o item que cruza 80% ainda é A
         let class = match pct(cumulative, grand) {
             p if p < Decimal::from(80) => "A",
@@ -288,6 +289,7 @@ pub async fn products(ctx: &Ctx, q: ReportQuery) -> CoreResult<ProductsReport> {
             code,
             name,
             category,
+            unit,
             qty: from_milli(qty),
             revenue: from_cents(revenue),
             cost: from_cents(cost),

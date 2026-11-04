@@ -64,6 +64,7 @@ pub struct ProductRank {
     pub code: Option<String>,
     pub name: String,
     pub category: Option<String>,
+    pub unit: String,
     pub qty: Decimal,
     pub revenue: Decimal,
     pub cost: Decimal,

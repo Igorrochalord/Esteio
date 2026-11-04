@@ -206,6 +206,7 @@ export interface ProductRank {
   code: string | null;
   name: string;
   category: string | null;
+  unit: string;
   qty: Dec;
   revenue: Dec;
   cost: Dec;
