@@ -7,10 +7,10 @@ O projeto avança em fases. Ao fim de cada fase, `make check` precisa estar verd
 |---|---|---|
 | 1 | Fundação SaaS (FastAPI + Postgres): substituída, preservada na tag `v0.1-saas` | substituída |
 | 1b | Fundação local: núcleo Rust + SQLite, login, autocadastro, pessoas, empresa, histórico, backup, CI | em andamento |
-| 2 | Estoque: categorias, fornecedores, produtos, movimentações imutáveis, alerta de mínimo | próxima |
-| 3 | Vendas / PDV | — |
-| 4 | Financeiro | — |
-| 5 | Relatórios | — |
+| 2 | Comercial: produtos, categorias, estoque (movimentações imutáveis, mínimo), clientes, vendas com cancelamento, relatórios (vendas, ABC, estoque, mapa por UF, vendedores), grades tipo planilha, exportar/importar Excel | em validação |
+| 3 | PDV de balcão (caixa: abertura/fechamento, troco), fornecedores e compras | — |
+| 4 | Financeiro (contas a receber do fiado, a pagar, fluxo de caixa) | — |
+| 5 | Relatórios adicionais e comparativos entre períodos | — |
 | 6 | Sincronização entre filiais (serviço na nuvem + consumo do `change_log`) | — |
 | 7 | Release: assinatura de código, atualização automática | — |
 | — | Assinatura e licenciamento ([pesquisa](assinatura.md)): encaixar quando os planos forem decididos | proposta |

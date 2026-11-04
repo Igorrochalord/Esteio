@@ -31,6 +31,7 @@ assinatura, roteiro).
 
 ## Regras do frontend (`apps/desktop/src`)
 - `services/api.ts`: `call<T>(comando, args)` sobre `invoke` e `ApiError {code, message, fields}`.
+- Listas usam `components/DataGrid.tsx` (edição na célula, ordenação, totais, exportar .xlsx).
   Comandos tipados em `services/endpoints.ts`, tipos em `services/types.ts`. Argumentos em snake_case.
 - `useAuth()` (`status`: loading/setup/anonymous/authenticated, `me`, `can`); rotas com
   `RequireAuth` / `RequirePermission` em `App.tsx` (HashRouter).
@@ -46,5 +47,8 @@ assinatura, roteiro).
 - **Fase 1b (fundação local)**: núcleo, comandos, frontend e CI prontos; `make check` verde e o app
   abre no WSL (`make dev`).
 - Pendente: roteiro manual completo na interface; primeiro instalador pelo CI (requer push).
-- Próxima: Fase 2, estoque.
+- **Fase 2 (comercial)**: produtos/estoque, clientes, vendas, relatórios, grade tipo planilha e
+  Excel prontos e testados; aguardando validação do usuário na interface.
+- Dinheiro em centavos e quantidades em milésimos no banco; `Decimal` (texto) na API (`src/money.rs`).
+- Gráficos: seguir a skill dataviz (série única, rampa sequencial validada, tabela junto).
 - O código SaaS antigo (FastAPI/Postgres) está na tag `v0.1-saas`.

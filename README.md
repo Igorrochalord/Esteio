@@ -29,7 +29,8 @@ make dev       # abre o app usando .dev-data/
 ```
 
 Usuários do seed (senha `nucleo123`): `dono@paodourado.com.br` (proprietário),
-`admin@paodourado.com.br` (administrador), `caixa@paodourado.com.br` (usuário).
+`admin@paodourado.com.br` (administrador), `caixa@paodourado.com.br` e `balcao@paodourado.com.br`
+(usuários). O seed também cria 28 produtos, 24 clientes e 90 dias de vendas.
 Para a outra empresa de exemplo: `make reset-data && make seed empresa=techparts`.
 
 ## Estrutura

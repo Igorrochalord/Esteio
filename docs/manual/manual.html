@@ -104,8 +104,8 @@
       computador do cliente. Sem servidor e sem internet.
     </p>
     <div class="cover-meta">
-      <div><b>Versão</b>0.1.0 · fase 1b</div>
-      <div><b>Data</b>3 de novembro de 2026</div>
+      <div><b>Versão</b>0.1.0 · fase 2</div>
+      <div><b>Data</b>4 de novembro de 2026</div>
       <div><b>Repositório</b>github.com/Igorrochalord/Esteio</div>
     </div>
   </div>
@@ -171,8 +171,12 @@
     <div class="card"><h4>Dados protegidos</h4>Backup automático diário (7 cópias), backup manual e restauração com cópia de segurança.</div>
   </div>
 
-  <h3>Funcionalidades atuais (fase 1b)</h3>
+  <h3>Funcionalidades atuais (fases 1b e 2)</h3>
   <ul>
+    <li><strong>Vendas:</strong> nova venda com busca por nome/código/código de barras, desconto por item e na venda, vendedor, 6 formas de pagamento (fiado exige cliente), F9 finaliza; cancelamento devolve o estoque.</li>
+    <li><strong>Produtos:</strong> planilha editável (código, nome, categoria, unidade, preço, custo, margem, estoque, mínimo), categorias, entrada/saída/ajuste de estoque, histórico por produto, importação de Excel/CSV.</li>
+    <li><strong>Clientes:</strong> planilha editável com CPF/CNPJ validado, cidade e UF.</li>
+    <li><strong>Relatórios:</strong> vendas por dia/semana/mês e por hora, formas de pagamento, ranking e curva ABC, lucro por categoria, posição e cobertura de estoque, mapa de vendas por UF, cidades e melhores clientes, desempenho por vendedor. Tudo exporta para Excel.</li>
     <li><strong>Primeira abertura:</strong> assistente que cadastra a empresa (nome, CNPJ, cores, logo) e o proprietário.</li>
     <li><strong>Entrada:</strong> login com a marca da empresa, mostrar senha, aviso de Caps Lock, lembrar e-mail.</li>
     <li><strong>Pedir cadastro:</strong> a pessoa cria a conta, que aguarda aprovação de um administrador.</li>
@@ -352,6 +356,10 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
   <table class="files">
     <thead><tr><th>Arquivo</th><th>Tela</th><th>Usa</th></tr></thead>
     <tbody>
+      <tr><td><code>SalesPage.tsx</code></td><td class="wrap">Vendas: lista em grade com período e situação; <em>Nova venda</em> (busca com leitor de código de barras, itens, desconto, cliente, vendedor, pagamento, F9); detalhes com itens e cancelamento.</td><td class="wrap"><code>salesApi</code>, <code>productsApi</code>, <code>customersApi</code></td></tr>
+      <tr><td><code>ProductsPage.tsx</code></td><td class="wrap">Produtos: grade editável, filtros (categoria, abaixo do mínimo, inativos), novo produto, movimentar estoque, categorias, importar planilha, histórico do produto (Enter em célula não editável).</td><td class="wrap"><code>productsApi</code>, <code>sheetApi</code></td></tr>
+      <tr><td><code>CustomersPage.tsx</code></td><td class="wrap">Clientes: grade editável e formulário (reusado na venda).</td><td class="wrap"><code>customersApi</code></td></tr>
+      <tr><td><code>ReportsPage.tsx</code></td><td class="wrap">Relatórios em abas com um filtro de período comum: Vendas, Produtos, Estoque, Clientes e mapa, Vendedores.</td><td class="wrap"><code>reportsApi</code></td></tr>
       <tr><td><code>LoginPage.tsx</code></td><td class="wrap">Entrar: marca da empresa, mostrar senha, Caps Lock, "lembrar meu e-mail" (localStorage, nunca a senha), aviso após pedido de cadastro, links.</td><td class="wrap"><code>useAuth().login</code></td></tr>
       <tr><td><code>RegisterPage.tsx</code></td><td class="wrap">Pedir cadastro: nome, e-mail, senha, confirmação → volta ao login com aviso.</td><td class="wrap"><code>authApi.register</code></td></tr>
       <tr><td><code>OnboardingPage.tsx</code></td><td class="wrap">Primeira abertura em 3 etapas (empresa, identidade visual, acesso) com prévia ao vivo; envia logo ao final.</td><td class="wrap"><code>companyApi.onboard</code>, <code>uploadLogo</code></td></tr>
@@ -367,6 +375,9 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
   <table class="files">
     <thead><tr><th>Arquivo</th><th>O que faz</th></tr></thead>
     <tbody>
+      <tr><td><code>DataGrid.tsx</code></td><td class="wrap"><strong>O "Excel interno".</strong> Grade com célula ativa, edição por teclado (Enter/F2/digitar, Enter grava e desce, Tab, Esc, Ctrl+C), ordenação no cabeçalho, busca, linha de totais e "Exportar Excel" do que está visível. Colunas declaradas com <code>get</code>, <code>kind</code> (text, money, number, percent, date, select, boolean), <code>editable</code>, <code>total</code>.</td></tr>
+      <tr><td><code>charts.tsx</code></td><td class="wrap">Gráficos SVG: <code>ColumnChart</code>, <code>BarList</code>, <code>StatTile</code>, <code>BrazilTileMap</code>. Rampa azul validada; tooltip no hover e foco.</td></tr>
+      <tr><td><code>PeriodPicker.tsx</code></td><td class="wrap">Seletor de período (hoje, 7/30 dias, mês, mês passado, ano, personalizado).</td></tr>
       <tr><td><code>AuthProvider.tsx</code></td><td class="wrap">Guarda a sessão na interface: <code>status</code> (loading/setup/anonymous/authenticated), <code>me</code>, <code>login</code>, <code>logout</code>, <code>can()</code>; aplica a marca; volta ao login quando o núcleo diz <code>unauthorized</code>.</td></tr>
       <tr><td><code>guards.tsx</code></td><td class="wrap"><code>RequireAuth</code>, <code>RequireAnonymous</code> (onboarding só sem empresa), <code>RequirePermission</code> (tela "Sem acesso").</td></tr>
       <tr><td><code>AuthFrame.tsx</code></td><td class="wrap">Moldura do login/cadastro: painel com logo, nome e cores da empresa + cartão do formulário.</td></tr>
@@ -391,6 +402,8 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td><code>services/endpoints.ts</code></td><td class="wrap">Um método por comando: <code>authApi, companyApi, usersApi, auditApi, backupApi</code>. Argumentos em snake_case.</td><td class="wrap when">todo comando novo</td></tr>
       <tr><td><code>services/types.ts</code></td><td class="wrap">Tipos espelhando o núcleo (<code>User, Me, Branding, Company, AuditEntry, BackupInfo, Module…</code>).</td><td class="wrap when">campo/tipo novo; módulo novo</td></tr>
       <tr><td><code>services/labels.ts</code></td><td class="wrap">Textos: nomes de papéis, ações do histórico, nomes de campos; formatação de data e CNPJ.</td><td class="wrap when">ação nova na auditoria; texto</td></tr>
+      <tr><td><code>services/format.ts</code></td><td class="wrap">R$, quantidades, %, datas no padrão brasileiro; <code>parseDecimal</code> lê o que a pessoa digita ("1.234,56").</td><td class="wrap when">formato de exibição</td></tr>
+      <tr><td><code>services/period.ts</code></td><td class="wrap">Períodos em dias locais e limites para a API.</td><td class="wrap when">novo atalho de período</td></tr>
       <tr><td><code>services/theme.ts</code></td><td class="wrap">Cores padrão, <code>applyBranding()</code>, contraste automático do texto, iniciais.</td><td class="wrap when">cores padrão</td></tr>
     </tbody>
   </table>
@@ -413,6 +426,9 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td><code>src/commands/auth.rs</code></td><td class="wrap"><code>setup_status, login_branding, register, onboard, login, logout, me</code>.</td><td class="wrap when">—</td></tr>
       <tr><td><code>src/commands/company.rs</code></td><td class="wrap"><code>company_get, company_update, branding_update, logo_upload, logo_remove</code>.</td><td class="wrap when">—</td></tr>
       <tr><td><code>src/commands/users.rs</code></td><td class="wrap"><code>users_list, users_create, users_update, users_approve, users_reject, users_reset_password</code>.</td><td class="wrap when">—</td></tr>
+      <tr><td><code>src/commands/products.rs</code></td><td class="wrap"><code>products_list/create/update, stock_move, stock_movements, categories_list/create/rename/delete</code>.</td><td class="wrap when">—</td></tr>
+      <tr><td><code>src/commands/customers.rs</code> · <code>sales.rs</code></td><td class="wrap"><code>customers_list/create/update</code> · <code>sales_list/get/create/cancel, sellers_list</code>.</td><td class="wrap when">—</td></tr>
+      <tr><td><code>src/commands/reports.rs</code> · <code>spreadsheet.rs</code></td><td class="wrap"><code>report_sales/products/stock/customers/sellers</code> · <code>export_xlsx, import_preview, import_products</code>.</td><td class="wrap when">—</td></tr>
       <tr><td><code>src/commands/audit.rs</code> · <code>backup.rs</code></td><td class="wrap"><code>audit_list</code> · <code>backup_list, backup_create, backup_restore</code>.</td><td class="wrap when">—</td></tr>
     </tbody>
   </table>
@@ -437,7 +453,8 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td><code>src/permissions.rs</code></td><td class="wrap"><code>Role</code>, <code>Module</code>, <code>Action</code>, <strong>matriz</strong> <code>granted()</code>, mapa para o menu.</td><td class="wrap when">módulo novo; mudar permissões</td></tr>
       <tr><td><code>src/audit.rs</code></td><td class="wrap"><code>snapshot</code>, <code>diff</code>, <code>record</code>, <code>record_changes</code> (só grava se mudou).</td><td class="wrap when">raramente</td></tr>
       <tr><td><code>src/security.rs</code></td><td class="wrap">Hash/verificação argon2 em thread separada; hash "falso" para tempo constante.</td><td class="wrap when">política de senha</td></tr>
-      <tr><td><code>src/validate.rs</code></td><td class="wrap">CNPJ (dígitos verificadores), e-mail, cor hexadecimal, tamanho de texto.</td><td class="wrap when">nova validação comum (CPF, CEP…)</td></tr>
+      <tr><td><code>src/money.rs</code></td><td class="wrap">Dinheiro (centavos ↔ Decimal) e quantidades (milésimos ↔ Decimal); total de linha com arredondamento meio-para-cima.</td><td class="wrap when">regra de arredondamento</td></tr>
+      <tr><td><code>src/validate.rs</code></td><td class="wrap">CNPJ e CPF (dígitos verificadores), UF, e-mail, cor hexadecimal, tamanho de texto.</td><td class="wrap when">nova validação comum (CPF, CEP…)</td></tr>
       <tr><td><code>src/modules/mod.rs</code></td><td class="wrap">Lista de módulos; <code>double_option</code> (diferencia campo ausente de <code>null</code>).</td><td class="wrap when">módulo novo</td></tr>
       <tr><td><code>src/bin/seed.rs</code></td><td class="wrap">Cria empresa de demonstração (padaria ou techparts) com logo e usuários; senha <code>nucleo123</code>.</td><td class="wrap when">dados de demonstração</td></tr>
     </tbody>
@@ -449,6 +466,7 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
     <tbody>
       <tr><td><code>0001_fundacao.sql</code></td><td class="wrap"><code>installation</code>, <code>change_log</code>, <code>company</code>, <code>users</code>, <code>audit_logs</code>; triggers de histórico de alterações, de bloqueio de DELETE e de auditoria imutável.</td></tr>
       <tr><td><code>0002_cadastro.sql</code></td><td class="wrap">Coluna <code>users.pending</code> (autocadastro aguardando aprovação).</td></tr>
+      <tr><td><code>0003_comercial.sql</code></td><td class="wrap"><code>categories</code>, <code>products</code>, <code>stock_movements</code> (imutável), <code>customers</code>, <code>sales</code>, <code>sale_items</code>, com as regras de sync.</td></tr>
     </tbody>
   </table>
   <div class="warn"><strong>Nunca edite uma migração já distribuída.</strong> Crie a próxima (<code>0003_…sql</code>). Elas
@@ -464,6 +482,11 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td><code>company</code></td><td class="wrap"><code>models.rs</code>: <code>Company</code> (logo em BLOB, <code>logo_url</code> em data URL), <code>Branding</code>, entradas de onboarding/edição. <code>service.rs</code>: <code>status</code>, <code>public_branding</code>, <code>onboard</code>, <code>get</code>, <code>update</code>, <code>update_branding</code>, <code>upload_logo</code> (PNG/JPEG por assinatura, 2 MB), <code>remove_logo</code>.</td></tr>
       <tr><td><code>users</code></td><td class="wrap"><code>models.rs</code>: <code>User</code> (hash e <code>deleted_at</code> nunca serializados), <code>UserCreate</code>, <code>UserUpdate</code>, <code>RegisterInput</code>. <code>service.rs</code>: <code>list</code>, <code>create</code>, <code>update</code> (protege dono e a si mesmo), <code>register</code>, <code>approve</code>, <code>reject</code>, <code>reset_password</code>.</td></tr>
       <tr><td><code>audit</code></td><td class="wrap"><code>models.rs</code>: <code>AuditEntry</code> (com nome do autor), <code>AuditQuery</code>, <code>Page</code>. <code>repository.rs</code>: busca paginada com filtros. <code>service.rs</code>: <code>list</code> (limite 1–200).</td></tr>
+      <tr><td><code>products</code></td><td class="wrap"><code>models.rs</code>: <code>Product</code> (custo só para quem edita), <code>ProductInput/Patch</code>, <code>StockInput</code>, <code>UNITS</code>. <code>repository.rs</code>: SQL e <code>apply_movement</code> (atualiza o saldo e grava a movimentação). <code>service.rs</code>: cadastro com código automático, edição parcial, entrada/saída/ajuste, categorias.</td></tr>
+      <tr><td><code>customers</code></td><td class="wrap"><code>service.rs</code>: cadastro e edição com CPF/CNPJ único, e-mail e UF validados.</td></tr>
+      <tr><td><code>sales</code></td><td class="wrap"><code>service.rs</code>: <code>create</code> (uma transação: valida, calcula totais e custo, baixa estoque, audita), <code>cancel</code> (estorna), <code>list/get</code>; <code>PAYMENT_METHODS</code> em <code>models.rs</code>.</td></tr>
+      <tr><td><code>reports</code></td><td class="wrap"><code>service.rs</code>: <code>sales_summary</code> (totais, série por período local, pagamento, hora), <code>products</code> (ABC, categorias), <code>stock</code> (valor, cobertura), <code>customers</code> (UF, cidade, ranking), <code>sellers</code>.</td></tr>
+      <tr><td><code>spreadsheet</code></td><td class="wrap"><code>service.rs</code>: <code>export_xlsx</code> (abas com formatos R$, %, data), <code>preview</code> e <code>import_products</code> (xlsx/xls/ods/csv, números brasileiros, sugestão de colunas, erros por linha).</td></tr>
       <tr><td><code>backup</code></td><td class="wrap"><code>service.rs</code>: <code>create</code>, <code>list</code>, <code>auto_daily</code> (24 h, guarda 7: <code>KEEP_AUTO</code>), <code>restore</code> (valida, guarda cópia do estado atual, troca o arquivo, desfaz se falhar).</td></tr>
     </tbody>
   </table>
@@ -476,6 +499,8 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td><code>foundation.rs</code></td><td class="wrap">Toda tabela de negócio tem colunas de sync e triggers; histórico de alterações alimentado; DELETE bloqueado; auditoria imutável; ids UUID v7.</td></tr>
       <tr><td><code>auth_and_permissions.rs</code></td><td class="wrap">Onboarding, validações, login, logout, desativação imediata, matriz de papéis, regras de pessoas, e-mail duplicado.</td></tr>
       <tr><td><code>registration.rs</code></td><td class="wrap">Autocadastro pendente, aprovação, recusa libera e-mail, só gestores aprovam, redefinição de senha, marca pública.</td></tr>
+      <tr><td><code>commerce.rs</code></td><td class="wrap">Códigos, categorias, estoque e imutabilidade, quantidades fracionadas, totais/custo/lucro da venda, estoque insuficiente, fiado, cancelamento, operador sem custo.</td></tr>
+      <tr><td><code>reports.rs</code></td><td class="wrap">Valores conferidos à mão: totais, dia local, pagamento, ABC, cobertura, UF, vendedores; exportar/importar planilha.</td></tr>
       <tr><td><code>company_and_backup.rs</code></td><td class="wrap">Edição da empresa e auditoria só do que muda, cores e logo, paginação do histórico, backup e restauração, arquivo inválido, rotação automática.</td></tr>
     </tbody>
   </table>
@@ -520,6 +545,21 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td class="wrap">nova validação (CPF, CEP…)</td><td class="wrap"><code>core/src/validate.rs</code> (com teste no próprio arquivo)</td></tr>
       <tr><td class="wrap">registrar algo no histórico</td><td class="wrap"><code>audit::record</code> / <code>record_changes</code> no service; texto em <code>labels.ts</code></td></tr>
       <tr><td class="wrap">dados de demonstração</td><td class="wrap"><code>core/src/bin/seed.rs</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Comercial</h3>
+  <table>
+    <thead><tr><th>Quero…</th><th>Onde</th></tr></thead>
+    <tbody>
+      <tr><td class="wrap">nova forma de pagamento</td><td class="wrap"><code>PAYMENT_METHODS</code> em <code>core/src/modules/sales/models.rs</code> + nova migração alterando o CHECK de <code>sales.payment_method</code> + <code>PAYMENT_LABEL</code> em <code>labels.ts</code> + <code>PAYMENTS</code> em <code>SalesPage.tsx</code></td></tr>
+      <tr><td class="wrap">nova unidade de medida</td><td class="wrap"><code>UNITS</code> em <code>core/src/modules/products/models.rs</code> e <code>UNIT_OPTIONS</code> em <code>labels.ts</code></td></tr>
+      <tr><td class="wrap">permitir vender sem estoque</td><td class="wrap">a checagem "Estoque insuficiente" em <code>core/src/modules/sales/service.rs</code> (ou desmarcar "Controla estoque" no produto)</td></tr>
+      <tr><td class="wrap">limites da curva ABC (80/95%)</td><td class="wrap"><code>products()</code> em <code>core/src/modules/reports/service.rs</code></td></tr>
+      <tr><td class="wrap">colunas de uma grade</td><td class="wrap">a lista <code>columns</code> da página (ex.: <code>ProductsPage.tsx</code>); <code>editable</code> + tratar a chave no <code>onEdit</code></td></tr>
+      <tr><td class="wrap">cores dos gráficos</td><td class="wrap"><code>SEQ</code>/<code>RAMP</code> em <code>front/components/charts.tsx</code>; validar com <code>validate_palette</code> antes</td></tr>
+      <tr><td class="wrap">novo relatório</td><td class="wrap">função em <code>core/src/modules/reports/service.rs</code> (+ teste) → comando em <code>tauri/src/commands/reports.rs</code> → <code>reportsApi</code> → nova aba em <code>ReportsPage.tsx</code></td></tr>
+      <tr><td class="wrap">colunas reconhecidas na importação</td><td class="wrap"><code>ALIASES</code> em <code>core/src/modules/spreadsheet/service.rs</code></td></tr>
     </tbody>
   </table>
 
@@ -615,6 +655,10 @@ pub async fn products_list(core: State&lt;'_, Core&gt;) -&gt; Res&lt;Vec&lt;Prod
       <tr><td><code>installation</code></td><td>infra</td><td class="wrap">uma linha: <code>device_id</code> e <code>branch_id</code> desta instalação</td></tr>
       <tr><td><code>company</code></td><td>negócio</td><td class="wrap">uma linha: nome, CNPJ, cores, logo (BLOB + tipo + <code>logo_id</code>)</td></tr>
       <tr><td><code>users</code></td><td>negócio</td><td class="wrap">nome, e-mail (único, minúsculas), hash argon2, papel, ativo, <code>pending</code>, último acesso</td></tr>
+      <tr><td><code>categories</code> · <code>products</code></td><td>negócio</td><td class="wrap">catálogo; preço/custo em centavos, saldo e mínimo em milésimos</td></tr>
+      <tr><td><code>stock_movements</code></td><td>negócio</td><td class="wrap">entradas, saídas, ajustes, vendas e estornos; <strong>imutável</strong>; saldo após cada uma</td></tr>
+      <tr><td><code>customers</code></td><td>negócio</td><td class="wrap">CPF/CNPJ, contato, cidade, UF</td></tr>
+      <tr><td><code>sales</code> · <code>sale_items</code></td><td>negócio</td><td class="wrap">venda (número por filial, pagamento, totais, custo do momento) e itens (nome congelado)</td></tr>
       <tr><td><code>audit_logs</code></td><td>infra</td><td class="wrap">histórico append-only: autor, ação, entidade, antes/depois (JSON)</td></tr>
       <tr><td><code>change_log</code></td><td>infra</td><td class="wrap">fila de alterações para o sync futuro (preenchida por trigger)</td></tr>
       <tr><td><code>_sqlx_migrations</code></td><td>infra</td><td class="wrap">migrações já aplicadas (controle do sqlx)</td></tr>
@@ -627,7 +671,7 @@ pub async fn products_list(core: State&lt;'_, Core&gt;) -&gt; Res&lt;Vec&lt;Prod
     <li><code>branch_id</code>, <code>device_id</code>, <code>created_at</code>, <code>updated_at</code>, <code>deleted_at</code> (datas UTC <code>AAAA-MM-DDTHH:MM:SS.sssZ</code>).</li>
     <li>Triggers <code>&lt;t&gt;_cl_insert</code>, <code>&lt;t&gt;_cl_update</code> (alimentam <code>change_log</code>) e <code>&lt;t&gt;_no_delete</code> (exclusão só lógica).</li>
     <li>Consultas filtram <code>deleted_at IS NULL</code>; índices únicos com <code>WHERE deleted_at IS NULL</code>.</li>
-    <li>Dinheiro em <code>INTEGER</code> (centavos).</li>
+    <li>Dinheiro em <code>INTEGER</code> (centavos); quantidades em <code>INTEGER</code> milésimos (1,25 kg = 1250). Na API, <code>Decimal</code> como texto ("12.50").</li>
   </ul>
   <div class="note">O teste <code>tests/foundation.rs</code> falha se uma tabela nova esquecer alguma dessas regras.</div>
 
@@ -648,6 +692,10 @@ pub async fn products_list(core: State&lt;'_, Core&gt;) -&gt; Res&lt;Vec&lt;Prod
       <tr><td>users (pessoas)</td><td>manage</td><td>manage</td><td>—</td></tr>
       <tr><td>audit (histórico)</td><td>manage</td><td>read</td><td>—</td></tr>
       <tr><td>backup</td><td>manage (restaura)</td><td>write (faz cópia)</td><td>—</td></tr>
+      <tr><td>products (catálogo, estoque)</td><td>manage</td><td>manage</td><td>read (sem custo)</td></tr>
+      <tr><td>customers</td><td>manage</td><td>manage</td><td>write</td></tr>
+      <tr><td>sales</td><td>manage</td><td>manage (cancela)</td><td>write (vende)</td></tr>
+      <tr><td>reports</td><td>manage</td><td>read</td><td>—</td></tr>
     </tbody>
   </table>
   <p>Níveis acumulam: <code>manage</code> ⊃ <code>write</code> ⊃ <code>read</code>. A interface só esconde menus;
@@ -694,6 +742,17 @@ pub async fn products_list(core: State&lt;'_, Core&gt;) -&gt; Res&lt;Vec&lt;Prod
       <tr><td><code>users_reject</code></td><td><code>user_id</code></td><td>—</td><td>users manage</td></tr>
       <tr><td><code>users_reset_password</code></td><td><code>user_id, password</code></td><td>—</td><td>users manage</td></tr>
       <tr><td><code>audit_list</code></td><td><code>query: {limit, offset, entity?}</code></td><td><code>Page&lt;AuditEntry&gt;</code></td><td>audit read</td></tr>
+      <tr><td><code>products_list</code> · <code>categories_list</code></td><td>—</td><td><code>Product[]</code> · <code>Category[]</code></td><td>products read</td></tr>
+      <tr><td><code>products_create</code> · <code>products_update</code></td><td><code>data</code> · <code>id, data</code> (só os campos alterados)</td><td><code>Product</code></td><td>products write</td></tr>
+      <tr><td><code>stock_move</code></td><td><code>data: {product_id, kind, qty, unit_cost?, note?}</code></td><td><code>Product</code></td><td>products write</td></tr>
+      <tr><td><code>stock_movements</code></td><td><code>query: {product_id?, from?, to?, limit?}</code></td><td><code>Movement[]</code></td><td>products read</td></tr>
+      <tr><td><code>customers_list/create/update</code></td><td>— · <code>data</code> · <code>id, data</code></td><td><code>Customer</code></td><td>customers read/write</td></tr>
+      <tr><td><code>sales_create</code></td><td><code>data: {items[], payment_method, customer_id?, seller_id?, discount?, sold_at?}</code></td><td><code>Sale</code></td><td>sales write</td></tr>
+      <tr><td><code>sales_list</code> · <code>sales_get</code></td><td><code>query</code> · <code>id</code></td><td><code>Sale[]</code> · <code>Sale</code></td><td>sales read</td></tr>
+      <tr><td><code>sales_cancel</code></td><td><code>id, reason</code></td><td><code>Sale</code></td><td>sales manage</td></tr>
+      <tr><td><code>report_*</code> (5)</td><td><code>query: {from, to, tz_offset_minutes, group?}</code></td><td>relatório</td><td>reports read</td></tr>
+      <tr><td><code>export_xlsx</code></td><td><code>path, sheets[]</code></td><td>—</td><td>sessão</td></tr>
+      <tr><td><code>import_preview</code> · <code>import_products</code></td><td><code>path</code> · <code>data: {path, mapping, update_existing}</code></td><td>prévia · resultado</td><td>products write</td></tr>
       <tr><td><code>backup_list</code></td><td>—</td><td><code>BackupInfo[]</code></td><td>backup write</td></tr>
       <tr><td><code>backup_create</code></td><td><code>dest?</code></td><td><code>BackupInfo</code></td><td>backup write</td></tr>
       <tr><td><code>backup_restore</code></td><td><code>path</code></td><td><code>BackupInfo</code> (cópia do estado anterior)</td><td>backup manage</td></tr>
@@ -830,8 +889,8 @@ pub async fn products_list(core: State&lt;'_, Core&gt;) -&gt; Res&lt;Vec&lt;Prod
     <tbody>
       <tr><td>1</td><td class="wrap">Fundação SaaS (FastAPI + Postgres), preservada na tag <code>v0.1-saas</code></td><td>substituída</td></tr>
       <tr><td>1b</td><td class="wrap">Fundação local: núcleo Rust + SQLite, login, autocadastro, pessoas, empresa, histórico, backup, CI</td><td>em andamento</td></tr>
-      <tr><td>2</td><td class="wrap">Estoque: categorias, fornecedores, produtos, movimentações imutáveis, alerta de mínimo</td><td>próxima</td></tr>
-      <tr><td>3 · 4 · 5</td><td class="wrap">Vendas/PDV · Financeiro · Relatórios</td><td>—</td></tr>
+      <tr><td>2</td><td class="wrap">Comercial: produtos, estoque, clientes, vendas, relatórios, grade tipo planilha, Excel</td><td>em validação</td></tr>
+      <tr><td>3 · 4 · 5</td><td class="wrap">PDV de balcão e compras · Financeiro · Relatórios comparativos</td><td>—</td></tr>
       <tr><td>6</td><td class="wrap">Sincronização entre filiais (servidor + consumo do <code>change_log</code>)</td><td>—</td></tr>
       <tr><td>7</td><td class="wrap">Release: assinatura de código, atualização automática</td><td>—</td></tr>
       <tr><td>—</td><td class="wrap">Assinatura e licenciamento</td><td>proposta</td></tr>

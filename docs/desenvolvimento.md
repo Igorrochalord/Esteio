@@ -32,7 +32,7 @@ Os testes do núcleo (`make test`) só precisam do Rust. As libs do WebKit são 
 | `make lint` | `cargo fmt --check`, `clippy -D warnings`, `tsc`, `eslint` |
 | `make fmt` | formata o Rust |
 | `make check` | `lint` + `test`: rodar antes de cada commit |
-| `make seed` | cria empresa de demonstração em `.dev-data/` (`empresa=techparts` para a outra) |
+| `make seed` | empresa de demonstração em `.dev-data/`: pessoas, 28 produtos, 24 clientes em 12 UFs e 90 dias de vendas (`empresa=techparts` para a outra). Se a empresa já existe, só completa o comercial |
 | `make reset-data` | apaga `.dev-data/` |
 | `make dev` | abre o app usando `.dev-data/` (`NUCLEO_DATA_DIR`) |
 | `make build` | gera o instalador da plataforma atual ([distribuição](distribuicao.md)) |

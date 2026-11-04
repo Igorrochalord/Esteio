@@ -58,6 +58,27 @@ Exemplo: o dono troca a cor principal.
 | users | `users_list`, `users_create`, `users_update`, `users_approve`, `users_reject`, `users_reset_password` | users |
 | audit | `audit_list` | audit |
 | backup | `backup_list`, `backup_create`, `backup_restore` | backup |
+| products | `products_list/create/update`, `stock_move`, `stock_movements`, `categories_*` | products |
+| customers | `customers_list/create/update` | customers |
+| sales | `sales_list/get/create`, `sales_cancel` (manage), `sellers_list` | sales |
+| reports | `report_sales`, `report_products`, `report_stock`, `report_customers`, `report_sellers` | reports |
+| spreadsheet | `export_xlsx` (qualquer logado), `import_preview`, `import_products` (products write) | — |
+
+## "Excel interno": a grade
+
+`components/DataGrid.tsx` é usado em todas as listas: setas movem a célula ativa; Enter, F2,
+duplo clique ou começar a digitar editam; Enter grava e desce, Tab vai para o lado, Esc cancela;
+Ctrl+C copia; clique no cabeçalho ordena; busca filtra todas as colunas; linha de totais;
+"Exportar Excel" grava exatamente o que está visível (filtrado e ordenado). Cada célula
+editada chama o comando `*_update` do módulo com **só aquele campo**.
+
+## Gráficos
+
+`components/charts.tsx` (SVG próprio): `ColumnChart`, `BarList` (ranking), `StatTile` e
+`BrazilTileMap` (mapa em blocos por UF). Uma série por gráfico, rampa sequencial azul
+validada (`validate_palette --ordinal`), tooltip no hover e no foco do teclado, e cada gráfico
+tem a tabela correspondente ao lado. Datas dos relatórios agrupadas no **fuso local**
+(`tz_offset_minutes` enviado pela tela).
 
 ## Frontend
 

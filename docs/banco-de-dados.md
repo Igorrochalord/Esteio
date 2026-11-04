@@ -42,7 +42,11 @@ confere essas regras em todas as tabelas que não são de infraestrutura.
 
 Outras regras:
 
-- Dinheiro em `INTEGER` (centavos), para `SUM` exato.
+- Dinheiro em `INTEGER` (centavos) e quantidades em `INTEGER` milésimos (1 un = 1000,
+  1,25 kg = 1250), para `SUM` exato. Na API, `Decimal` serializado como texto (`"12.50"`);
+  conversões em `src/money.rs`.
+- O saldo de estoque em `products.stock_milli` é cache; a verdade são as `stock_movements`,
+  que não podem ser alteradas nem apagadas (correção = nova movimentação de ajuste).
 - Consultas filtram `deleted_at IS NULL`.
 - Índices únicos levam `WHERE deleted_at IS NULL` (ex.: `users_email_uq`).
 
@@ -64,6 +68,12 @@ precisar migrar dados depois, desde já:
 | `installation` | infra | uma linha: `device_id` e `branch_id` desta instalação |
 | `company` | negócio | uma linha: dados, cores e logo (BLOB) |
 | `users` | negócio | pessoas, papel, hash argon2, status, `pending` (autocadastro) |
+| `categories` | negócio | categorias de produto |
+| `products` | negócio | código, preço/custo (centavos), unidade, saldo em cache (milésimos), mínimo |
+| `stock_movements` | negócio (imutável) | entrada, saída, ajuste, venda, estorno; saldo após cada uma |
+| `customers` | negócio | nome, CPF/CNPJ, contato, cidade, UF (usada no mapa) |
+| `sales` | negócio | número por filial, cliente, vendedor, pagamento, totais e custo do momento |
+| `sale_items` | negócio | produto (nome congelado), qtd, preço, custo, desconto, total |
 | `audit_logs` | infra | histórico append-only |
 | `change_log` | infra | outbox do sync |
 

@@ -28,6 +28,14 @@
 | users (pessoas) | manage | manage | — |
 | audit (histórico) | manage | read | — |
 | backup | manage (restaura) | write (faz cópia) | — |
+| products (catálogo e estoque) | manage | manage | read (sem custo) |
+| customers | manage | manage | write |
+| sales | manage | manage (cancela) | write (vende) |
+| reports (inclui custo, margem, vendedores) | manage | read | — |
+
+Detalhes do comercial: quem não pode editar produtos não recebe o custo; lucro/custo da venda
+só para quem vê relatórios; alterar preço unitário na venda e lançar venda com data passada
+exigem `sales: manage`; cancelar venda exige `sales: manage` e devolve o estoque.
 
 Os níveis se acumulam: `manage` inclui `write`, que inclui `read`. A matriz fica em
 `crates/nucleo-core/src/permissions.rs` (`granted`). O front recebe a matriz efetiva em

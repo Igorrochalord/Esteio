@@ -58,11 +58,11 @@ Arquivos servidos como estão (ex.: `icon.png`).
 | Pasta / arquivo | O que faz | Exemplos |
 |---|---|---|
 | `main.tsx` / `App.tsx` | ponto de entrada; rotas e quem pode abrir cada uma | `/login`, `/usuarios` |
-| `pages/` | uma tela por arquivo | `LoginPage`, `RegisterPage`, `UsersPage`, `BackupPage` |
-| `components/` | peças usadas em várias telas | `Field`, `PasswordField`, `Dialog`, `AuthFrame`, guards de rota |
+| `pages/` | uma tela por arquivo | `SalesPage`, `ProductsPage`, `CustomersPage`, `ReportsPage`, `LoginPage`, `UsersPage`… |
+| `components/` | peças usadas em várias telas | `DataGrid` (planilha), `charts` (gráficos), `PeriodPicker`, `Field`, `Dialog`, `AuthFrame` |
 | `layouts/` | molduras: menu lateral do sistema e área de entrada | `AppLayout`, `AuthLayout` |
 | `hooks/` | lógica de React compartilhada | `useAuth` (sessão e permissões), `useAsync` (carregar dados) |
-| `services/` | chamadas ao núcleo, tipos e textos | `api.ts` (`call`), `endpoints.ts`, `types.ts`, `labels.ts`, `theme.ts` |
+| `services/` | chamadas ao núcleo, tipos, textos e formatos | `api.ts` (`call`), `endpoints.ts`, `types.ts`, `labels.ts`, `format.ts` (R$, datas), `period.ts`, `theme.ts` |
 | `styles.css` | visual do app inteiro (cores da marca via `--brand*`) | |
 
 ### `src-tauri/`: casca nativa
@@ -97,7 +97,9 @@ Biblioteca Rust sem interface: dá para testar sem abrir o programa.
 | `tests/` | testes de integração; `common/` tem os atalhos (`onboarded`, `login_as`) |
 
 Módulos atuais: `auth` (login), `company` (empresa e marca), `users` (pessoas, cadastro,
-aprovação), `audit` (histórico) e `backup` (cópias de segurança).
+aprovação), `audit` (histórico), `backup` (cópias), `products` (catálogo, categorias, estoque),
+`customers`, `sales` (vendas e cancelamento), `reports` (relatórios) e `spreadsheet`
+(exportar .xlsx, importar produtos). `src/money.rs` converte dinheiro e quantidades.
 
 ## `docs/`
 
