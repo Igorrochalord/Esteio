@@ -22,7 +22,7 @@ import { useAsync } from "../hooks/useAsync";
 import { useAuth } from "../hooks/useAuth";
 import { ApiError } from "../services/api";
 import { integrationsApi } from "../services/endpoints";
-import { formatDateTime } from "../services/labels";
+import { formatDateTime, JOB_KIND_LABEL } from "../services/labels";
 import type { IntegrationCatalogItem, IntegrationKind, JobStatus } from "../services/types";
 
 const KIND_ICON: Record<IntegrationKind, LucideIcon> = {
@@ -232,7 +232,7 @@ export function IntegrationsPage() {
                     <tr key={j.id}>
                       <td className="num nowrap">{formatDateTime(j.created_at)}</td>
                       <td>{name}</td>
-                      <td>{j.kind}</td>
+                      <td>{JOB_KIND_LABEL[j.kind] ?? j.kind}</td>
                       <td>
                         <span className={`tag ${st.tone}`}>{st.label}</span>
                       </td>
@@ -292,10 +292,11 @@ function ConfigureDialog({
   onSaved: (message: string) => Promise<void>;
 }) {
   const saved = item.integration;
+  const environments = item.sandbox_only ? (["sandbox"] as const) : (["sandbox", "production"] as const);
   const [environment, setEnvironment] = useState<"sandbox" | "production">(saved?.environment ?? "sandbox");
   const [enabled, setEnabled] = useState(saved?.enabled ?? true);
   const [config, setConfig] = useState<Record<string, string>>(() =>
-    Object.fromEntries(item.fields.filter((f) => !f.secret).map((f) => [f.key, String(saved?.config[f.key] ?? "")])),
+    Object.fromEntries(item.fields.filter((f) => f.kind === "text").map((f) => [f.key, String(saved?.config[f.key] ?? "")])),
   );
   const [secrets, setSecrets] = useState<Record<string, string>>({});
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -359,7 +360,7 @@ function ConfigureDialog({
           </p>
         )}
         <div className="segmented" role="radiogroup" aria-label="Ambiente">
-          {(["sandbox", "production"] as const).map((env) => (
+          {environments.map((env) => (
             <label key={env} className={environment === env ? "is-on" : undefined}>
               <input type="radio" checked={environment === env} onChange={() => setEnvironment(env)} />
               {env === "sandbox" ? "Teste" : "Produção (valendo)"}
@@ -367,7 +368,16 @@ function ConfigureDialog({
           ))}
         </div>
         {item.fields.map((f) =>
-          f.secret ? (
+          f.kind === "file" ? (
+            <FileField
+              key={f.key}
+              label={f.label}
+              stored={stored.has(f.key)}
+              error={fields[`secrets.${f.key}`]}
+              help={f.help}
+              onChange={(b64) => setSecrets({ ...secrets, [f.key]: b64 })}
+            />
+          ) : f.kind === "secret" ? (
             <Field
               key={f.key}
               label={f.label}
@@ -394,6 +404,10 @@ function ConfigureDialog({
           <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
           Ativada
         </label>
+        {item.oauth && saved && <OAuthSection provider={item.id} onDone={onSaved} />}
+        {item.oauth && !saved && (
+          <p className="muted small">Depois de salvar, autorize o acesso à sua conta pelo navegador.</p>
+        )}
         <p className="muted small">
           Os dados de acesso ficam guardados com criptografia neste computador e nunca aparecem no histórico.
         </p>
@@ -409,5 +423,98 @@ function ConfigureDialog({
         </div>
       </form>
     </Dialog>
+  );
+}
+
+/** Arquivo (ex.: certificado .p12/.pfx) lido no próprio computador e enviado em base64. */
+function FileField({
+  label,
+  stored,
+  error,
+  help,
+  onChange,
+}: {
+  label: string;
+  stored: boolean;
+  error?: string;
+  help: string | null;
+  onChange: (b64: string) => void;
+}) {
+  const [name, setName] = useState<string | null>(null);
+  async function pick(file: File | undefined) {
+    if (!file) return;
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let bin = "";
+    for (const b of bytes) bin += String.fromCharCode(b);
+    setName(file.name);
+    onChange(btoa(bin));
+  }
+  return (
+    <div className="field">
+      <span className="field-label">{label}</span>
+      <label className="btn btn--ghost file-btn">
+        <input type="file" accept=".p12,.pfx" hidden onChange={(e) => void pick(e.target.files?.[0])} />
+        {name ?? (stored ? "Arquivo guardado · trocar…" : "Escolher arquivo…")}
+      </label>
+      {error ? <p className="field-error">{error}</p> : help ? <p className="field-hint">{help}</p> : null}
+    </div>
+  );
+}
+
+/** Autorização pelo navegador: abre a página do serviço e recebe o código copiado de lá. */
+function OAuthSection({ provider, onDone }: { provider: string; onDone: (message: string) => Promise<void> }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function open() {
+    setError(null);
+    try {
+      setUrl(await integrationsApi.authorize(provider));
+    } catch (e) {
+      setError(errorText(e, "Não foi possível abrir a autorização."));
+    }
+  }
+
+  async function confirm() {
+    setBusy(true);
+    setError(null);
+    try {
+      const out = await integrationsApi.oauthCode(provider, code);
+      if (out.status === "ok") await onDone(`Conta autorizada. ${out.status_detail ?? ""}`.trim());
+      else setError(out.status_detail ?? "A autorização não funcionou.");
+    } catch (e) {
+      setError(errorText(e, "Não foi possível confirmar a autorização."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="panel panel--inset stack--tight">
+      <strong>Autorizar acesso à sua conta</strong>
+      <p className="muted small">
+        1. Clique em Autorizar: o navegador abre a página do serviço. 2. Entre e aceite. 3. Copie o código que
+        aparece no final e cole aqui.
+      </p>
+      {error && <Notice tone="error">{error}</Notice>}
+      <div className="row">
+        <button type="button" className="btn btn--ghost" onClick={() => void open()}>
+          Autorizar no navegador
+        </button>
+      </div>
+      {url && (
+        <p className="small muted">
+          Se o navegador não abriu, copie este endereço: <code style={{ wordBreak: "break-all" }}>{url}</code>
+        </p>
+      )}
+      <Field label="Código de autorização" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" />
+      <div className="row row--end">
+        <button type="button" className="btn btn--primary" disabled={busy || !code.trim()} onClick={() => void confirm()}>
+          Confirmar código
+        </button>
+      </div>
+    </div>
   );
 }

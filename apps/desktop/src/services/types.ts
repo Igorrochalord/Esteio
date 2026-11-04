@@ -519,7 +519,7 @@ export type IntegrationKind = "pix" | "nfse" | "marketplace" | "other";
 export interface IntegrationField {
   key: string;
   label: string;
-  secret: boolean;
+  kind: "text" | "secret" | "file";
   required: boolean;
   help: string | null;
 }
@@ -546,6 +546,9 @@ export interface IntegrationCatalogItem {
   fields: IntegrationField[];
   available: boolean;
   phase: string | null;
+  capabilities: string[];
+  sandbox_only: boolean;
+  oauth: boolean;
   integration: IntegrationOut | null;
 }
 

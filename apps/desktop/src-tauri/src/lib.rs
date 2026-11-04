@@ -29,6 +29,8 @@ const QUEUE_INTERVAL: Duration = Duration::from_secs(15);
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        // só o núcleo abre o navegador (autorização das integrações); a interface não tem permissão
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let dir = data_dir(app)?;
             let core = tauri::async_runtime::block_on(Core::open(&dir))?;
@@ -144,6 +146,8 @@ pub fn run() {
             commands::integrations::integrations_job_retry,
             commands::integrations::integrations_job_cancel,
             commands::integrations::integrations_run_now,
+            commands::integrations::integrations_authorize,
+            commands::integrations::integrations_oauth_code,
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Núcleo ERP");

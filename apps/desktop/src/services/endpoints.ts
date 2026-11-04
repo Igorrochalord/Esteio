@@ -263,4 +263,6 @@ export const integrationsApi = {
   retry: (id: string) => call<void>("integrations_job_retry", { id }),
   cancel: (id: string) => call<void>("integrations_job_cancel", { id }),
   runNow: () => call<TickReport>("integrations_run_now"),
+  authorize: (provider: string) => call<string>("integrations_authorize", { provider }),
+  oauthCode: (provider: string, code: string) => call<IntegrationOut>("integrations_oauth_code", { provider, code }),
 };

@@ -4,7 +4,8 @@ use nucleo_core::modules::integrations::models::{
 use nucleo_core::modules::integrations::service as integrations;
 use nucleo_core::permissions::{Action, Module};
 use nucleo_core::Core;
-use tauri::State;
+use tauri::{AppHandle, State};
+use tauri_plugin_opener::OpenerExt;
 
 use super::Res;
 
@@ -67,4 +68,36 @@ pub async fn integrations_job_cancel(core: State<'_, Core>, id: String) -> Res<(
 pub async fn integrations_run_now(core: State<'_, Core>) -> Res<TickReport> {
     core.require(Module::Integrations, Action::Manage).await?;
     integrations::tick(&core).await
+}
+
+/// Abre a página de autorização do serviço no navegador e devolve o endereço
+/// (a tela mostra para copiar, caso o navegador não abra).
+#[tauri::command(rename_all = "snake_case")]
+pub async fn integrations_authorize(
+    app: AppHandle,
+    core: State<'_, Core>,
+    provider: String,
+) -> Res<String> {
+    let ctx = core.require(Module::Integrations, Action::Manage).await?;
+    let url = integrations::authorize_url(&core, &ctx, &provider).await?;
+    if !url.starts_with("https://") {
+        return Err(nucleo_core::CoreError::BusinessRule(
+            "Endereço de autorização inválido.".into(),
+        ));
+    }
+    if let Err(e) = app.opener().open_url(&url, None::<&str>) {
+        log::warn!("não abriu o navegador: {e}");
+    }
+    Ok(url)
+}
+
+/// Recebe o código copiado da página de autorização e troca por tokens.
+#[tauri::command(rename_all = "snake_case")]
+pub async fn integrations_oauth_code(
+    core: State<'_, Core>,
+    provider: String,
+    code: String,
+) -> Res<IntegrationOut> {
+    let ctx = core.require(Module::Integrations, Action::Manage).await?;
+    integrations::oauth_exchange(&core, &ctx, &provider, &code).await
 }

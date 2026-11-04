@@ -52,6 +52,7 @@ export const ACTION_LABEL: Record<string, string> = {
   "integration.delete": "Integração removida",
   "integration.job_retry": "Envio repetido",
   "integration.job_cancel": "Envio cancelado",
+  "integration.authorize": "Integração autorizada no navegador",
 };
 
 const dateTime = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -174,4 +175,13 @@ export const DRE_GROUP_LABEL: Record<string, string> = {
   despesas_financeiras: "Despesas financeiras",
   investimentos: "Investimentos",
   compras_estoque: "Compras de mercadoria (estoque)",
+};
+
+/** Nome legível de cada tipo de trabalho da fila de integrações. */
+export const JOB_KIND_LABEL: Record<string, string> = {
+  "pix.create": "Gerar cobrança PIX",
+  "pix.poll": "Conferir pagamento PIX",
+  "pix.cancel": "Cancelar cobrança PIX",
+  "orders.sync": "Buscar pedidos on-line",
+  "nfse.emit": "Emitir NFS-e",
 };
