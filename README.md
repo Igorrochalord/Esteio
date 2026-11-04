@@ -1,110 +1,105 @@
-# Núcleo ERP
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="Núcleo ERP: a gestão da sua empresa, instalada no seu computador" width="100%">
+</p>
 
-ERP modular para pequenas e médias empresas, distribuído como **programa instalável**
-(`.exe` no Windows). Cada empresa instala no próprio computador e os dados ficam num arquivo
-local. Não há servidor nem internet envolvidos, e o sistema assume as cores e o logo da empresa.
+<p align="center">
+  <a href="https://github.com/Igorrochalord/Esteio/releases/latest"><img alt="Última versão" src="https://img.shields.io/github/v/release/Igorrochalord/Esteio?label=vers%C3%A3o&color=2563eb"></a>
+  <a href="https://github.com/Igorrochalord/Esteio/actions/workflows/ci.yml"><img alt="Testes" src="https://img.shields.io/github/actions/workflow/status/Igorrochalord/Esteio/ci.yml?branch=main&label=testes"></a>
+  <img alt="Windows e Linux" src="https://img.shields.io/badge/Windows%20%7C%20Linux-desktop-0f172a">
+  <img alt="Funciona offline" src="https://img.shields.io/badge/funciona-sem%20internet-16a34a">
+</p>
+
+## Para que serve
+
+O **Núcleo ERP** é um sistema de gestão para pequenas e médias empresas, como padarias, lojas,
+assistências técnicas e prestadores de serviço. Ele organiza vendas, estoque, clientes,
+dinheiro e serviços num só lugar.
+
+A ideia é ser **simples de ter**. Você não precisa de servidor nem de mensalidade de nuvem,
+e ele funciona sem internet. Basta instalar no computador da empresa, como qualquer outro
+programa. Os dados ficam guardados ali mesmo, com cópia de segurança automática, e o
+sistema usa as cores e o logo da sua empresa.
+
+<p align="center">
+  <img src="docs/assets/modulos.svg" alt="Módulos: Vendas, Estoque, Clientes, Financeiro, Ordens de serviço e Relatórios" width="100%">
+</p>
+
+## Baixar
+
+Escolha **um** arquivo, de acordo com o seu computador. O download começa na hora e sempre
+traz a versão mais recente.
+
+<p align="center">
+  <a href="https://github.com/Igorrochalord/Esteio/releases/latest/download/NucleoERP-Windows-Instalador.exe"><img src="docs/assets/baixar-windows.svg" alt="Baixar para Windows" height="72"></a>
+  &nbsp;
+  <a href="https://github.com/Igorrochalord/Esteio/releases/latest/download/NucleoERP-Linux.AppImage"><img src="docs/assets/baixar-linux.svg" alt="Baixar para Linux (AppImage)" height="72"></a>
+  &nbsp;
+  <a href="https://github.com/Igorrochalord/Esteio/releases/latest/download/NucleoERP-Linux.deb"><img src="docs/assets/baixar-linux-deb.svg" alt="Baixar para Ubuntu e Debian (.deb)" height="72"></a>
+</p>
+
+| Você usa… | Baixe | O que é |
+|---|---|---|
+| **Windows 10 ou 11** | [`NucleoERP-Windows-Instalador.exe`](https://github.com/Igorrochalord/Esteio/releases/latest/download/NucleoERP-Windows-Instalador.exe) | instalador comum: abrir, avançar, concluir |
+| **Linux** (qualquer distribuição) | [`NucleoERP-Linux.AppImage`](https://github.com/Igorrochalord/Esteio/releases/latest/download/NucleoERP-Linux.AppImage) | programa num arquivo só; não precisa instalar |
+| **Ubuntu, Debian, Mint** | [`NucleoERP-Linux.deb`](https://github.com/Igorrochalord/Esteio/releases/latest/download/NucleoERP-Linux.deb) | instala e aparece no menu de aplicativos |
+| **Fedora, openSUSE** | [`NucleoERP-Linux.rpm`](https://github.com/Igorrochalord/Esteio/releases/latest/download/NucleoERP-Linux.rpm) | instala e aparece no menu de aplicativos |
+| TI de empresa (Windows) | [`NucleoERP-Windows.msi`](https://github.com/Igorrochalord/Esteio/releases/latest/download/NucleoERP-Windows.msi) | instalação em massa / GPO |
+
+> **Não sabe qual escolher?** No Windows, o `.exe`. No Linux, o `.AppImage`.
+> Passo a passo de instalação, aviso do Windows na primeira vez e como atualizar sem perder
+> dados estão em **[docs/executar.md](docs/executar.md)**.
+> Todas as versões: [Releases](https://github.com/Igorrochalord/Esteio/releases).
+
+## O que tem dentro
+
+| Módulo | Faz |
+|---|---|
+| **Vendas** | venda à vista ou fiado, cancelamento, entra direto no financeiro |
+| **Estoque** | produtos, categorias, entradas e saídas, alerta de estoque mínimo |
+| **Clientes** | cadastro completo, importar e exportar Excel, mapa por estado |
+| **Financeiro** | contas a pagar e a receber, contas bancárias, extrato (OFX), fluxo de caixa, DRE |
+| **Ordens de serviço** | quadro de etapas, peças e serviços, prazos, faturar com um clique, imprimir OS |
+| **Relatórios** | painel inicial, curva ABC, vendedores, comparar períodos, Excel e PDF |
+| **Pessoas e segurança** | usuários com papéis (dono, administrador, usuário), histórico de alterações |
+| **Cópias de segurança** | automáticas, mais cópia manual e restauração |
+
+Tudo com modo claro e escuro, grades tipo planilha e um tutorial guiado na primeira vez.
+
+## Como é feito
 
 | Parte | Tecnologia |
 |---|---|
 | Interface | React 19 + TypeScript + Vite, dentro do Tauri v2 |
 | Regras de negócio | Rust (`crates/nucleo-core`) |
 | Dados | SQLite local (sqlx), com backup automático |
-| Instalador | Tauri bundler: NSIS/MSI no Windows, gerado no CI |
-
-## Baixar
-
-Instalador para Windows na página de versões:
-**[github.com/Igorrochalord/Esteio/releases/latest](https://github.com/Igorrochalord/Esteio/releases/latest)**
-(baixe o `…-setup.exe`). Passo a passo e atalhos em [distribuição](docs/distribuicao.md).
-
-## Como atualizar
-
-### Para quem usa o programa (clientes)
-
-1. **Faça uma cópia de segurança antes** (menu *Cópias de segurança* → *Salvar cópia em…*).
-2. Baixe a versão nova em **[Releases](https://github.com/Igorrochalord/Esteio/releases/latest)**
-   (arquivo `Nucleo ERP_<versão>_x64-setup.exe`).
-3. Feche o Núcleo ERP e execute o instalador **por cima** da versão atual. Não precisa desinstalar.
-4. Abra o programa. Seus dados continuam lá: ficam em
-   `%APPDATA%\br.com.nucleoerp.desktop\` (separados do programa), e o banco é atualizado
-   sozinho na primeira abertura (migrações automáticas).
-
-Não volte para uma versão mais antiga depois de abrir a nova: o banco já foi atualizado e
-o programa antigo recusa backups de versão mais nova. Em caso de problema, instale de novo a
-versão nova e, se preciso, restaure a cópia feita no passo 1.
-
-### Para você: publicar uma atualização
-
-```bash
-make check                       # tudo verde antes de publicar
-make version v=0.2.0             # sobe a versão nos 3 arquivos
-git commit -am "build: versão 0.2.0"
-git tag v0.2.0
-git push origin main --tags      # o CI gera o instalador e um release em rascunho
-```
-
-No GitHub, abra **Releases**, revise o rascunho, escreva as novidades e clique em
-**Publish release**. O link "latest" passa a apontar para a versão nova.
-Atualização automática dentro do programa (sem baixar à mão) está prevista: `tauri-plugin-updater`
-com chave de assinatura (ver [distribuição](docs/distribuicao.md)).
-
-### Para quem desenvolve: atualizar o código local
-
-```bash
-git pull
-make install     # se o package.json mudou
-make check       # fmt, lint, tipos e testes
-make dev         # migrações novas são aplicadas sozinhas ao abrir
-```
-
-Se a mudança trouxe dados de demonstração novos: `make reset-data && make seed`.
-
-## Começando
-
-Pré-requisitos e instalação do ambiente: [docs/desenvolvimento.md](docs/desenvolvimento.md).
-
-```bash
-make install   # dependências do frontend
-make test      # testes do núcleo
-make seed      # empresa de demonstração em .dev-data/
-make dev       # abre o app usando .dev-data/
-```
-
-Usuários do seed (senha `nucleo123`): `dono@paodourado.com.br` (proprietário),
-`admin@paodourado.com.br` (administrador), `caixa@paodourado.com.br` e `balcao@paodourado.com.br`
-(usuários). O seed também cria 28 produtos, 24 clientes e 90 dias de vendas.
-Para a outra empresa de exemplo: `make reset-data && make seed empresa=techparts`.
-
-## Estrutura
-
-Resumo abaixo; explicação de cada pasta em [docs/estrutura.md](docs/estrutura.md).
+| Instaladores | Tauri bundler, gerados no CI: `.exe`/`.msi` (Windows), `.AppImage`/`.deb`/`.rpm` (Linux) |
 
 ```
 apps/desktop/            app instalável
   src/                   interface React (pages, components, layouts, services, hooks)
   src-tauri/             casca Tauri: comandos finos que chamam o núcleo
 crates/nucleo-core/      regras de negócio + banco (sem interface)
-  src/modules/<m>/       models, repository, service de cada módulo
-  migrations/            migrações SQL do SQLite
-  tests/                 testes de integração
 docs/                    documentação por tópico + decisões (adr/)
-.github/workflows/       CI: lint, testes e instalador Windows
+.github/workflows/       CI: lint, testes e instaladores Windows e Linux
 ```
 
 ## Documentação
+
+**Como executar, instalar, atualizar e publicar:** [docs/executar.md](docs/executar.md).
 
 **Documentação Master em PDF:** [docs/Nucleo-ERP-Documentacao.pdf](docs/Nucleo-ERP-Documentacao.pdf), com o projeto inteiro,
 arquivo por arquivo, e onde alterar cada coisa (fonte: `docs/manual/manual.html`; regenerar com `make manual`).
 
 | Tópico | Conteúdo |
 |---|---|
+| [Executar e atualizar](docs/executar.md) | baixar, instalar, atualizar, rodar o código, publicar versão |
 | [Estrutura de pastas](docs/estrutura.md) | o que cada pasta e arquivo principal faz |
 | [Arquitetura](docs/arquitetura.md) | camadas, caminho de uma ação da tela ao banco, módulos |
 | [Desenvolvimento](docs/desenvolvimento.md) | ambiente, comandos, testes, como criar um módulo |
 | [Banco de dados](docs/banco-de-dados.md) | SQLite, migrações, regras de tabela, sync, auditoria |
 | [Segurança e permissões](docs/seguranca-e-permissoes.md) | login, sessão, papéis, CSP |
 | [Backup e restauração](docs/backup.md) | cópias automáticas e manuais, restauração |
-| [Distribuição](docs/distribuicao.md) | instalador, atalhos, publicar e baixar pelo GitHub |
+| [Distribuição](docs/distribuicao.md) | instaladores, atalhos, CI e release no GitHub |
 | [Assinatura](docs/assinatura.md) | pesquisa: modelos de plano, cobrança e licença offline |
 | [Roteiro](docs/roteiro.md) | fases concluídas e próximas |
 | [Decisões (ADR)](docs/adr/) | registro das decisões de arquitetura |

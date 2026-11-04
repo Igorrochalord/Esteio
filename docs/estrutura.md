@@ -35,7 +35,7 @@ appIgor/
 | `Cargo.toml` | workspace Rust: junta o núcleo e o app; versão do produto e perfis de compilação |
 | `Cargo.lock` | versões exatas das bibliotecas Rust (commitado: o build é reproduzível) |
 | `Makefile` | atalhos do dia a dia (`make test`, `make dev`, …) |
-| `README.md` | porta de entrada do projeto |
+| `README.md` | apresentação do projeto e links de download (banners em `docs/assets/`) |
 | `CLAUDE.md` | regras para agentes de IA que trabalham no repositório |
 | `.editorconfig` / `.gitignore` | padrão de formatação / o que não vai para o git |
 
@@ -105,6 +105,9 @@ aprovação), `audit` (histórico), `backup` (cópias), `products` (catálogo, c
 
 Documentação por tópico ([índice no README](../README.md#documentação)). `adr/` guarda as
 decisões de arquitetura numeradas; uma decisão nova ganha um ADR, e as antigas não são apagadas.
+`executar.md` concentra baixar, instalar, rodar, atualizar e publicar. `assets/` tem os SVGs
+animados do README (banner, módulos e botões de download), feitos à mão e com
+`prefers-reduced-motion` respeitado.
 
 ## Gerados (fora do git)
 

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="84" viewBox="0 0 380 84" role="img" aria-label="Baixar para Linux — AppImage · roda em qualquer distro">
+  <style>
+    text { font-family: "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .shine { animation: shine 3.2s ease-in-out infinite; }
+    @keyframes shine { 0%,55% { transform: translateX(-120px) } 100% { transform: translateX(500px) } }
+    .arrow { animation: drop 1.6s ease-in-out infinite; }
+    @keyframes drop { 0%,100% { transform: translateY(-2px) } 50% { transform: translateY(3px) } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } .shine { display: none } }
+  </style>
+  <defs>
+    <linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ea580c"/><stop offset="1" stop-color="#9a3412"/></linearGradient>
+    <linearGradient id="s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <clipPath id="c"><rect width="380" height="84" rx="16"/></clipPath>
+  </defs>
+  <g clip-path="url(#c)">
+    <rect width="380" height="84" fill="url(#b)"/>
+    <path class="shine" d="M20 -10h70l-40 104h-70Z" fill="url(#s)"/>
+  </g>
+  <g transform="translate(22 20)" fill="#fff"><g transform="translate(4 0)"><ellipse cx="18" cy="26" rx="14" ry="17"/><ellipse cx="18" cy="29" rx="9" ry="12" fill="#fff" fill-opacity=".9"/><circle cx="13" cy="15" r="2.4" fill="#111"/><circle cx="23" cy="15" r="2.4" fill="#111"/><path d="M13 20h10l-5 5Z" fill="#fbbf24"/><ellipse cx="9" cy="43" rx="7" ry="3" fill="#fbbf24"/><ellipse cx="27" cy="43" rx="7" ry="3" fill="#fbbf24"/></g></g>
+  <text x="84" y="38" font-size="20" font-weight="700" fill="#fff">Baixar para Linux</text>
+  <text x="84" y="61" font-size="13.5" fill="#fff" fill-opacity=".85">AppImage · roda em qualquer distro</text>
+  <g transform="translate(340 30)"><g class="arrow" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M10 0v18M2 11l8 8 8-8M0 26h20"/></g></g>
+</svg>

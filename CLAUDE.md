@@ -41,7 +41,7 @@ assinatura, roteiro).
 ## Ambiente
 - `make install` / `test` / `lint` / `check` / `seed` / `reset-data` / `dev` / `build`.
 - Dados de dev em `.dev-data/` (`NUCLEO_DATA_DIR`). Seed: senha `nucleo123` (dono@paodourado.com.br, …).
-- Instalador Windows: CI (`.github/workflows/ci.yml`, runner windows-latest).
+- Instaladores: CI (`.github/workflows/ci.yml`): Windows (windows-latest) e Linux (ubuntu-22.04); release junta os dois.
 
 ## Estado
 - **Fase 1b (fundação local)**: núcleo, comandos, frontend e CI prontos; `make check` verde e o app
@@ -64,6 +64,10 @@ assinatura, roteiro).
   Próxima: NFS-e (pesquisar a API do Emissor Nacional antes; provável ADR 0003, única parte online).
 - Página `/planos`, lembrete a cada 5 min (`PlansNudge`, dono/admin) e tutorial por papel (`Tour`):
   ao criar telas novas, acrescente o passo correspondente em `stepsFor()` do `Tour.tsx`.
-- Publicar versão: `make version v=X.Y.Z` → commit → tag → push (README, "Como atualizar").
+- Publicar versão: `make version v=X.Y.Z` → commit → tag → push (`docs/executar.md`).
+- README é vitrine (propósito, banners SVG animados em `docs/assets/`, download); instruções de
+  execução/instalação/atualização vão em `docs/executar.md`. O CI gera Windows e Linux com nomes
+  fixos (`NucleoERP-Windows-Instalador.exe`, `NucleoERP-Linux.AppImage`/`.deb`/`.rpm`) para os
+  links `releases/latest/download/…`; não renomeie sem atualizar README e docs.
 - Cores: só variáveis CSS de `styles.css` (há modo escuro); nada de hex em componentes.
 - O código SaaS antigo (FastAPI/Postgres) está na tag `v0.1-saas`.

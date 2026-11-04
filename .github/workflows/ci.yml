@@ -53,18 +53,67 @@ jobs:
         run: |
           npm ci
           npm run tauri build
+      # nomes fixos: o README aponta para releases/latest/download/<nome>
+      - name: renomear para o download
+        shell: bash
+        run: |
+          mkdir -p dist-release
+          cp target/release/bundle/nsis/*-setup.exe dist-release/NucleoERP-Windows-Instalador.exe
+          cp target/release/bundle/msi/*.msi dist-release/NucleoERP-Windows.msi
       - uses: actions/upload-artifact@v7
         with:
           name: nucleo-erp-windows
-          path: |
-            target/release/bundle/nsis/*.exe
-            target/release/bundle/msi/*.msi
+          path: dist-release/*
           if-no-files-found: error
-      - name: release (tags v*)
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v3
+
+  linux:
+    name: pacotes Linux
+    needs: check
+    # 22.04: glibc mais antiga, então o AppImage roda em mais distribuições
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: libs do Tauri (WebKit)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev libdbus-1-dev pkg-config build-essential file
+      - uses: dtolnay/rust-toolchain@1.91.0
+      - uses: Swatinem/rust-cache@v2.9.3
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - name: build
+        working-directory: apps/desktop
+        run: |
+          npm ci
+          npm run tauri build -- --bundles appimage,deb,rpm
+      - name: renomear para o download
+        run: |
+          mkdir -p dist-release
+          cp target/release/bundle/appimage/*.AppImage dist-release/NucleoERP-Linux.AppImage
+          cp target/release/bundle/deb/*.deb dist-release/NucleoERP-Linux.deb
+          cp target/release/bundle/rpm/*.rpm dist-release/NucleoERP-Linux.rpm
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nucleo-erp-linux
+          path: dist-release/*
+          if-no-files-found: error
+
+  release:
+    name: release (tags v*)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: dist-release
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v3
         with:
           draft: true
-          files: |
-            target/release/bundle/nsis/*.exe
-            target/release/bundle/msi/*.msi
+          files: dist-release/*
