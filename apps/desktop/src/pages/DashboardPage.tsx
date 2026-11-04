@@ -15,7 +15,7 @@ import { Link, useNavigate } from "react-router";
 import { BarList, ColumnChart, StatTile } from "../components/charts";
 import { useAsync } from "../hooks/useAsync";
 import { useAuth } from "../hooks/useAuth";
-import { productsApi, reportsApi, salesApi, usersApi } from "../services/endpoints";
+import { financeApi, productsApi, reportsApi, salesApi, usersApi } from "../services/endpoints";
 import { int, isoDay, localDayStart, money, moneyShort, nextDay, pctChange, qty, toNum, tzOffset } from "../services/format";
 
 function greeting(): string {
@@ -213,6 +213,7 @@ function Alerts() {
   const { data: users } = useAsync(() => (canApprove ? usersApi.list() : Promise.resolve([])), [canApprove]);
   const { data: products } = useAsync(() => (can("products") ? productsApi.list() : Promise.resolve([])));
   const { me } = useAuth();
+  const { data: fin } = useAsync(() => (can("finance") ? financeApi.summary(isoDay(new Date())) : Promise.resolve(null)));
   const pending = users?.filter((u) => u.pending).length ?? 0;
   const low = (products ?? []).filter((p) => p.below_min);
   const noLogo = can("settings", "manage") && !me?.company.logo_url;
@@ -229,6 +230,10 @@ function Alerts() {
       action: "Ver produtos",
       to: "/produtos",
     });
+  if (fin?.payable_overdue_count)
+    items.push({ key: "pay", icon: AlertTriangle, tone: "warn", text: `${fin.payable_overdue_count} conta(s) a pagar vencida(s): ${money(fin.payable_overdue)}`, action: "Ver contas", to: "/financeiro" });
+  if (fin?.receivable_overdue_count)
+    items.push({ key: "rec", icon: AlertTriangle, tone: "warn", text: `${fin.receivable_overdue_count} conta(s) a receber vencida(s), como fiados: ${money(fin.receivable_overdue)}`, action: "Cobrar", to: "/financeiro" });
   if (noProducts) items.push({ key: "np", icon: Boxes, tone: "info", text: "Cadastre ou importe seus produtos para começar a vender", action: "Ir para produtos", to: "/produtos" });
   if (noLogo) items.push({ key: "logo", icon: CircleCheck, tone: "info", text: "Envie o logo da empresa para aparecer no sistema", action: "Enviar logo", to: "/empresa" });
   if (!items.length) return null;

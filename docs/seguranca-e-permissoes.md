@@ -32,6 +32,7 @@
 | customers | manage | manage | write |
 | sales | manage | manage (cancela) | write (vende) |
 | reports (inclui custo, margem, vendedores) | manage | read | — |
+| finance (contas, a pagar/receber, DRE) | manage | manage | — |
 
 Detalhes do comercial: quem não pode editar produtos não recebe o custo; lucro/custo da venda
 só para quem vê relatórios; alterar preço unitário na venda e lançar venda com data passada

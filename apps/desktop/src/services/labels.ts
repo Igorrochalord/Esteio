@@ -30,6 +30,20 @@ export const ACTION_LABEL: Record<string, string> = {
   "customer.update": "Cliente alterado",
   "sale.create": "Venda registrada",
   "sale.cancel": "Venda cancelada",
+  "bank_account.create": "Conta bancária criada",
+  "bank_account.update": "Conta bancária alterada",
+  "fin_category.create": "Categoria financeira criada",
+  "fin_category.update": "Categoria financeira alterada",
+  "fin_entry.create": "Título lançado",
+  "fin_entry.update": "Título alterado",
+  "fin_entry.receive": "Recebimento registrado",
+  "fin_entry.pay": "Pagamento registrado",
+  "fin_entry.unpay": "Baixa estornada",
+  "fin_entry.cancel": "Título cancelado",
+  "bank_tx.create": "Lançamento avulso",
+  "bank_tx.transfer": "Transferência entre contas",
+  "bank_tx.delete": "Lançamento excluído",
+  "bank_tx.ofx_import": "Extrato importado",
 };
 
 const dateTime = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -118,3 +132,24 @@ export function formatDocument(doc: string | null): string {
   if (doc.length === 11) return doc.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
   return formatCnpj(doc);
 }
+
+export const ACCOUNT_KIND_LABEL: Record<string, string> = {
+  caixa: "Caixa (dinheiro)",
+  corrente: "Conta corrente",
+  poupanca: "Poupança",
+  carteira: "Carteira digital",
+};
+
+export const DRE_GROUP_LABEL: Record<string, string> = {
+  receita_vendas: "Receita de vendas e serviços",
+  outras_receitas: "Outras receitas",
+  receitas_financeiras: "Receitas financeiras",
+  deducoes: "Deduções",
+  impostos: "Impostos",
+  custos: "Custos (compras)",
+  despesas_operacionais: "Despesas operacionais",
+  despesas_pessoal: "Despesas com pessoal",
+  despesas_financeiras: "Despesas financeiras",
+  investimentos: "Investimentos",
+  compras_estoque: "Compras de mercadoria (estoque)",
+};

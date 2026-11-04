@@ -56,6 +56,9 @@ assinatura, roteiro).
 - **Planos: tudo liberado hoje.** `src/plans.rs` define Gratuito/Starter/Platinum/Infinite; recurso
   novo da tabela de `docs/assinatura.md` ganha `// PLANO:` e, se couber, `plans::ensure_within`.
 - Roteiro aprovado: Financeiro → Ordens de serviço → NFS-e (Emissor Nacional, A1) → Planos/cobrança.
+- **Fase 4 (financeiro)**: pronta e testada; vendas alimentam o financeiro (à vista → conta padrão,
+  fiado → a receber). DRE por competência: compra de mercadoria é informativa (o custo entra pelo CMV).
+  SQL: não misture `?` e `?N` na mesma consulta (desloca as posições no SQLite).
 - Página `/planos`, lembrete a cada 5 min (`PlansNudge`, dono/admin) e tutorial por papel (`Tour`):
   ao criar telas novas, acrescente o passo correspondente em `stepsFor()` do `Tour.tsx`.
 - Publicar versão: `make version v=X.Y.Z` → commit → tag → push (README, "Como atualizar").

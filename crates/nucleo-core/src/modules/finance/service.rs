@@ -61,7 +61,7 @@ async fn audit(
 // ------------------------------------------------------------------ categorias
 
 /// (nome, tipo, grupo da DRE, chave do sistema)
-const DEFAULT_CATEGORIES: [(&str, &str, &str, Option<&str>); 13] = [
+const DEFAULT_CATEGORIES: [(&str, &str, &str, Option<&str>); 14] = [
     ("Vendas", "receita", "receita_vendas", Some("vendas")),
     ("Serviços", "receita", "receita_vendas", Some("servicos")),
     ("Outras receitas", "receita", "outras_receitas", None),
@@ -71,7 +71,9 @@ const DEFAULT_CATEGORIES: [(&str, &str, &str, Option<&str>); 13] = [
         "receitas_financeiras",
         None,
     ),
-    ("Compras e fornecedores", "despesa", "custos", None),
+    // compra para revenda não é despesa do mês: o custo entra pelo CMV de cada venda
+    ("Compras de mercadoria", "despesa", "compras_estoque", None),
+    ("Custos de serviços (terceiros)", "despesa", "custos", None),
     ("Aluguel", "despesa", "despesas_operacionais", None),
     (
         "Energia, água e internet",

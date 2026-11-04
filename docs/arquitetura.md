@@ -63,6 +63,11 @@ Exemplo: o dono troca a cor principal.
 | sales | `sales_list/get/create`, `sales_cancel` (manage), `sellers_list` | sales |
 | reports | `report_sales`, `report_products`, `report_stock`, `report_customers`, `report_sellers` | reports |
 | spreadsheet | `export_xlsx` (qualquer logado), `import_preview`, `import_products` (products write) | — |
+| finance | `fin_accounts/…`, `fin_entries/…` (criar, baixar, estornar, cancelar), `fin_transactions/…`, `fin_transfer`, `fin_ofx_preview/import`, `fin_cash_flow`, `fin_dre`, `fin_summary` | finance |
+
+**Ponte vendas → financeiro** (`finance::service::on_sale_created/on_sale_canceled`, chamada dentro da
+transação da venda): à vista entra na conta padrão (cria "Caixa" se não houver conta); fiado vira
+conta a receber em 30 dias; cancelar a venda remove a entrada e cancela o fiado em aberto.
 
 ## "Excel interno": a grade
 

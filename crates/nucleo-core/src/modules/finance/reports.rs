@@ -202,6 +202,7 @@ pub async fn dre(ctx: &Ctx, q: DreQuery) -> CoreResult<Dre> {
             "receitas_financeiras" => "receitas_financeiras",
             "investimentos" => "investimentos",
             "cmv" => "cmv",
+            "compras_estoque" => "compras_estoque",
             _ => "despesas_operacionais",
         };
         g.entry(key).or_insert_with(|| vec![0; months.len()])[i] += cents;
@@ -274,6 +275,7 @@ pub async fn dre(ctx: &Ctx, q: DreQuery) -> CoreResult<Dre> {
         &financeiro,
     );
     let investimentos = get("investimentos");
+    let compras = get("compras_estoque");
 
     let line = |key: &str, label: &str, kind: &str, v: Vec<i64>| DreLine {
         total: from_cents(v.iter().sum()),
@@ -313,6 +315,12 @@ pub async fn dre(ctx: &Ctx, q: DreQuery) -> CoreResult<Dre> {
             financeiro,
         ),
         line("resultado", "= Resultado líquido", "subtotal", resultado),
+        line(
+            "compras_estoque",
+            "Compras de mercadoria (viram custo na venda, pelo CMV)",
+            "info",
+            compras,
+        ),
         line(
             "investimentos",
             "Investimentos (fora do resultado)",

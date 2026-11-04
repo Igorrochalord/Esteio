@@ -8,6 +8,7 @@ import {
   HelpCircle,
   House,
   Keyboard,
+  Landmark,
   ShoppingCart,
   Sparkles,
   UserRound,
@@ -105,6 +106,13 @@ function stepsFor(role: Role, firstName: string, company: string): Step[] {
       tip: "Enter numa célula de estoque abre o histórico do produto.",
     },
     customers,
+    {
+      icon: Landmark,
+      title: "Financeiro sem retrabalho",
+      text: "Vendas à vista entram sozinhas no caixa e o fiado vira conta a receber. Lance contas a pagar (com parcelas ou repetição mensal), dê baixa, importe o extrato do banco (OFX) para conciliar e acompanhe o fluxo de caixa e a DRE.",
+      chips: ["A pagar", "A receber", "Extrato OFX", "DRE"],
+      tip: "Contas vencidas aparecem em Atenção, no Início.",
+    },
     {
       icon: BarChart3,
       title: "Relatórios e comparação",

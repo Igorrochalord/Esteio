@@ -1,6 +1,15 @@
 import { call } from "./api";
 import type {
   AuditEntry,
+  BankAccount,
+  BankTx,
+  CashFlow,
+  Dre,
+  EntryKind,
+  FinCategory,
+  FinEntry,
+  FinanceSummary,
+  OfxPreview,
   BackupInfo,
   Branding,
   Category,
@@ -147,6 +156,7 @@ export interface SaleInput {
   discount?: Dec | null;
   notes?: string | null;
   sold_at?: string | null;
+  tz_offset_minutes?: number;
   items: { product_id: string; qty: Dec; unit_price?: Dec | null; discount?: Dec | null }[];
 }
 
@@ -172,4 +182,49 @@ export const sheetApi = {
   preview: (path: string) => call<ImportPreview>("import_preview", { path }),
   importProducts: (data: { path: string; mapping: Partial<Record<ImportField, number>>; update_existing: boolean }) =>
     call<ImportResult>("import_products", { data }),
+};
+
+export interface EntryInput {
+  kind: EntryKind;
+  description: string;
+  category_id: string;
+  customer_id?: string | null;
+  counterparty?: string | null;
+  amount: Dec;
+  issue_date?: string | null;
+  due_date: string;
+  installments?: number | null;
+  repeat_months?: number | null;
+  document?: string | null;
+  notes?: string | null;
+}
+
+export const financeApi = {
+  accounts: () => call<BankAccount[]>("fin_accounts"),
+  createAccount: (data: { name: string; kind: string; bank_name?: string | null; agency?: string | null; account_number?: string | null; initial_balance?: Dec | null; opening_date?: string | null; is_default?: boolean }) =>
+    call<BankAccount>("fin_account_create", { data }),
+  updateAccount: (id: string, data: Record<string, unknown>) => call<BankAccount>("fin_account_update", { id, data }),
+  categories: () => call<FinCategory[]>("fin_categories"),
+  createCategory: (data: { name: string; kind: string; dre_group: string }) => call<FinCategory>("fin_category_create", { data }),
+  updateCategory: (id: string, data: { name?: string; dre_group?: string; active?: boolean }) => call<void>("fin_category_update", { id, data }),
+  entries: (query: { kind?: EntryKind; status?: string; due_from?: string; due_to?: string; customer_id?: string }) =>
+    call<FinEntry[]>("fin_entries", { query }),
+  createEntry: (data: EntryInput) => call<FinEntry[]>("fin_entry_create", { data }),
+  updateEntry: (id: string, data: Record<string, unknown>) => call<FinEntry>("fin_entry_update", { id, data }),
+  pay: (id: string, data: { date: string; amount?: Dec | null; bank_account_id?: string | null; payment_method?: string | null }) =>
+    call<FinEntry>("fin_entry_pay", { id, data }),
+  unpay: (id: string) => call<FinEntry>("fin_entry_unpay", { id }),
+  cancel: (id: string) => call<FinEntry>("fin_entry_cancel", { id }),
+  transactions: (query: { bank_account_id?: string; from?: string; to?: string }) => call<BankTx[]>("fin_transactions", { query }),
+  createTransaction: (data: { bank_account_id: string; date: string; kind: "entrada" | "saida"; amount: Dec; description: string; category_id?: string | null }) =>
+    call<void>("fin_transaction_create", { data }),
+  transfer: (data: { from_account_id: string; to_account_id: string; date: string; amount: Dec; description?: string | null }) =>
+    call<void>("fin_transfer", { data }),
+  deleteTransaction: (id: string) => call<void>("fin_transaction_delete", { id }),
+  ofxPreview: (bank_account_id: string, path: string) => call<OfxPreview>("fin_ofx_preview", { bank_account_id, path }),
+  ofxImport: (data: { bank_account_id: string; path: string; create_new: boolean; income_category_id?: string | null; expense_category_id?: string | null }) =>
+    call<{ reconciled: number; created: number; skipped: number }>("fin_ofx_import", { data }),
+  cashFlow: (query: { from: string; to: string; group?: "day" | "month" }) => call<CashFlow>("fin_cash_flow", { query }),
+  dre: (query: { from_month: string; to_month: string; tz_offset_minutes: number }) => call<Dre>("fin_dre", { query }),
+  summary: (today: string) => call<FinanceSummary>("fin_summary", { today }),
 };

@@ -501,6 +501,11 @@ async fn cash_flow_and_dre() {
     )
     .await
     .unwrap();
+    // compra de mercadoria vira estoque: não pode reduzir o resultado (o custo já está no CMV)
+    let mercadoria = category(&c, "Compras de mercadoria").await;
+    fin::create_entry(&c, entry("pagar", &mercadoria, "50", "2026-10-12"))
+        .await
+        .unwrap();
     let impostos = category(&c, "Impostos e taxas").await;
     fin::create_entry(&c, entry("pagar", &impostos, "6", "2026-10-20"))
         .await
@@ -521,11 +526,11 @@ async fn cash_flow_and_dre() {
     let m = &cf.rows[0];
     assert_eq!(
         (m.realized_in, m.realized_out, m.projected_out),
-        (d("100"), d("30"), d("6"))
+        (d("100"), d("30"), d("56"))
     );
     assert_eq!(
         (cf.closing_balance, cf.projected_closing),
-        (d("1070"), d("1064"))
+        (d("1070"), d("1014"))
     );
 
     let dre = reports::dre(
@@ -546,11 +551,16 @@ async fn cash_flow_and_dre() {
     assert_eq!(get("lucro_bruto"), d("54"));
     assert_eq!(get("despesas_operacionais"), d("-30"));
     assert_eq!(get("resultado"), d("24"));
+    assert_eq!(
+        get("compras_estoque"),
+        d("-50"),
+        "aparece só como informação"
+    );
 
     let s = fin::summary(&c, "2026-10-21").await.unwrap();
     assert_eq!(
         (s.total_balance, s.payable_overdue, s.payable_overdue_count),
-        (d("1070"), d("6"), 1)
+        (d("1070"), d("56"), 2)
     );
 }
 

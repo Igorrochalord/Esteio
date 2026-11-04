@@ -8,6 +8,10 @@ use nucleo_core::modules::company::models::{CompanyIn, OnboardingInput, OwnerIn}
 use nucleo_core::modules::company::service as company;
 use nucleo_core::modules::customers::models::CustomerInput;
 use nucleo_core::modules::customers::service as customers;
+use nucleo_core::modules::finance::models::{
+    AccountInput, EntryInput, EntryQuery, PayInput, TransferInput,
+};
+use nucleo_core::modules::finance::service as fin;
 use nucleo_core::modules::products::models::ProductInput;
 use nucleo_core::modules::products::service as products;
 use nucleo_core::modules::sales::models::{SaleInput, SaleItemInput};
@@ -604,6 +608,25 @@ async fn seed_commerce(core: &Core, spec: &Spec) -> Result<(), CoreError> {
     }
     println!("  + {} clientes", client_ids.len());
 
+    // contas: o caixa recebe as vendas à vista
+    let account = |name: &str, kind: &str, initial: i64, default: bool| AccountInput {
+        name: name.into(),
+        kind: kind.into(),
+        bank_name: (kind != "caixa").then(|| name.split(' ').next().unwrap_or(name).to_owned()),
+        agency: (kind == "corrente").then(|| "0341".into()),
+        account_number: (kind == "corrente").then(|| "12345-6".into()),
+        initial_balance: Some(Decimal::from(initial)),
+        opening_date: Some(
+            (chrono::Utc::now() - chrono::Duration::days(95))
+                .format("%Y-%m-%d")
+                .to_string(),
+        ),
+        is_default: Some(default),
+    };
+    let caixa = fin::create_account(&ctx, account("Caixa da loja", "caixa", 500, true)).await?;
+    let banco = fin::create_account(&ctx, account("Itaú PJ", "corrente", 8000, false)).await?;
+    fin::create_account(&ctx, account("Nubank PJ", "carteira", 1200, false)).await?;
+
     let seller_list = sellers(&ctx).await?;
     let seller_weights: Vec<u32> = (0..seller_list.len())
         .map(|i| [2, 3, 5, 4][i % 4])
@@ -695,5 +718,167 @@ async fn seed_commerce(core: &Core, spec: &Spec) -> Result<(), CoreError> {
         }
     }
     println!("  + {count} vendas em 90 dias");
+    seed_finance(&ctx, &mut rng, &caixa.id, &banco.id, today).await?;
+    Ok(())
+}
+
+/// Contas fixas, compras, depósitos do caixa no banco e recebimento da maior parte do fiado.
+async fn seed_finance(
+    ctx: &nucleo_core::Ctx,
+    rng: &mut Rng,
+    caixa: &str,
+    banco: &str,
+    today: chrono::NaiveDate,
+) -> Result<(), CoreError> {
+    use chrono::Datelike;
+    let cats = fin::categories(ctx).await?;
+    let cat = |name: &str| {
+        cats.iter()
+            .find(|c| c.name == name)
+            .map(|c| c.id.clone())
+            .unwrap_or_default()
+    };
+    let fmt = |d: chrono::NaiveDate| d.format("%Y-%m-%d").to_string();
+    let first = today.with_day(1).unwrap_or(today);
+    let mut entries = 0;
+    // 3 meses passados + o atual + 2 futuros
+    for back in -3i32..=2 {
+        let month = if back < 0 {
+            first - chrono::Months::new(back.unsigned_abs())
+        } else {
+            first + chrono::Months::new(back as u32)
+        };
+        let fixed = [
+            (
+                "Aluguel da loja",
+                "Aluguel",
+                2800,
+                5,
+                Some("Imobiliária Central"),
+            ),
+            ("Folha de pagamento", "Salários e encargos", 4800, 5, None),
+            (
+                "Energia elétrica",
+                "Energia, água e internet",
+                420 + rng.below(220) as i64,
+                15,
+                Some("CPFL"),
+            ),
+            (
+                "Internet",
+                "Energia, água e internet",
+                149,
+                10,
+                Some("Vivo Empresas"),
+            ),
+            (
+                "Simples Nacional (DAS)",
+                "Impostos e taxas",
+                1100 + rng.below(400) as i64,
+                20,
+                Some("Receita Federal"),
+            ),
+            (
+                "Farinha e insumos",
+                "Compras de mercadoria",
+                1800 + rng.below(900) as i64,
+                12,
+                Some("Moinho Bom Grão"),
+            ),
+            (
+                "Laticínios",
+                "Compras de mercadoria",
+                900 + rng.below(500) as i64,
+                22,
+                Some("Laticínios Serra"),
+            ),
+        ];
+        for (desc, category, value, day, who) in fixed {
+            let due = month.with_day(day).unwrap_or(month);
+            let created = fin::create_entry(
+                ctx,
+                EntryInput {
+                    kind: "pagar".into(),
+                    description: desc.into(),
+                    category_id: cat(category),
+                    customer_id: None,
+                    counterparty: who.map(Into::into),
+                    amount: Decimal::from(value),
+                    issue_date: Some(fmt(due)),
+                    due_date: fmt(due),
+                    installments: None,
+                    repeat_months: None,
+                    document: None,
+                    notes: None,
+                },
+            )
+            .await?;
+            entries += 1;
+            // vencidos são pagos, exceto dois deixados em atraso de propósito
+            let leave_open =
+                back == 0 && (desc == "Laticínios" || desc == "Energia elétrica") && due < today;
+            if due < today && !leave_open {
+                fin::pay_entry(
+                    ctx,
+                    &created[0].id,
+                    PayInput {
+                        date: fmt(due),
+                        amount: None,
+                        bank_account_id: Some(banco.into()),
+                        payment_method: Some("pix".into()),
+                    },
+                )
+                .await?;
+            }
+        }
+    }
+    // depósito semanal do caixa no banco (parte do dinheiro e cartões do caixa)
+    let mut day = today - chrono::Duration::days(84);
+    while day < today {
+        // deposita o equivalente a uma semana de vendas
+        let amount = Decimal::from(3800 + rng.below(900) as i64);
+        fin::transfer(
+            ctx,
+            TransferInput {
+                from_account_id: caixa.into(),
+                to_account_id: banco.into(),
+                date: fmt(day),
+                amount,
+                description: Some("Depósito do caixa".into()),
+            },
+        )
+        .await?;
+        day += chrono::Duration::days(7);
+    }
+    // fiado: ~80% dos vencidos já recebidos
+    let fiado = fin::entries(
+        ctx,
+        EntryQuery {
+            kind: Some("receber".into()),
+            status: Some("aberto".into()),
+            ..Default::default()
+        },
+    )
+    .await?;
+    let mut received = 0;
+    for e in fiado {
+        let due = chrono::NaiveDate::parse_from_str(&e.due_date, "%Y-%m-%d").unwrap_or(today);
+        if due < today && rng.below(100) < 80 {
+            let paid = due - chrono::Duration::days(rng.below(10) as i64);
+            fin::pay_entry(
+                ctx,
+                &e.id,
+                PayInput {
+                    date: fmt(paid),
+                    amount: None,
+                    bank_account_id: Some(banco.into()),
+                    payment_method: Some("pix".into()),
+                },
+            )
+            .await?;
+            received += 1;
+        }
+    }
+    println!("  + financeiro: 3 contas, {entries} contas a pagar, depósitos semanais, {received} fiados recebidos");
     Ok(())
 }

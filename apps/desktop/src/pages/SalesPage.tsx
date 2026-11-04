@@ -10,7 +10,7 @@ import { useAsync } from "../hooks/useAsync";
 import { useAuth } from "../hooks/useAuth";
 import { ApiError } from "../services/api";
 import { customersApi, productsApi, salesApi } from "../services/endpoints";
-import { dateTime, decimalInput, money, parseDecimal, qty, toNum } from "../services/format";
+import { dateTime, decimalInput, money, parseDecimal, qty, toNum, tzOffset } from "../services/format";
 import { PAYMENT_LABEL } from "../services/labels";
 import { periodBounds, presetPeriod, type Period } from "../services/period";
 import type { Customer, PaymentMethod, Product, Sale, SaleItem } from "../services/types";
@@ -237,6 +237,7 @@ function NewSaleForm({ onDone }: { onDone: (s: Sale) => Promise<void> }) {
         payment_method: payment,
         discount: discount.trim() ? parseDecimal(discount) : null,
         notes: notes.trim() || null,
+        tz_offset_minutes: tzOffset(),
         items,
       });
       await onDone(sale);

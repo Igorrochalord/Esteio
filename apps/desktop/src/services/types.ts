@@ -8,7 +8,8 @@ export type Module =
   | "products"
   | "customers"
   | "sales"
-  | "reports";
+  | "reports"
+  | "finance";
 
 export interface User {
   id: string;
@@ -331,4 +332,110 @@ export interface PlanItem {
   plan: PlanCode;
   price: Dec;
   limits: PlanLimits;
+}
+
+// ------------------------------------------------------------------ financeiro
+
+export type AccountKind = "caixa" | "corrente" | "poupanca" | "carteira";
+
+export interface BankAccount {
+  id: string;
+  name: string;
+  kind: AccountKind;
+  bank_name: string | null;
+  agency: string | null;
+  account_number: string | null;
+  initial_balance: Dec;
+  opening_date: string;
+  is_default: boolean;
+  active: boolean;
+  balance: Dec;
+  unreconciled: number;
+}
+
+export interface FinCategory {
+  id: string;
+  name: string;
+  kind: "receita" | "despesa";
+  dre_group: string;
+  system_key: string | null;
+  active: boolean;
+}
+
+export type EntryKind = "receber" | "pagar";
+
+export interface FinEntry {
+  id: string;
+  kind: EntryKind;
+  description: string;
+  category_id: string;
+  category_name: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  counterparty: string | null;
+  amount: Dec;
+  issue_date: string;
+  due_date: string;
+  status: "aberto" | "pago" | "cancelado";
+  paid_date: string | null;
+  paid_amount: Dec | null;
+  bank_account_id: string | null;
+  bank_account_name: string | null;
+  payment_method: string | null;
+  document: string | null;
+  installment: number | null;
+  installments: number | null;
+  group_id: string | null;
+  sale_id: string | null;
+  sale_number: number | null;
+  notes: string | null;
+}
+
+export interface BankTx {
+  id: string;
+  bank_account_id: string;
+  bank_account_name: string;
+  date: string;
+  amount: Dec;
+  balance_after: Dec;
+  description: string;
+  category_id: string | null;
+  category_name: string | null;
+  entry_id: string | null;
+  sale_id: string | null;
+  transfer_group: string | null;
+  reconciled: boolean;
+  origin: "manual" | "titulo" | "venda" | "transferencia";
+}
+
+export interface OfxPreview {
+  bank_id: string | null;
+  account_id: string | null;
+  start: string | null;
+  end: string | null;
+  ledger_balance: Dec | null;
+  lines: { fitid: string; date: string; amount: Dec; memo: string; status: "novo" | "conciliar" | "ja_importado"; match_id: string | null; match_description: string | null }[];
+}
+
+export interface CashFlow {
+  opening_balance: Dec;
+  closing_balance: Dec;
+  projected_closing: Dec;
+  rows: { period: string; realized_in: Dec; realized_out: Dec; projected_in: Dec; projected_out: Dec; balance: Dec; projected_balance: Dec }[];
+}
+
+export interface Dre {
+  months: string[];
+  lines: { key: string; label: string; kind: "group" | "subtotal" | "info"; values: Dec[]; total: Dec }[];
+}
+
+export interface FinanceSummary {
+  total_balance: Dec;
+  receivable_overdue: Dec;
+  receivable_overdue_count: number;
+  receivable_next7: Dec;
+  payable_overdue: Dec;
+  payable_overdue_count: number;
+  payable_next7: Dec;
+  payable_today: Dec;
 }

@@ -72,12 +72,15 @@ export function ColumnChart({
   axisFormat,
   height = 220,
   ariaLabel,
+  legend = ["Período atual", "Período anterior"],
 }: {
   data: ColumnDatum[];
   format: (v: number) => string;
   axisFormat?: (v: number) => string;
   height?: number;
   ariaLabel: string;
+  /** rótulos da série principal e da cinza (quando há `previous`) */
+  legend?: [string, string];
 }) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [tip, setTip] = useState<Tip | null>(null);
@@ -107,7 +110,7 @@ export function ColumnChart({
         <>
           <strong>{format(d.value)}</strong>
           <span>{d.label}</span>
-          {d.previous != null && <span>anterior: {format(d.previous)}</span>}
+          {d.previous != null && <span>{legend[1].toLowerCase()}: {format(d.previous)}</span>}
           {d.detail}
         </>
       ),
@@ -169,8 +172,8 @@ export function ColumnChart({
       </svg>
       {compare && (
         <div className="chart-legend" aria-hidden>
-          <span><i className="swatch swatch--series" /> Período atual</span>
-          <span><i className="swatch swatch--ghost" /> Período anterior</span>
+          <span><i className="swatch swatch--series" /> {legend[0]}</span>
+          <span><i className="swatch swatch--ghost" /> {legend[1]}</span>
         </div>
       )}
       <Tooltip tip={tip} />

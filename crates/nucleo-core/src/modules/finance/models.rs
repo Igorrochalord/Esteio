@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::modules::double_option;
 
 pub const ACCOUNT_KINDS: [&str; 4] = ["caixa", "corrente", "poupanca", "carteira"];
-pub const DRE_GROUPS: [&str; 10] = [
+pub const DRE_GROUPS: [&str; 11] = [
     "receita_vendas",
     "outras_receitas",
     "deducoes",
@@ -15,6 +15,8 @@ pub const DRE_GROUPS: [&str; 10] = [
     "receitas_financeiras",
     "impostos",
     "investimentos",
+    // compra de mercadoria para revenda: vira estoque; o custo entra no CMV quando vende
+    "compras_estoque",
 ];
 
 #[derive(Debug, Clone, Serialize)]

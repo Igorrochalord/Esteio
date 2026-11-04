@@ -74,6 +74,10 @@ precisar migrar dados depois, desde já:
 | `customers` | negócio | nome, CPF/CNPJ, contato, cidade, UF (usada no mapa) |
 | `sales` | negócio | número por filial, cliente, vendedor, pagamento, totais e custo do momento |
 | `sale_items` | negócio | produto (nome congelado), qtd, preço, custo, desconto, total |
+| `bank_accounts` | negócio | contas (caixa, corrente, poupança, carteira), saldo inicial, conta padrão |
+| `fin_categories` | negócio | categorias de receita/despesa e a linha da DRE (`dre_group`) |
+| `fin_entries` | negócio | contas a pagar/receber: parcelas, recorrência, baixa, vínculo com venda (fiado) |
+| `bank_transactions` | negócio | extrato: valor com sinal, origem (venda, título, transferência, avulso), FITID do OFX, conciliado |
 | `audit_logs` | infra | histórico append-only |
 | `change_log` | infra | outbox do sync |
 
