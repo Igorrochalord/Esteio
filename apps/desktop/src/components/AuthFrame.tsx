@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { authApi } from "../services/endpoints";
 import { applyBranding } from "../services/theme";
 import type { Branding } from "../services/types";
+import { AuthShowcase } from "./AuthShowcase";
 import { BrandMark } from "./BrandMark";
 
 /**
@@ -31,6 +32,7 @@ export function AuthFrame({ children }: { children: ReactNode }) {
           <p className="auth-brand-name">{name}</p>
         </div>
         <p className="auth-brand-tagline">Gestão do dia a dia da sua empresa, em um só lugar.</p>
+        <AuthShowcase />
         <p className="auth-brand-foot">Os dados ficam guardados neste computador.</p>
       </aside>
       <main className="auth-main">

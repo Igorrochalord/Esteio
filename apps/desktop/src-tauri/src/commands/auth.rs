@@ -47,9 +47,9 @@ pub async fn me(core: State<'_, Core>) -> Res<Me> {
     auth::me(&ctx).await
 }
 
-/// Planos (preço e limites). Hoje tudo está liberado; usado na página "Planos".
+/// Planos (preço e limites). Tabela pública e fixa: aparece na página "Planos" e também na
+/// vitrine da tela de entrada, antes do login. Hoje tudo está liberado.
 #[tauri::command(rename_all = "snake_case")]
-pub async fn plans_catalog(core: State<'_, Core>) -> Res<Vec<nucleo_core::plans::CatalogItem>> {
-    core.current().await?;
+pub async fn plans_catalog() -> Res<Vec<nucleo_core::plans::CatalogItem>> {
     Ok(nucleo_core::plans::catalog())
 }
