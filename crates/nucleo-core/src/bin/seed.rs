@@ -16,6 +16,8 @@ use nucleo_core::modules::products::models::ProductInput;
 use nucleo_core::modules::products::service as products;
 use nucleo_core::modules::sales::models::{SaleInput, SaleItemInput};
 use nucleo_core::modules::sales::service as sales;
+use nucleo_core::modules::service_orders::models::{InvoiceInput, OsInput, OsItemInput};
+use nucleo_core::modules::service_orders::service as os;
 use nucleo_core::modules::users::models::UserCreate;
 use nucleo_core::modules::users::service as users;
 use nucleo_core::modules::users::service::sellers;
@@ -38,6 +40,16 @@ type Item = (
 );
 /// (nome, cidade, UF)
 type Client = (&'static str, &'static str, &'static str);
+/// serviço do catálogo: (nome, unidade, preço)
+type Service = (&'static str, &'static str, &'static str);
+/// OS de demonstração: (equipamento, relato, diagnóstico, situação final, previsão em dias a partir de hoje)
+type OsDemo = (
+    Option<&'static str>,
+    &'static str,
+    Option<&'static str>,
+    &'static str,
+    i64,
+);
 
 struct Spec {
     catalog: &'static [Item],
@@ -49,6 +61,8 @@ struct Spec {
     colors: (&'static str, &'static str),
     owner: (&'static str, &'static str),
     members: &'static [(&'static str, &'static str, &'static str)],
+    services: &'static [Service],
+    orders: &'static [OsDemo],
 }
 
 const PADARIA: Spec = Spec {
@@ -271,6 +285,55 @@ const PADARIA: Spec = Spec {
         ("Bia Caixa", "caixa@paodourado.com.br", "user"),
         ("Diego Balcão", "balcao@paodourado.com.br", "user"),
     ],
+    services: &[
+        ("Decoração personalizada", "un", "45.00"),
+        ("Entrega a domicílio", "un", "15.00"),
+        ("Montagem de mesa de festa", "h", "60.00"),
+    ],
+    orders: &[
+        (
+            Some("Bolo de aniversário 3 kg"),
+            "Tema fundo do mar, escrita \"Parabéns Lucas\"",
+            None,
+            "aberta",
+            4,
+        ),
+        (
+            Some("Coffee break 40 pessoas"),
+            "Empresa, sexta às 9h",
+            Some("Cardápio aprovado pelo cliente"),
+            "em_andamento",
+            2,
+        ),
+        (
+            Some("Mesa de festa infantil"),
+            "Montagem no salão do prédio",
+            None,
+            "aguardando",
+            -1,
+        ),
+        (
+            Some("Cesta de café da manhã"),
+            "Presente de Dia das Mães",
+            Some("Pronta para retirada"),
+            "concluida",
+            0,
+        ),
+        (
+            Some("Bolo de casamento"),
+            "Três andares, massa branca",
+            Some("Entregue e montado"),
+            "faturada",
+            -6,
+        ),
+        (
+            Some("Torta salgada grande"),
+            "Retirada no sábado",
+            None,
+            "cancelada",
+            1,
+        ),
+    ],
 };
 
 const TECHPARTS: Spec = Spec {
@@ -391,6 +454,50 @@ const TECHPARTS: Spec = Spec {
     colors: ("#0e7490", "#082f49"),
     owner: ("Rafael Tech", "dono@techparts.com.br"),
     members: &[("Lia Vendas", "vendas@techparts.com.br", "user")],
+    services: &[
+        ("Mão de obra técnica", "h", "120.00"),
+        ("Diagnóstico", "un", "80.00"),
+        ("Formatação com backup", "un", "150.00"),
+    ],
+    orders: &[
+        (
+            Some("Notebook Dell Inspiron"),
+            "Não carrega a bateria",
+            None,
+            "aberta",
+            3,
+        ),
+        (
+            Some("PC gamer"),
+            "Desliga sozinho durante jogos",
+            Some("Fonte com defeito; trocar"),
+            "em_andamento",
+            1,
+        ),
+        (
+            Some("Impressora HP"),
+            "Atolando papel",
+            None,
+            "aguardando",
+            -2,
+        ),
+        (
+            Some("Notebook Lenovo"),
+            "Lento, pede formatação",
+            Some("Formatado; dados preservados"),
+            "concluida",
+            0,
+        ),
+        (
+            Some("Rede do escritório"),
+            "Instalar 3 pontos de rede",
+            Some("Pontos instalados e testados"),
+            "faturada",
+            -5,
+        ),
+        (Some("Monitor 24\""), "Sem imagem", None, "cancelada", 2),
+        (Some("Servidor"), "Trocar HD por SSD", None, "aberta", 6),
+    ],
 };
 
 /// PNG de cor sólida sem dependências (zlib em blocos "stored", sem compressão).
@@ -719,6 +826,125 @@ async fn seed_commerce(core: &Core, spec: &Spec) -> Result<(), CoreError> {
     }
     println!("  + {count} vendas em 90 dias");
     seed_finance(&ctx, &mut rng, &caixa.id, &banco.id, today).await?;
+    // estoque atual (depois das vendas): só peças com sobra entram nas OS
+    let parts: Vec<String> = products::list(&ctx)
+        .await?
+        .into_iter()
+        .filter(|p| p.active && p.track_stock && p.stock > Decimal::from(5))
+        .map(|p| p.id)
+        .collect();
+    let techs: Vec<String> = seller_list.iter().map(|s| s.id.clone()).collect();
+    seed_service_orders(core, spec, &parts, &client_ids, &techs, &mut rng, today).await
+}
+
+/// Serviços no catálogo e algumas OS em cada etapa do quadro (uma faturada, uma cancelada).
+async fn seed_service_orders(
+    core: &Core,
+    spec: &Spec,
+    parts: &[String],
+    clients: &[String],
+    techs: &[String],
+    rng: &mut Rng,
+    today: chrono::NaiveDate,
+) -> Result<(), CoreError> {
+    let ctx = core.require(Module::ServiceOrders, Action::Manage).await?;
+    let cat = products::create_category(&ctx, "Serviços").await?;
+    let mut services = Vec::new();
+    for (name, unit, price) in spec.services {
+        let p = products::create(
+            &ctx,
+            ProductInput {
+                code: String::new(),
+                barcode: None,
+                name: (*name).into(),
+                category_id: Some(cat.id.clone()),
+                unit: Some((*unit).into()),
+                price: dec(price),
+                cost: None,
+                track_stock: Some(false),
+                min_stock: None,
+                initial_stock: None,
+            },
+        )
+        .await?;
+        services.push(p.id);
+    }
+    let day = |offset: i64| {
+        (today + chrono::Duration::days(offset))
+            .format("%Y-%m-%d")
+            .to_string()
+    };
+    for (n, (equipment, reported, diagnosis, target, due)) in spec.orders.iter().enumerate() {
+        let mut items = vec![OsItemInput {
+            product_id: services[n % services.len()].clone(),
+            description: None,
+            qty: Decimal::from(1 + rng.below(3) as i64),
+            unit_price: None,
+            discount: None,
+        }];
+        if !parts.is_empty() && rng.below(100) < 70 {
+            items.push(OsItemInput {
+                product_id: parts[rng.below(parts.len() as u64) as usize].clone(),
+                description: None,
+                qty: Decimal::ONE,
+                unit_price: None,
+                discount: None,
+            });
+        }
+        let o = os::create(
+            &ctx,
+            OsInput {
+                customer_id: clients[rng.below(clients.len() as u64) as usize].clone(),
+                equipment: equipment.map(Into::into),
+                reported: (*reported).into(),
+                technician_id: (*target != "aberta").then(|| techs[n % techs.len()].clone()),
+                scheduled_date: Some(day(due - 2)),
+                due_date: Some(day(*due)),
+                items,
+            },
+        )
+        .await?;
+        if let Some(d) = diagnosis {
+            let patch = nucleo_core::modules::service_orders::models::OsPatch {
+                diagnosis: Some(Some((*d).into())),
+                ..Default::default()
+            };
+            os::update(&ctx, &o.id, patch).await?;
+        }
+        let path: &[&str] = match *target {
+            "em_andamento" => &["em_andamento"],
+            "aguardando" => &["em_andamento", "aguardando"],
+            "concluida" | "faturada" => &["em_andamento", "concluida"],
+            _ => &[],
+        };
+        for s in path {
+            os::change_status(&ctx, &o.id, s, None).await?;
+        }
+        if *target == "aguardando" {
+            os::add_note(
+                &ctx,
+                &o.id,
+                "Aguardando aprovação do orçamento pelo cliente",
+            )
+            .await?;
+        }
+        if *target == "faturada" {
+            let input = InvoiceInput {
+                payment_method: "pix".into(),
+                seller_id: None,
+                tz_offset_minutes: Some(-180),
+            };
+            os::invoice(&ctx, &o.id, input).await?;
+        }
+        if *target == "cancelada" {
+            os::cancel(&ctx, &o.id, "Cliente desistiu (demonstração)").await?;
+        }
+    }
+    println!(
+        "  + {} serviços e {} ordens de serviço",
+        services.len(),
+        spec.orders.len()
+    );
     Ok(())
 }
 

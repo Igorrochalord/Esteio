@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::modules::double_option;
 
-pub const UNITS: [&str; 8] = ["un", "kg", "g", "l", "ml", "cx", "pct", "m"];
+pub const UNITS: [&str; 9] = ["un", "kg", "g", "l", "ml", "cx", "pct", "m", "h"];
 pub const MANUAL_KINDS: [&str; 3] = ["entrada", "saida", "ajuste"];
 
 #[derive(Debug, Clone, sqlx::FromRow)]

@@ -48,10 +48,12 @@ pub enum Module {
     Reports,
     /// contas bancárias, a pagar/receber, fluxo de caixa, DRE
     Finance,
+    /// ordens de serviço
+    ServiceOrders,
 }
 
 impl Module {
-    pub const ALL: [Module; 9] = [
+    pub const ALL: [Module; 10] = [
         Self::Settings,
         Self::Users,
         Self::Audit,
@@ -61,6 +63,7 @@ impl Module {
         Self::Sales,
         Self::Reports,
         Self::Finance,
+        Self::ServiceOrders,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -74,6 +77,7 @@ impl Module {
             Self::Sales => "sales",
             Self::Reports => "reports",
             Self::Finance => "finance",
+            Self::ServiceOrders => "service_orders",
         }
     }
 }
@@ -102,14 +106,17 @@ pub fn granted(role: Role, module: Module) -> Option<Action> {
     match role {
         Role::Owner => Some(Manage),
         Role::Admin => match module {
-            Settings | Users | Products | Customers | Sales | Finance => Some(Manage),
+            Settings | Users | Products | Customers | Sales | Finance | ServiceOrders => {
+                Some(Manage)
+            }
             Audit | Reports => Some(Read),
             Backup => Some(Write), // gera cópias; restaurar é só do dono
         },
         // operador do dia a dia: vende, cadastra clientes, consulta produtos
         Role::User => match module {
             Settings | Products => Some(Read),
-            Customers | Sales => Some(Write),
+            // técnico/atendente: abre, atualiza e fatura OS; cancelar é de quem gerencia
+            Customers | Sales | ServiceOrders => Some(Write),
             _ => None,
         },
     }
@@ -144,7 +151,7 @@ mod tests {
     #[test]
     fn user_menu_only_lists_granted_modules() {
         let p = permissions_for(Role::User);
-        assert_eq!(p.len(), 4);
+        assert_eq!(p.len(), 5);
         assert_eq!(p["settings"], "read");
         assert_eq!(p["sales"], "write");
         assert!(!p.contains_key("reports"));

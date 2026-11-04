@@ -82,7 +82,8 @@ struct Line {
     total_cents: i64,
 }
 
-pub async fn create(ctx: &Ctx, data: SaleInput) -> CoreResult<Sale> {
+/// Cria a venda dentro de uma transação já aberta (usada também ao faturar uma OS). Devolve o id.
+pub(crate) async fn create_in(tx: &mut db::Conn, ctx: &Ctx, data: SaleInput) -> CoreResult<String> {
     let mut v = Validator::default();
     v.check(
         PAYMENT_METHODS.contains(&data.payment_method.as_str()),
@@ -117,14 +118,12 @@ pub async fn create(ctx: &Ctx, data: SaleInput) -> CoreResult<Sale> {
     v.check(sale_discount >= 0, "discount", "Desconto inválido");
     v.finish()?;
 
-    let mut tx = ctx.db.begin().await?;
-
     // vendedor e cliente
     let seller_id = data
         .seller_id
         .clone()
         .unwrap_or_else(|| ctx.user.id.clone());
-    let seller = users_repo::get(&mut tx, &seller_id).await?;
+    let seller = users_repo::get(tx, &seller_id).await?;
     if !seller.is_some_and(|s| s.is_active) {
         return Err(CoreError::field(
             "seller_id",
@@ -132,10 +131,7 @@ pub async fn create(ctx: &Ctx, data: SaleInput) -> CoreResult<Sale> {
         ));
     }
     if let Some(cid) = &data.customer_id {
-        if !customers::get(&mut tx, cid)
-            .await?
-            .is_some_and(|c| c.active)
-        {
+        if !customers::get(tx, cid).await?.is_some_and(|c| c.active) {
             return Err(CoreError::field(
                 "customer_id",
                 "Cliente não encontrado ou inativo",
@@ -147,7 +143,7 @@ pub async fn create(ctx: &Ctx, data: SaleInput) -> CoreResult<Sale> {
     let mut lines = Vec::with_capacity(data.items.len());
     let mut needed: HashMap<String, i64> = HashMap::new();
     for (i, item) in data.items.iter().enumerate() {
-        let p = products::load(&mut tx, &item.product_id).await?;
+        let p = products::load(tx, &item.product_id).await?;
         if !p.active {
             return Err(CoreError::BusinessRule(format!(
                 "O produto {} está inativo",
@@ -208,7 +204,7 @@ pub async fn create(ctx: &Ctx, data: SaleInput) -> CoreResult<Sale> {
         .sum();
 
     let id = db::new_id();
-    let number = repository::next_number(&mut tx, &ctx.inst.branch_id).await?;
+    let number = repository::next_number(tx, &ctx.inst.branch_id).await?;
     let now = db::now();
     sqlx::query(
         "INSERT INTO sales (id, number, customer_id, seller_id, status, payment_method,
@@ -267,7 +263,7 @@ pub async fn create(ctx: &Ctx, data: SaleInput) -> CoreResult<Sale> {
                 sale_id: Some(&id),
                 user_id: Some(&ctx.user.id),
             };
-            products_repo::apply_movement(&mut tx, &ctx.inst, m).await?;
+            products_repo::apply_movement(tx, &ctx.inst, m).await?;
         }
     }
 
@@ -279,7 +275,7 @@ pub async fn create(ctx: &Ctx, data: SaleInput) -> CoreResult<Sale> {
         .map(|d| (d.with_timezone(&Utc) + offset).date_naive())
         .unwrap_or_else(|_| (Utc::now() + offset).date_naive());
     finance::on_sale_created(
-        &mut tx,
+        tx,
         &ctx.inst,
         &id,
         number,
@@ -303,8 +299,14 @@ pub async fn create(ctx: &Ctx, data: SaleInput) -> CoreResult<Sale> {
             "items": lines.len(),
         })),
     };
-    audit::record(&mut tx, &ctx.inst, entry).await?;
+    audit::record(tx, &ctx.inst, entry).await?;
 
+    Ok(id)
+}
+
+pub async fn create(ctx: &Ctx, data: SaleInput) -> CoreResult<Sale> {
+    let mut tx = ctx.db.begin().await?;
+    let id = create_in(&mut tx, ctx, data).await?;
     let row = repository::get(&mut tx, &id)
         .await?
         .ok_or_else(|| CoreError::Internal("venda recém-criada sumiu".into()))?;
