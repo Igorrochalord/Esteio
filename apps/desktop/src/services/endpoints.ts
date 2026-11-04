@@ -1,5 +1,32 @@
 import { call } from "./api";
-import type { AuditEntry, BackupInfo, Branding, Company, Me, Page, Role, User } from "./types";
+import type {
+  AuditEntry,
+  BackupInfo,
+  Branding,
+  Category,
+  Company,
+  Customer,
+  CustomersReport,
+  Dec,
+  ImportField,
+  ImportPreview,
+  ImportResult,
+  Me,
+  Movement,
+  Page,
+  PaymentMethod,
+  Product,
+  ProductsReport,
+  ReportQuery,
+  Role,
+  Sale,
+  SalesSummary,
+  SellerOption,
+  SellerRow,
+  SheetInput,
+  StockReport,
+  User,
+} from "./types";
 
 export const authApi = {
   setupStatus: () => call<{ configured: boolean }>("setup_status"),
@@ -59,4 +86,88 @@ export const backupApi = {
   /** sem `dest`, salva na pasta de backups do app */
   create: (dest?: string) => call<BackupInfo>("backup_create", { dest: dest ?? null }),
   restore: (path: string) => call<BackupInfo>("backup_restore", { path }),
+};
+
+export interface ProductInput {
+  code?: string;
+  barcode?: string | null;
+  name: string;
+  category_id?: string | null;
+  unit?: string;
+  price: Dec;
+  cost?: Dec | null;
+  track_stock?: boolean;
+  min_stock?: Dec | null;
+  initial_stock?: Dec | null;
+}
+
+/** Edição parcial: só os campos enviados mudam; `null` limpa campos opcionais. */
+export type ProductPatch = Partial<{
+  code: string;
+  barcode: string | null;
+  name: string;
+  category_id: string | null;
+  unit: string;
+  price: Dec;
+  cost: Dec;
+  track_stock: boolean;
+  min_stock: Dec;
+  active: boolean;
+}>;
+
+export const productsApi = {
+  list: () => call<Product[]>("products_list"),
+  create: (data: ProductInput) => call<Product>("products_create", { data }),
+  update: (id: string, data: ProductPatch) => call<Product>("products_update", { id, data }),
+  moveStock: (data: { product_id: string; kind: "entrada" | "saida" | "ajuste"; qty: Dec; unit_cost?: Dec | null; note?: string | null }) =>
+    call<Product>("stock_move", { data }),
+  movements: (query: { product_id?: string; from?: string; to?: string; limit?: number }) =>
+    call<Movement[]>("stock_movements", { query }),
+  categories: () => call<Category[]>("categories_list"),
+  createCategory: (name: string) => call<Category>("categories_create", { name }),
+  renameCategory: (id: string, name: string) => call<void>("categories_rename", { id, name }),
+  deleteCategory: (id: string) => call<void>("categories_delete", { id }),
+};
+
+export type CustomerInput = Omit<Customer, "id" | "active" | "created_at" | "updated_at">;
+
+export const customersApi = {
+  list: () => call<Customer[]>("customers_list"),
+  create: (data: Partial<CustomerInput> & { name: string }) => call<Customer>("customers_create", { data }),
+  update: (id: string, data: Partial<CustomerInput & { active: boolean }>) =>
+    call<Customer>("customers_update", { id, data }),
+};
+
+export interface SaleInput {
+  customer_id?: string | null;
+  seller_id?: string | null;
+  payment_method: PaymentMethod;
+  discount?: Dec | null;
+  notes?: string | null;
+  sold_at?: string | null;
+  items: { product_id: string; qty: Dec; unit_price?: Dec | null; discount?: Dec | null }[];
+}
+
+export const salesApi = {
+  list: (query: { from?: string; to?: string; status?: string; customer_id?: string; seller_id?: string; limit?: number }) =>
+    call<Sale[]>("sales_list", { query }),
+  get: (id: string) => call<Sale>("sales_get", { id }),
+  create: (data: SaleInput) => call<Sale>("sales_create", { data }),
+  cancel: (id: string, reason: string) => call<Sale>("sales_cancel", { id, reason }),
+  sellers: () => call<SellerOption[]>("sellers_list"),
+};
+
+export const reportsApi = {
+  sales: (query: ReportQuery) => call<SalesSummary>("report_sales", { query }),
+  products: (query: ReportQuery) => call<ProductsReport>("report_products", { query }),
+  stock: (query: ReportQuery) => call<StockReport>("report_stock", { query }),
+  customers: (query: ReportQuery) => call<CustomersReport>("report_customers", { query }),
+  sellers: (query: ReportQuery) => call<SellerRow[]>("report_sellers", { query }),
+};
+
+export const sheetApi = {
+  exportXlsx: (path: string, sheets: SheetInput[]) => call<void>("export_xlsx", { path, sheets }),
+  preview: (path: string) => call<ImportPreview>("import_preview", { path }),
+  importProducts: (data: { path: string; mapping: Partial<Record<ImportField, number>>; update_existing: boolean }) =>
+    call<ImportResult>("import_products", { data }),
 };

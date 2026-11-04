@@ -10,6 +10,10 @@ export function AppLayout() {
 
   const links = [
     { to: "/", label: "Início", show: true, end: true },
+    { to: "/vendas", label: "Vendas", show: can("sales") },
+    { to: "/produtos", label: "Produtos", show: can("products") },
+    { to: "/clientes", label: "Clientes", show: can("customers") },
+    { to: "/relatorios", label: "Relatórios", show: can("reports") },
     { to: "/usuarios", label: "Pessoas", show: can("users") },
     { to: "/empresa", label: "Empresa", show: can("settings") },
     { to: "/auditoria", label: "Histórico", show: can("audit") },
