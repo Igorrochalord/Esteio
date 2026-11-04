@@ -86,6 +86,7 @@ async fn sell(
             discount: None,
             notes: None,
             sold_at: Some(when.into()),
+            tz_offset_minutes: Some(-180),
             items: items
                 .iter()
                 .map(|(p, q)| SaleItemInput {

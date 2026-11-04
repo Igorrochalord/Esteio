@@ -6,6 +6,7 @@ use crate::audit::{self, Entry};
 use crate::db;
 use crate::error::{CoreError, CoreResult, Validator};
 use crate::modules::customers::service as customers;
+use crate::modules::finance::service as finance;
 use crate::modules::products::repository::{self as products_repo, NewMovement};
 use crate::modules::products::service as products;
 use crate::modules::users::repository as users_repo;
@@ -270,6 +271,25 @@ pub async fn create(ctx: &Ctx, data: SaleInput) -> CoreResult<Sale> {
         }
     }
 
+    // financeiro: à vista entra na conta padrão; fiado vira conta a receber
+    let offset = chrono::Duration::minutes(i64::from(
+        data.tz_offset_minutes.unwrap_or(-180).clamp(-840, 840),
+    ));
+    let local_date = DateTime::parse_from_rfc3339(&sold_at)
+        .map(|d| (d.with_timezone(&Utc) + offset).date_naive())
+        .unwrap_or_else(|_| (Utc::now() + offset).date_naive());
+    finance::on_sale_created(
+        &mut tx,
+        &ctx.inst,
+        &id,
+        number,
+        &data.payment_method,
+        total,
+        data.customer_id.as_deref(),
+        local_date,
+    )
+    .await?;
+
     let entry = Entry {
         actor_id: Some(&ctx.user.id),
         action: "sale.create",
@@ -396,6 +416,8 @@ pub async fn cancel(ctx: &Ctx, id: &str, reason: &str) -> CoreResult<Sale> {
         };
         products_repo::apply_movement(&mut tx, &ctx.inst, m).await?;
     }
+
+    finance::on_sale_canceled(&mut tx, id).await?;
 
     let entry = Entry {
         actor_id: Some(&ctx.user.id),

@@ -188,7 +188,7 @@ fn cell_text(d: &Data) -> String {
 }
 
 /// Bytes → texto: UTF-8 (com ou sem BOM) ou, se falhar, Windows-1252/Latin-1 (CSV do Excel).
-fn decode(bytes: &[u8]) -> String {
+pub(crate) fn decode(bytes: &[u8]) -> String {
     let bytes = bytes.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(bytes);
     match std::str::from_utf8(bytes) {
         Ok(s) => s.to_owned(),

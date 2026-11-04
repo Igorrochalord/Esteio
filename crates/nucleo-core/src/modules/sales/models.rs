@@ -23,6 +23,8 @@ pub struct SaleInput {
     pub notes: Option<String>,
     /// data da venda (só para quem gerencia vendas; padrão = agora)
     pub sold_at: Option<String>,
+    /// fuso da tela (minutos a somar ao UTC); define a data local no financeiro. Padrão: Brasília
+    pub tz_offset_minutes: Option<i32>,
     pub items: Vec<SaleItemInput>,
 }
 

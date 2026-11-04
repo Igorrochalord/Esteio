@@ -677,6 +677,7 @@ async fn seed_commerce(core: &Core, spec: &Spec) -> Result<(), CoreError> {
                 discount: None,
                 notes: None,
                 sold_at: Some(sold_at),
+                tz_offset_minutes: Some(-180),
                 items,
             };
             match sales::create(&ctx, input).await {
