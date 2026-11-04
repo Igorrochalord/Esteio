@@ -10,6 +10,7 @@ import { CompanyPage } from "./pages/CompanyPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
+import { RegisterPage } from "./pages/RegisterPage";
 import { UsersPage } from "./pages/UsersPage";
 
 // HashRouter: o app carrega arquivos locais; não há servidor para fallback de rotas.
@@ -20,6 +21,7 @@ export function App() {
         <Routes>
           <Route element={<RequireAnonymous><AuthLayout /></RequireAnonymous>}>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/cadastro" element={<RegisterPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
           </Route>
           <Route element={<RequireAuth><AppLayout /></RequireAuth>}>

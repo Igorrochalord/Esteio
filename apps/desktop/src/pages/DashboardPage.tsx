@@ -1,6 +1,8 @@
 import { Link } from "react-router";
 
+import { useAsync } from "../hooks/useAsync";
 import { useAuth } from "../hooks/useAuth";
+import { usersApi } from "../services/endpoints";
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -9,6 +11,9 @@ function greeting(): string {
 
 export function DashboardPage() {
   const { me, can } = useAuth();
+  const canApprove = can("users", "manage");
+  const { data: users } = useAsync(() => (canApprove ? usersApi.list() : Promise.resolve([])), [canApprove]);
+  const pending = users?.filter((u) => u.pending).length ?? 0;
   if (!me) return null;
   const firstName = me.user.name.split(" ")[0];
   const setupPending = !me.company.logo_url;
@@ -25,6 +30,15 @@ export function DashboardPage() {
           </p>
         </div>
       </header>
+
+      {pending > 0 && (
+        <section className="panel panel--attention">
+          <h2>{pending === 1 ? "1 pedido de acesso" : `${pending} pedidos de acesso`}</h2>
+          <p className="muted">
+            Há pessoas aguardando aprovação. <Link to="/usuarios">Ver pedidos</Link>
+          </p>
+        </section>
+      )}
 
       {can("settings", "manage") && (
         <section className="panel">

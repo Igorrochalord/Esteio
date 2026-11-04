@@ -8,6 +8,8 @@ export interface User {
   email: string;
   role: Role;
   is_active: boolean;
+  /** autocadastro aguardando aprovação */
+  pending: boolean;
   last_login_at: string | null;
   created_at: string;
 }

@@ -253,6 +253,28 @@ a {
   flex-direction: column;
   gap: 1.1rem;
 }
+.panel--attention {
+  border-left: 4px solid var(--brand);
+}
+.pending-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: flex;
+  flex-direction: column;
+}
+.pending-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--line);
+}
+.pending-row select {
+  width: auto;
+}
 .panel--quiet {
   background: transparent;
   border-style: dashed;
@@ -301,7 +323,7 @@ a {
   font-size: var(--t-s);
   font-weight: 600;
 }
-input:not([type="color"]):not([type="file"]),
+input:not([type="color"]):not([type="file"]):not([type="checkbox"]):not([type="radio"]),
 select {
   font: inherit;
   color: inherit;
@@ -334,6 +356,32 @@ select:disabled {
   font-size: var(--t-xs);
   color: var(--danger);
   font-weight: 500;
+}
+.field-control {
+  position: relative;
+}
+.field-control input {
+  padding-right: 5.5rem;
+}
+.field-action {
+  all: unset;
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  transform: translateY(-50%);
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-s);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+.field-action:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+.field-action:focus-visible {
+  outline: 2px solid var(--brand);
 }
 .color-field {
   display: flex;
@@ -551,6 +599,111 @@ select:disabled {
   letter-spacing: -0.02em;
 }
 
+/* Login e cadastro: marca da empresa à esquerda, formulário à direita */
+.auth-split {
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.85fr) minmax(0, 1.15fr);
+}
+.auth-brand {
+  background: var(--brand-deep);
+  color: var(--brand-deep-ink);
+  padding: clamp(2rem, 5vw, 3.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.auth-brand::after {
+  /* faixa na cor principal: dá presença à marca sem depender do logo */
+  content: "";
+  position: absolute;
+  inset: auto -20% -35% auto;
+  width: 70%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--brand);
+  opacity: 0.22;
+}
+.auth-brand-top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.auth-brand .brand-mark {
+  border: 2px solid color-mix(in srgb, var(--brand-deep-ink) 25%, transparent);
+}
+.auth-brand-name {
+  font-size: var(--t-xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.auth-brand-tagline {
+  margin-top: auto;
+  font-size: var(--t-xl);
+  line-height: 1.3;
+  max-width: 20ch;
+  position: relative;
+  z-index: 1;
+}
+.auth-brand-foot {
+  font-size: var(--t-s);
+  opacity: 0.75;
+  position: relative;
+  z-index: 1;
+}
+.auth-main {
+  display: grid;
+  grid-template-columns: min(27rem, 100%);
+  justify-content: center;
+  align-content: center;
+  padding: 2rem 1rem;
+  background: var(--paper);
+}
+.auth-main .auth-card {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.05);
+}
+.auth-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.auth-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: var(--t-s);
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--t-s);
+  cursor: pointer;
+}
+.check input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--brand);
+}
+.btn--large {
+  min-height: 2.875rem;
+  font-size: var(--t-m);
+}
+.caps-warning {
+  color: var(--danger);
+  font-weight: 600;
+}
+
 .onboarding {
   width: min(64rem, 100%);
   display: grid;
@@ -704,6 +857,17 @@ select:disabled {
 }
 
 @media (max-width: 760px) {
+  .auth-split {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+  .auth-brand {
+    padding: 1.5rem;
+  }
+  .auth-brand-tagline,
+  .auth-brand-foot {
+    display: none;
+  }
   .shell {
     grid-template-columns: 1fr;
   }

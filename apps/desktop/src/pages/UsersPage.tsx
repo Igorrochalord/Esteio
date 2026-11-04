@@ -17,20 +17,29 @@ export function UsersPage() {
   const canManage = can("users", "manage");
   const { data: users, error, loading, reload } = useAsync(usersApi.list);
   const [creating, setCreating] = useState(false);
+  const [resetting, setResetting] = useState<User | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  async function change(user: User, patch: { role?: AssignableRole; is_active?: boolean }, done: string) {
+  async function act(action: () => Promise<unknown>, done: string) {
     setActionError(null);
     setNotice(null);
     try {
-      await usersApi.update(user.id, patch);
+      await action();
       setNotice(done);
       await reload();
     } catch (e) {
       setActionError(e instanceof ApiError ? e.message : "Não foi possível salvar.");
     }
   }
+
+  const change = (user: User, patch: { role?: AssignableRole; is_active?: boolean }, done: string) =>
+    act(() => usersApi.update(user.id, patch), done);
+
+  const pending = users?.filter((u) => u.pending) ?? [];
+  const members = users?.filter((u) => !u.pending) ?? [];
+  const canReset = (u: User) =>
+    canManage && u.id !== me?.user.id && (u.role !== "owner" || me?.user.role === "owner");
 
   return (
     <div className="page">
@@ -49,6 +58,23 @@ export function UsersPage() {
       {(error || actionError) && <Notice tone="error">{error ?? actionError}</Notice>}
       {notice && <Notice tone="success">{notice}</Notice>}
 
+      {canManage && pending.length > 0 && (
+        <section className="panel panel--attention" aria-labelledby="pending-title">
+          <h2 id="pending-title">Aguardando aprovação ({pending.length})</h2>
+          <p className="muted">
+            Estas pessoas pediram acesso pela tela de entrada. Escolha o papel e aprove, ou recuse.
+          </p>
+          <ul className="pending-list">
+            {pending.map((u) => (
+              <PendingRow key={u.id} user={u}
+                onApprove={(role) => act(() => usersApi.approve(u.id, role),
+                  `${u.name} foi aprovado como ${ROLE_LABEL[role].toLowerCase()}.`)}
+                onReject={() => act(() => usersApi.reject(u.id), `O pedido de ${u.name} foi recusado.`)} />
+            ))}
+          </ul>
+        </section>
+      )}
+
       {loading && !users ? (
         <p className="muted">Carregando…</p>
       ) : (
@@ -65,7 +91,7 @@ export function UsersPage() {
               </tr>
             </thead>
             <tbody>
-              {users?.map((u) => {
+              {members.map((u) => {
                 const locked = u.role === "owner" || u.id === me?.user.id || !canManage;
                 return (
                   <tr key={u.id} className={u.is_active ? "" : "is-inactive"}>
@@ -91,6 +117,11 @@ export function UsersPage() {
                     </td>
                     {canManage && (
                       <td className="actions">
+                        {canReset(u) && (
+                          <button className="btn btn--ghost" onClick={() => setResetting(u)}>
+                            Redefinir senha
+                          </button>
+                        )}
                         {!locked && (
                           <button className="btn btn--ghost"
                             onClick={() => void change(u, { is_active: !u.is_active },
@@ -107,6 +138,17 @@ export function UsersPage() {
           </table>
         </div>
       )}
+
+      <Dialog open={!!resetting} title={`Redefinir senha de ${resetting?.name ?? ""}`}
+        onClose={() => setResetting(null)}>
+        {resetting && (
+          <ResetPasswordForm user={resetting}
+            onDone={() => {
+              setNotice(`Senha de ${resetting.name} redefinida. Repasse a senha provisória para a pessoa.`);
+              setResetting(null);
+            }} />
+        )}
+      </Dialog>
 
       <Dialog open={creating} title="Adicionar pessoa" onClose={() => setCreating(false)}>
         {creating && (
@@ -167,6 +209,78 @@ function CreateUserForm({ onCreated }: { onCreated: (u: User) => void | Promise<
       <div className="row row--end">
         <button className="btn btn--primary" disabled={busy}>
           {busy ? "Adicionando…" : "Adicionar pessoa"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function PendingRow({ user, onApprove, onReject }: {
+  user: User;
+  onApprove: (role: AssignableRole) => Promise<void>;
+  onReject: () => Promise<void>;
+}) {
+  const [role, setRole] = useState<AssignableRole>("user");
+  const [busy, setBusy] = useState(false);
+  const run = async (fn: () => Promise<void>) => {
+    setBusy(true);
+    try {
+      await fn();
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <li className="pending-row">
+      <div>
+        <strong>{user.name}</strong>
+        <span className="muted"> · {user.email} · pedido em {formatDateTime(user.created_at)}</span>
+      </div>
+      <div className="row">
+        <select aria-label={`Papel de ${user.name}`} value={role}
+          onChange={(e) => setRole(e.target.value as AssignableRole)}>
+          <option value="user">{ROLE_LABEL.user}</option>
+          <option value="admin">{ROLE_LABEL.admin}</option>
+        </select>
+        <button className="btn btn--primary" disabled={busy} onClick={() => void run(() => onApprove(role))}>
+          Aprovar
+        </button>
+        <button className="btn btn--ghost" disabled={busy} onClick={() => void run(onReject)}>
+          Recusar
+        </button>
+      </div>
+    </li>
+  );
+}
+
+function ResetPasswordForm({ user, onDone }: { user: User; onDone: () => void }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await usersApi.resetPassword(user.id, password);
+      onDone();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Não foi possível redefinir a senha.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className="stack" onSubmit={submit}>
+      {error && <Notice tone="error">{error}</Notice>}
+      <Field label="Nova senha provisória" type="text" required minLength={8} autoComplete="off" autoFocus
+        hint="Mínimo de 8 caracteres. A senha antiga deixa de funcionar." value={password}
+        onChange={(e) => setPassword(e.target.value)} />
+      <div className="row row--end">
+        <button className="btn btn--primary" disabled={busy}>
+          {busy ? "Salvando…" : "Redefinir senha"}
         </button>
       </div>
     </form>
