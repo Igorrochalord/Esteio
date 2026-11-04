@@ -1,4 +1,5 @@
-//! Núcleo ERP: regras de negócio e banco local (SQLite). Sem GUI e sem HTTP; a camada
+//! Núcleo ERP: regras de negócio e banco local (SQLite). Sem GUI; HTTP só de saída, para as
+//! integrações online opcionais (`modules::integrations`, ADR 0003). A camada
 //! Tauri (`apps/desktop/src-tauri`) só valida a sessão/permissão e delega para cá.
 //!
 //! Padrão por módulo: `modules/<m>/{models,repository,service}.rs`.
@@ -12,18 +13,23 @@ pub mod modules;
 pub mod money;
 pub mod permissions;
 pub mod plans;
+pub mod secrets;
 pub mod security;
 pub mod validate;
 
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
 use sqlx::SqlitePool;
 
 use db::Installation;
 pub use error::{CoreError, CoreResult};
+use modules::integrations::http::Http;
+use modules::integrations::provider::Provider;
+use modules::integrations::service::Registry;
 use modules::users::{models::User, repository as users_repo};
 use permissions::{Action, Module};
+use secrets::Vault;
 
 /// Estado do app: banco aberto + sessão do usuário (em memória, nunca em disco).
 pub struct Core {
@@ -33,6 +39,10 @@ pub struct Core {
     session: Mutex<Option<String>>,
     /// serializa backup/restauração (troca do arquivo do banco)
     pub(crate) maintenance: tokio::sync::Mutex<()>,
+    /// credenciais das integrações (chave fora do banco)
+    vault: Vault,
+    http: Http,
+    providers: RwLock<Registry>,
 }
 
 /// Contexto de um comando autenticado: banco, instalação e usuário relido do banco.
@@ -62,7 +72,40 @@ impl Core {
             inst: RwLock::new(inst),
             session: Mutex::new(None),
             maintenance: tokio::sync::Mutex::new(()),
+            vault: Vault::open(data_dir)?,
+            http: Http::new(),
+            providers: RwLock::new(Registry::default()),
         })
+    }
+
+    pub fn vault(&self) -> &Vault {
+        &self.vault
+    }
+
+    pub fn http(&self) -> &Http {
+        &self.http
+    }
+
+    /// Registra um provedor de integração (PIX, NFS-e, marketplace…).
+    pub fn register_provider(&self, p: Arc<dyn Provider>) {
+        self.providers
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .register(p);
+    }
+
+    pub fn provider(&self, id: &str) -> Option<Arc<dyn Provider>> {
+        self.providers
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(id)
+    }
+
+    pub fn providers(&self) -> Vec<Arc<dyn Provider>> {
+        self.providers
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .all()
     }
 
     pub fn data_dir(&self) -> &Path {

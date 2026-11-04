@@ -50,10 +50,12 @@ pub enum Module {
     Finance,
     /// ordens de serviço
     ServiceOrders,
+    /// integrações online (PIX, NFS-e, marketplaces): credenciais e fila
+    Integrations,
 }
 
 impl Module {
-    pub const ALL: [Module; 10] = [
+    pub const ALL: [Module; 11] = [
         Self::Settings,
         Self::Users,
         Self::Audit,
@@ -64,6 +66,7 @@ impl Module {
         Self::Reports,
         Self::Finance,
         Self::ServiceOrders,
+        Self::Integrations,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -78,6 +81,7 @@ impl Module {
             Self::Reports => "reports",
             Self::Finance => "finance",
             Self::ServiceOrders => "service_orders",
+            Self::Integrations => "integrations",
         }
     }
 }
@@ -106,9 +110,8 @@ pub fn granted(role: Role, module: Module) -> Option<Action> {
     match role {
         Role::Owner => Some(Manage),
         Role::Admin => match module {
-            Settings | Users | Products | Customers | Sales | Finance | ServiceOrders => {
-                Some(Manage)
-            }
+            Settings | Users | Products | Customers | Sales | Finance | ServiceOrders
+            | Integrations => Some(Manage),
             Audit | Reports => Some(Read),
             Backup => Some(Write), // gera cópias; restaurar é só do dono
         },
