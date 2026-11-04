@@ -1,53 +1,49 @@
 # CLAUDE.md: guia para agentes neste repositório
 
 ## Projeto
-nucleo-erp: ERP modular SaaS. API FastAPI (monolito modular) + Postgres 16 com RLS + S3,
-e cliente desktop Tauri v2/React. Decisões em `docs/adr/0001-arquitetura.md`.
-**Não mude a arquitetura sem perguntar ao usuário.**
+Núcleo ERP: ERP modular **instalável** (Tauri v2 + React na interface, Rust + SQLite no núcleo).
+Sem servidor, sem HTTP e com uma empresa por instalação. Decisão em `docs/adr/0002-executavel-local.md`.
+**Não mude a arquitetura sem perguntar ao usuário.** A documentação por tópico está em `docs/`
+(arquitetura, desenvolvimento, banco-de-dados, seguranca-e-permissoes, backup, distribuicao, roteiro).
 
 ## Fluxo de trabalho
-- Desenvolvido em fases. Ao fim de cada fase: `make reset && make up`, `make lint`,
-  `make test`, `make smoke` (todos verdes), depois atualizar este arquivo e parar
-  esperando "pode seguir".
+- Desenvolvido em fases (`docs/roteiro.md`). Ao fim de cada fase: `make check` verde, atualizar
+  `docs/` e este arquivo, depois parar e esperar "pode seguir".
 - Commits pequenos em Conventional Commits (`feat(módulo): …`, `fix`, `test`, `build`, `docs`).
-- Tudo roda em containers: não depende de Python/Node locais. Node local é 18; o
-  frontend usa a imagem `node:22-alpine` pelos alvos `make web-*`.
+- Ferramentas locais: Rust (`~/.cargo/bin`, 1.91) e Node 18+. Não usa Docker.
+  `make test` só precisa do Rust; `lint`/`dev`/`build` precisam das libs do WebKit.
 
-## Regras do backend
-- Módulo novo: `app/modules/<m>/{models,schemas,repository,service,router}.py`;
-  registrar os modelos em `app/modules/models.py` e o router em `app/main.py`.
-- Regra de negócio só em `service.py`. Router: valida (Pydantic) + `Depends(require(Module.X, Action.Y))` + delega.
-- Services lançam `app.core.errors.*` (nunca `HTTPException`) e fazem `await ctx.db.commit()`
-  no fim. Depois do commit o `app.tenant_id` some (é `is_local`); não consulte mais depois.
-- Toda tabela de negócio: coluna `tenant_id` + `enable_tenant_rls(tabela)` + `grant_app(tabela)`
-  na migração (`app/core/rls.py`). Migrações escritas à mão em `alembic/versions/NNNN_*.py`.
-- Escrita relevante → `audit.record(...)` com `audit.snapshot()` / `audit.diff()`.
-- Modelos com `updated_at`: usar `TimestampMixin` (eager_defaults; evita lazy-load async).
-- Dinheiro: `Decimal` / `Numeric(14, 2)`. Nunca float.
-- Novo módulo de permissão: adicionar em `Module` e na `MATRIX` de `app/core/permissions.py`.
-- Testes: `tests/` com `client`, `onboard()`, `create_member()` do `conftest.py`. Todo
-  módulo novo ganha teste de isolamento entre tenants (API e, se fizer sentido, SQL direto).
+## Regras do núcleo (`crates/nucleo-core`)
+- Módulo novo: `src/modules/<m>/{models,repository,service}.rs` + `modules/mod.rs`; comandos em
+  `apps/desktop/src-tauri/src/commands/<m>.rs`, registrados no `generate_handler!` de `src-tauri/src/lib.rs`.
+- Regra de negócio só no service. O comando faz `core.require(Module::X, Action::Y)` e delega.
+- Services devolvem `CoreError` (mensagem pt-BR para o usuário final), validam com `Validator`
+  (chave = caminho do campo, ex.: `owner.email`) e fazem `tx.commit()` no fim.
+- Toda tabela de negócio: id UUID v7 (`db::new_id`), `branch_id`, `device_id`, `created_at`,
+  `updated_at`, `deleted_at`, mais os triggers `_cl_insert`, `_cl_update` e `_no_delete`
+  (`tests/foundation.rs` cobra isso). Migrações SQL à mão em `migrations/NNNN_*.sql`; nunca editar uma publicada.
+- Escrita relevante → `audit::record` ou `audit::record_changes`. Campos sensíveis levam `#[serde(skip_serializing)]`.
+- Dinheiro: `INTEGER` em centavos no banco e `rust_decimal` no domínio. Nunca float.
+- Novo módulo de permissão: `Module` (+`ALL`, `as_str`) e `granted()` em `src/permissions.rs`;
+  no front, `Module` em `services/types.ts`.
+- Testes em `tests/` com `common::{onboarded, create_member, login_as}`: regras, permissão por papel e auditoria.
 
-## Regras do frontend (apps/desktop)
-- `src/services/api.ts`: `api<T>(path, opts)` com refresh automático (single-flight);
-  endpoints tipados em `services/endpoints.ts`, tipos em `services/types.ts`.
-- Autenticação via `useAuth()` (`me`, `can(module, level)`); rotas protegidas com
+## Regras do frontend (`apps/desktop/src`)
+- `services/api.ts`: `call<T>(comando, args)` sobre `invoke` e `ApiError {code, message, fields}`.
+  Comandos tipados em `services/endpoints.ts`, tipos em `services/types.ts`. Argumentos em snake_case.
+- `useAuth()` (`status`: loading/setup/anonymous/authenticated, `me`, `can`); rotas com
   `RequireAuth` / `RequirePermission` em `App.tsx` (HashRouter).
-- Tema: `applyBranding()` define `--brand`, `--brand-ink`, `--brand-deep`, `--brand-deep-ink`.
-  Use essas variáveis; não fixe cores de marca no CSS.
+- Tema: `applyBranding()` define `--brand`, `--brand-ink`, `--brand-deep` e `--brand-deep-ink`. Não fixe cores de marca.
 - Textos em pt-BR, voltados ao usuário final (sem jargão técnico).
 
 ## Ambiente
-- `make up` / `reset` / `test` / `lint` / `smoke` / `seed` / `web-dev` (ver README).
-- S3 local é SeaweedFS (MinIO saiu do Docker Hub), bucket criado por `storage-init`.
-- Usuários do seed: senha `nucleo123` (dono@paodourado.com.br, dono@techparts.com.br, …).
+- `make install` / `test` / `lint` / `check` / `seed` / `reset-data` / `dev` / `build`.
+- Dados de dev em `.dev-data/` (`NUCLEO_DATA_DIR`). Seed: senha `nucleo123` (dono@paodourado.com.br, …).
+- Instalador Windows: CI (`.github/workflows/ci.yml`, runner windows-latest).
 
 ## Estado
-- **Fase 1 (fundação): concluída.** tenants, auth (login/refresh/logout/me), users,
-  branding + logo, auditoria, RLS, testes de isolamento, seed, smoke, desktop
-  (onboarding, login, layout, pessoas, empresa, histórico).
-- Próxima: Fase 2: estoque (categorias, fornecedores, produtos, movimentações imutáveis,
-  alertas de mínimo).
-- Pendências conhecidas: refresh token do desktop em `localStorage` (mover para o cofre
-  do SO antes de distribuir); `npm run tauri build` ainda não executado (sem Rust no
-  ambiente; previsto no CI da fase 7); smoke da fase 1 não cobre venda/estoque (entra na fase 3).
+- **Fase 1b (fundação local)**: núcleo, comandos, frontend e CI escritos; núcleo testado e commitado.
+- Pendente: instalar as libs do WebKit no WSL para compilar o app (`make lint` / `make dev`) e
+  testar o roteiro manual; primeiro instalador pelo CI.
+- Próxima: Fase 2, estoque.
+- O código SaaS antigo (FastAPI/Postgres) está na tag `v0.1-saas`.

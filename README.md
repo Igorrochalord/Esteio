@@ -1,80 +1,54 @@
-# nucleo-erp
+# Núcleo ERP
 
-ERP modular vendido como SaaS. Cada empresa (tenant) tem seus dados isolados por
-Row-Level Security no PostgreSQL e o sistema assume as cores e o logo dela.
+ERP modular para pequenas e médias empresas, distribuído como **programa instalável**
+(`.exe` no Windows). Cada empresa instala no próprio computador e os dados ficam num arquivo
+local. Não há servidor nem internet envolvidos, e o sistema assume as cores e o logo da empresa.
 
-| Parte | Stack |
+| Parte | Tecnologia |
 |---|---|
-| API | Python 3.12, FastAPI, SQLAlchemy 2 async, Alembic, Pydantic v2, uv |
-| Banco | PostgreSQL 16, banco compartilhado + RLS por `tenant_id` |
-| Arquivos | S3 (SeaweedFS em dev, AWS S3 em produção) via boto3 |
-| Desktop | Tauri v2 + React + TypeScript + Vite + React Router (só interface) |
+| Interface | React 19 + TypeScript + Vite, dentro do Tauri v2 |
+| Regras de negócio | Rust (`crates/nucleo-core`) |
+| Dados | SQLite local (sqlx), com backup automático |
+| Instalador | Tauri bundler: NSIS/MSI no Windows, gerado no CI |
 
 ## Começando
 
-Pré-requisitos: Docker com Compose v2 e `make`. Node e Python locais são opcionais:
-lint, testes e o frontend rodam em containers.
+Pré-requisitos e instalação do ambiente: [docs/desenvolvimento.md](docs/desenvolvimento.md).
 
 ```bash
-make up        # cria .env a partir do .env.example, sobe db + storage + api e espera ficar saudável
-make seed      # duas empresas de exemplo
-make smoke     # teste ponta a ponta via HTTP
-make web-dev   # frontend no navegador em http://localhost:1420
+make install   # dependências do frontend
+make test      # testes do núcleo
+make seed      # empresa de demonstração em .dev-data/
+make dev       # abre o app usando .dev-data/
 ```
 
-- API: http://localhost:8000 · documentação interativa: http://localhost:8000/docs
-- Saúde: http://localhost:8000/health
-- S3 (SeaweedFS): http://localhost:8333
-
-### Usuários do seed (senha `nucleo123`)
-
-| Empresa | E-mail | Papel |
-|---|---|---|
-| Padaria Pão Dourado | dono@paodourado.com.br | owner |
-| | admin@paodourado.com.br | admin |
-| | caixa@paodourado.com.br | user |
-| TechParts Distribuidora | dono@techparts.com.br | owner |
-| | vendas@techparts.com.br | user |
-
-## Comandos
-
-| Comando | O que faz |
-|---|---|
-| `make up` / `make down` | sobe / para o ambiente (volumes preservados) |
-| `make reset` | **apaga os volumes** e recria tudo do zero |
-| `make logs s=api` | segue os logs de um serviço |
-| `make test` | pytest dentro do container (banco `nucleo_test`, conectando como usuário sem bypass de RLS) |
-| `make lint` | ruff + mypy (backend), tsc + eslint (desktop) |
-| `make fmt` | formata o backend |
-| `make smoke` | `scripts/smoke.sh` contra a API rodando |
-| `make seed` | `scripts/seed.py` (idempotente) |
-| `make psql` / `make shell` | psql como superusuário / shell no container da api |
-| `make web-dev` / `make web-build` | frontend em dev / build de produção |
-
-## Desktop (Tauri)
-
-O frontend roda no navegador para desenvolvimento. Para o app nativo:
-
-```bash
-cd apps/desktop
-npm install
-npm run tauri dev     # requer Rust + dependências do Tauri no SO
-npm run tauri build   # instalador do SO atual
-```
-
-O instalador Windows deve ser gerado no Windows (ou no CI, fase 7). A URL da API vem de
-`VITE_API_URL` e pode ser trocada na tela de login (link "Alterar" ao lado de "Servidor").
+Usuários do seed (senha `nucleo123`): `dono@paodourado.com.br` (proprietário),
+`admin@paodourado.com.br` (administrador), `caixa@paodourado.com.br` (usuário).
+Para a outra empresa de exemplo: `make reset-data && make seed empresa=techparts`.
 
 ## Estrutura
 
 ```
-apps/backend/      app/core (config, db, segurança, RBAC, storage, auditoria)
-                   app/modules/<módulo>/{models,schemas,repository,service,router}.py
-                   alembic/ (migrações), tests/
-apps/desktop/      src/{pages,components,layouts,services,hooks}, src-tauri/
-infrastructure/    docker/ (compose + init do Postgres), terraform/
-scripts/           smoke.sh, seed.py
-docs/adr/          decisões de arquitetura
+apps/desktop/            app instalável
+  src/                   interface React (pages, components, layouts, services, hooks)
+  src-tauri/             casca Tauri: comandos finos que chamam o núcleo
+crates/nucleo-core/      regras de negócio + banco (sem interface)
+  src/modules/<m>/       models, repository, service de cada módulo
+  migrations/            migrações SQL do SQLite
+  tests/                 testes de integração
+docs/                    documentação por tópico + decisões (adr/)
+.github/workflows/       CI: lint, testes e instalador Windows
 ```
 
-Veja [docs/adr/0001-arquitetura.md](docs/adr/0001-arquitetura.md) para as decisões.
+## Documentação
+
+| Tópico | Conteúdo |
+|---|---|
+| [Arquitetura](docs/arquitetura.md) | camadas, caminho de uma ação da tela ao banco, módulos |
+| [Desenvolvimento](docs/desenvolvimento.md) | ambiente, comandos, testes, como criar um módulo |
+| [Banco de dados](docs/banco-de-dados.md) | SQLite, migrações, regras de tabela, sync, auditoria |
+| [Segurança e permissões](docs/seguranca-e-permissoes.md) | login, sessão, papéis, CSP |
+| [Backup e restauração](docs/backup.md) | cópias automáticas e manuais, restauração |
+| [Distribuição](docs/distribuicao.md) | gerar o instalador, onde ficam programa e dados, release |
+| [Roteiro](docs/roteiro.md) | fases concluídas e próximas |
+| [Decisões (ADR)](docs/adr/) | registro das decisões de arquitetura |
