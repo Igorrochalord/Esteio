@@ -9,7 +9,8 @@ export type Module =
   | "customers"
   | "sales"
   | "reports"
-  | "finance";
+  | "finance"
+  | "service_orders";
 
 export interface User {
   id: string;
@@ -438,4 +439,75 @@ export interface FinanceSummary {
   payable_overdue_count: number;
   payable_next7: Dec;
   payable_today: Dec;
+}
+
+// ------------------------------------------------------------------ ordens de serviço
+
+export type OsStatus = "aberta" | "em_andamento" | "aguardando" | "concluida" | "faturada" | "cancelada";
+
+export interface OsItem {
+  id: string;
+  product_id: string;
+  description: string;
+  is_service: boolean;
+  qty: Dec;
+  unit_price: Dec;
+  discount: Dec;
+  total: Dec;
+}
+
+export interface OsEvent {
+  id: string;
+  kind: "criada" | "status" | "nota" | "faturada";
+  from_status: OsStatus | null;
+  to_status: OsStatus | null;
+  note: string | null;
+  user_name: string | null;
+  created_at: string;
+}
+
+export interface ServiceOrder {
+  id: string;
+  number: number;
+  customer_id: string;
+  customer_name: string | null;
+  customer_phone: string | null;
+  status: OsStatus;
+  equipment: string | null;
+  reported: string;
+  diagnosis: string | null;
+  technician_id: string | null;
+  technician_name: string | null;
+  scheduled_date: string | null;
+  due_date: string | null;
+  subtotal: Dec;
+  discount: Dec;
+  total: Dec;
+  sale_id: string | null;
+  sale_number: number | null;
+  finished_at: string | null;
+  canceled_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  item_count: number;
+  items: OsItem[] | null;
+  events: OsEvent[] | null;
+}
+
+export interface OsItemInput {
+  product_id: string;
+  description?: string | null;
+  qty: Dec;
+  unit_price?: Dec | null;
+  discount?: Dec | null;
+}
+
+export interface OsInput {
+  customer_id: string;
+  equipment?: string | null;
+  reported: string;
+  technician_id?: string | null;
+  scheduled_date?: string | null;
+  due_date?: string | null;
+  items: OsItemInput[];
 }

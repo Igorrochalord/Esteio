@@ -10,6 +10,7 @@ import { CompanyPage } from "./pages/CompanyPage";
 import { CustomersPage } from "./pages/CustomersPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { FinancePage } from "./pages/finance/FinancePage";
+import { ServiceOrdersPage } from "./pages/ServiceOrdersPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { PlansPage } from "./pages/PlansPage";
@@ -35,6 +36,7 @@ export function App() {
             <Route path="/vendas" element={<RequirePermission module="sales"><SalesPage /></RequirePermission>} />
             <Route path="/produtos" element={<RequirePermission module="products"><ProductsPage /></RequirePermission>} />
             <Route path="/clientes" element={<RequirePermission module="customers"><CustomersPage /></RequirePermission>} />
+            <Route path="/os" element={<RequirePermission module="service_orders"><ServiceOrdersPage /></RequirePermission>} />
             <Route path="/financeiro" element={<RequirePermission module="finance"><FinancePage /></RequirePermission>} />
             <Route path="/relatorios" element={<RequirePermission module="reports"><ReportsPage /></RequirePermission>} />
             <Route path="/usuarios" element={<RequirePermission module="users"><UsersPage /></RequirePermission>} />

@@ -10,6 +10,7 @@ pub mod finance;
 pub mod products;
 pub mod reports;
 pub mod sales;
+pub mod service_orders;
 pub mod spreadsheet;
 pub mod users;
 

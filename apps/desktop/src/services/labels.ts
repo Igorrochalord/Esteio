@@ -44,6 +44,9 @@ export const ACTION_LABEL: Record<string, string> = {
   "bank_tx.transfer": "Transferência entre contas",
   "bank_tx.delete": "Lançamento excluído",
   "bank_tx.ofx_import": "Extrato importado",
+  "os.create": "Ordem de serviço aberta",
+  "os.invoice": "Ordem de serviço faturada",
+  "os.cancel": "Ordem de serviço cancelada",
 };
 
 const dateTime = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -104,6 +107,15 @@ export const UNIT_OPTIONS = [
   { value: "pct", label: "pct" },
   { value: "m", label: "m" },
 ];
+
+export const OS_STATUS_LABEL: Record<string, string> = {
+  aberta: "Aberta",
+  em_andamento: "Em andamento",
+  aguardando: "Aguardando",
+  concluida: "Concluída",
+  faturada: "Faturada",
+  cancelada: "Cancelada",
+};
 
 export const PAYMENT_LABEL: Record<string, string> = {
   dinheiro: "Dinheiro",

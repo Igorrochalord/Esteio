@@ -21,6 +21,10 @@ import type {
   ImportPreview,
   ImportResult,
   Me,
+  OsInput,
+  OsItemInput,
+  OsStatus,
+  ServiceOrder,
   Movement,
   Page,
   PlanItem,
@@ -227,4 +231,17 @@ export const financeApi = {
   cashFlow: (query: { from: string; to: string; group?: "day" | "month" }) => call<CashFlow>("fin_cash_flow", { query }),
   dre: (query: { from_month: string; to_month: string; tz_offset_minutes: number }) => call<Dre>("fin_dre", { query }),
   summary: (today: string) => call<FinanceSummary>("fin_summary", { today }),
+};
+
+export const osApi = {
+  list: (query: { status?: string; customer_id?: string; technician_id?: string } = {}) => call<ServiceOrder[]>("os_list", { query }),
+  get: (id: string) => call<ServiceOrder>("os_get", { id }),
+  create: (data: OsInput) => call<ServiceOrder>("os_create", { data }),
+  update: (id: string, data: Record<string, unknown>) => call<ServiceOrder>("os_update", { id, data }),
+  setItems: (id: string, items: OsItemInput[]) => call<ServiceOrder>("os_set_items", { id, items }),
+  changeStatus: (id: string, status: OsStatus, note?: string | null) => call<ServiceOrder>("os_change_status", { id, status, note: note ?? null }),
+  addNote: (id: string, note: string) => call<ServiceOrder>("os_add_note", { id, note }),
+  invoice: (id: string, data: { payment_method: PaymentMethod; seller_id?: string | null; tz_offset_minutes: number }) =>
+    call<ServiceOrder>("os_invoice", { id, data }),
+  cancel: (id: string, reason: string) => call<ServiceOrder>("os_cancel", { id, reason }),
 };

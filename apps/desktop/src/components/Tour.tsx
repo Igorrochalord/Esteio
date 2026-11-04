@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BarChart3,
+  ClipboardList,
   Boxes,
   Building2,
   DatabaseBackup,
@@ -65,6 +66,16 @@ function stepsFor(role: Role, firstName: string, company: string): Step[] {
     chips: ["Nova venda", "Código de barras", "Pix", "Fiado"],
     tip: "Fiado exige um cliente cadastrado.",
   };
+  const serviceOrders: Step = {
+    icon: ClipboardList,
+    title: "Ordens de serviço",
+    text:
+      role === "user"
+        ? "Em Ordens de serviço abra a OS do cliente, registre o problema, adicione mão de obra e peças e arraste o cartão no quadro conforme o trabalho anda. Concluída, é só faturar."
+        : "Abra a OS, defina técnico e previsão, lance mão de obra e peças e acompanhe tudo no quadro (aberta → em andamento → aguardando → concluída). Faturar gera a venda: peças saem do estoque e o valor cai no financeiro.",
+    chips: ["Quadro", "Mão de obra + peças", "Faturar", "Imprimir OS"],
+    tip: "OS com previsão vencida ficam marcadas em vermelho.",
+  };
   const customers: Step = {
     icon: UserRound,
     title: "Clientes",
@@ -77,6 +88,7 @@ function stepsFor(role: Role, firstName: string, company: string): Step[] {
       welcome,
       { icon: House, title: "Seu início", text: "Aqui ficam os atalhos e quanto você vendeu hoje.", chips: ["Suas vendas hoje"] },
       sale,
+      serviceOrders,
       customers,
       {
         icon: Boxes,
@@ -106,6 +118,7 @@ function stepsFor(role: Role, firstName: string, company: string): Step[] {
       tip: "Enter numa célula de estoque abre o histórico do produto.",
     },
     customers,
+    serviceOrders,
     {
       icon: Landmark,
       title: "Financeiro sem retrabalho",
