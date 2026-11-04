@@ -19,3 +19,4 @@ serde_json.workspace = true
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 log = "0.4"
+tokio = { workspace = true, features = ["time"] }

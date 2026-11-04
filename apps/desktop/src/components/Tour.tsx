@@ -10,6 +10,7 @@ import {
   House,
   Keyboard,
   Landmark,
+  Plug,
   ShoppingCart,
   Sparkles,
   UserRound,
@@ -143,6 +144,13 @@ function stepsFor(role: Role, firstName: string, company: string): Step[] {
       title: "Sua empresa, do seu jeito",
       text: "Em Empresa troque logo e cores: o sistema inteiro assume a sua marca. No ícone ao lado do seu nome, escolha tema claro, escuro ou automático.",
       chips: ["Logo", "Cores", "Tema escuro"],
+    },
+    {
+      icon: Plug,
+      title: "Integrações on-line",
+      text: "Em Integrações você conecta o sistema a serviços on-line, como PIX, nota fiscal e lojas virtuais. Sem internet nada para: o que precisa ser enviado espera na fila e segue sozinho quando a conexão voltar.",
+      chips: ["On-line", "Fila automática", "Dados de acesso protegidos"],
+      tip: "O aviso no rodapé do menu mostra se há algo esperando para ser enviado.",
     },
     {
       icon: DatabaseBackup,

@@ -1,11 +1,15 @@
 //! App desktop: a interface React chama os comandos daqui via `invoke`, e eles
-//! delegam ao `nucleo-core`. Não há servidor nem HTTP; o banco é um arquivo local.
+//! delegam ao `nucleo-core`. Não há servidor; o banco é um arquivo local. As integrações
+//! online (ADR 0003) só fazem chamadas de saída, por uma fila que tolera ficar sem internet.
 
 mod commands;
 
 use std::path::PathBuf;
 
+use std::time::Duration;
+
 use nucleo_core::modules::backup::service as backup;
+use nucleo_core::modules::integrations::service as integrations;
 use nucleo_core::Core;
 use tauri::Manager;
 
@@ -17,6 +21,9 @@ fn data_dir(app: &tauri::App) -> tauri::Result<PathBuf> {
         None => app.path().app_data_dir(),
     }
 }
+
+/// Intervalo do processador da fila de integrações.
+const QUEUE_INTERVAL: Duration = Duration::from_secs(15);
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -33,6 +40,18 @@ pub fn run() {
                 let core = handle.state::<Core>();
                 if let Err(e) = backup::auto_daily(&core).await {
                     log::error!("backup automático falhou: {e:?}");
+                }
+            });
+
+            // fila das integrações: sem internet, os trabalhos esperam e são reenviados depois
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                loop {
+                    tokio::time::sleep(QUEUE_INTERVAL).await;
+                    let core = handle.state::<Core>();
+                    if let Err(e) = integrations::tick(&core).await {
+                        log::error!("fila de integrações: {e:?}");
+                    }
                 }
             });
             Ok(())
@@ -116,6 +135,15 @@ pub fn run() {
             commands::finance::fin_cash_flow,
             commands::finance::fin_dre,
             commands::finance::fin_summary,
+            commands::integrations::integrations_catalog,
+            commands::integrations::integrations_save,
+            commands::integrations::integrations_test,
+            commands::integrations::integrations_remove,
+            commands::integrations::integrations_jobs,
+            commands::integrations::integrations_summary,
+            commands::integrations::integrations_job_retry,
+            commands::integrations::integrations_job_cancel,
+            commands::integrations::integrations_run_now,
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Núcleo ERP");

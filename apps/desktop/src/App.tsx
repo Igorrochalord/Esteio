@@ -6,6 +6,7 @@ import { AppLayout } from "./layouts/AppLayout";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { AuditPage } from "./pages/AuditPage";
 import { BackupPage } from "./pages/BackupPage";
+import { IntegrationsPage } from "./pages/IntegrationsPage";
 import { CompanyPage } from "./pages/CompanyPage";
 import { CustomersPage } from "./pages/CustomersPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -43,6 +44,7 @@ export function App() {
             <Route path="/empresa" element={<RequirePermission module="settings"><CompanyPage /></RequirePermission>} />
             <Route path="/planos" element={<PlansPage />} />
             <Route path="/backup" element={<RequirePermission module="backup" level="write"><BackupPage /></RequirePermission>} />
+            <Route path="/integracoes" element={<RequirePermission module="integrations"><IntegrationsPage /></RequirePermission>} />
             <Route path="/auditoria" element={<RequirePermission module="audit"><AuditPage /></RequirePermission>} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

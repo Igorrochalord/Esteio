@@ -10,7 +10,8 @@ export type Module =
   | "sales"
   | "reports"
   | "finance"
-  | "service_orders";
+  | "service_orders"
+  | "integrations";
 
 export interface User {
   id: string;
@@ -510,4 +511,80 @@ export interface OsInput {
   scheduled_date?: string | null;
   due_date?: string | null;
   items: OsItemInput[];
+}
+
+// ---------- integrações online ----------
+export type IntegrationKind = "pix" | "nfse" | "marketplace" | "other";
+
+export interface IntegrationField {
+  key: string;
+  label: string;
+  secret: boolean;
+  required: boolean;
+  help: string | null;
+}
+
+export interface IntegrationOut {
+  id: string;
+  provider: string;
+  environment: "sandbox" | "production";
+  enabled: boolean;
+  config: Record<string, unknown>;
+  secrets_set: string[];
+  secrets_readable: boolean;
+  status: "unchecked" | "ok" | "error";
+  status_detail: string | null;
+  checked_at: string | null;
+  updated_at: string;
+}
+
+export interface IntegrationCatalogItem {
+  id: string;
+  name: string;
+  kind: IntegrationKind;
+  description: string;
+  fields: IntegrationField[];
+  available: boolean;
+  phase: string | null;
+  integration: IntegrationOut | null;
+}
+
+export interface IntegrationSave {
+  provider: string;
+  environment: "sandbox" | "production";
+  enabled: boolean;
+  config: Record<string, unknown>;
+  secrets: Record<string, string>;
+}
+
+export type JobStatus = "pending" | "running" | "done" | "failed" | "canceled";
+
+export interface IntegrationJob {
+  id: string;
+  provider: string;
+  kind: string;
+  status: JobStatus;
+  attempts: number;
+  next_run_at: string;
+  last_error: string | null;
+  ref_entity: string | null;
+  ref_id: string | null;
+  finished_at: string | null;
+  created_at: string;
+}
+
+export interface QueueSummary {
+  pending: number;
+  running: number;
+  failed: number;
+  enabled_integrations: number;
+  last_success_at: string | null;
+}
+
+export interface TickReport {
+  ran: number;
+  done: number;
+  waiting: number;
+  retrying: number;
+  failed: number;
 }

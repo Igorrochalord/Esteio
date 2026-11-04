@@ -47,6 +47,11 @@ export const ACTION_LABEL: Record<string, string> = {
   "os.create": "Ordem de serviço aberta",
   "os.invoice": "Ordem de serviço faturada",
   "os.cancel": "Ordem de serviço cancelada",
+  "integration.create": "Integração configurada",
+  "integration.update": "Integração alterada",
+  "integration.delete": "Integração removida",
+  "integration.job_retry": "Envio repetido",
+  "integration.job_cancel": "Envio cancelado",
 };
 
 const dateTime = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -60,6 +65,11 @@ export function formatCnpj(digits: string | null): string {
 /** Campos mostrados no histórico, com nome legível. Os demais (ids, chaves internas) ficam ocultos. */
 export const FIELD_LABEL: Record<string, string> = {
   name: "nome",
+  provider: "integração",
+  environment: "ambiente",
+  enabled: "ativada",
+  credenciais: "credenciais",
+  kind: "tipo",
   email: "e-mail",
   role: "papel",
   is_active: "ativo",

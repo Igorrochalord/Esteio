@@ -1,5 +1,12 @@
 import { call } from "./api";
 import type {
+  IntegrationCatalogItem,
+  IntegrationJob,
+  IntegrationOut,
+  IntegrationSave,
+  JobStatus,
+  QueueSummary,
+  TickReport,
   AuditEntry,
   BankAccount,
   BankTx,
@@ -244,4 +251,16 @@ export const osApi = {
   invoice: (id: string, data: { payment_method: PaymentMethod; seller_id?: string | null; tz_offset_minutes: number }) =>
     call<ServiceOrder>("os_invoice", { id, data }),
   cancel: (id: string, reason: string) => call<ServiceOrder>("os_cancel", { id, reason }),
+};
+
+export const integrationsApi = {
+  catalog: () => call<IntegrationCatalogItem[]>("integrations_catalog"),
+  save: (data: IntegrationSave) => call<IntegrationOut>("integrations_save", { data }),
+  test: (provider: string) => call<IntegrationOut>("integrations_test", { provider }),
+  remove: (provider: string) => call<void>("integrations_remove", { provider }),
+  jobs: (status?: JobStatus | "") => call<IntegrationJob[]>("integrations_jobs", { filter: { status: status || null } }),
+  summary: () => call<QueueSummary>("integrations_summary"),
+  retry: (id: string) => call<void>("integrations_job_retry", { id }),
+  cancel: (id: string) => call<void>("integrations_job_cancel", { id }),
+  runNow: () => call<TickReport>("integrations_run_now"),
 };

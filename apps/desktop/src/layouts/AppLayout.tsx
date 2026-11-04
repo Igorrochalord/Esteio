@@ -12,6 +12,7 @@ import {
   LogOut,
   Monitor,
   Moon,
+  Plug,
   ShoppingCart,
   Sparkles,
   Sun,
@@ -23,6 +24,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 
 import { BrandMark } from "../components/BrandMark";
+import { SidebarConnection } from "../components/ConnectionStatus";
 import { PlansNudge } from "../components/PlansNudge";
 import { Tour } from "../components/Tour";
 import { useAuth } from "../hooks/useAuth";
@@ -93,6 +95,7 @@ export function AppLayout() {
         { to: "/usuarios", label: "Pessoas", icon: Users, show: can("users") },
         { to: "/empresa", label: "Empresa", icon: Building2, show: can("settings") },
         { to: "/auditoria", label: "Histórico", icon: History, show: can("audit") },
+        { to: "/integracoes", label: "Integrações", icon: Plug, show: can("integrations") },
         { to: "/backup", label: "Cópias de segurança", icon: DatabaseBackup, show: can("backup", "write") },
         { to: "/planos", label: "Planos", icon: Gem, show: canBuy },
       ],
@@ -128,6 +131,7 @@ export function AppLayout() {
             );
           })}
         </nav>
+        <SidebarConnection showQueue={can("integrations")} />
         <button type="button" className="sidebar-help" onClick={() => setTourOpen(true)}>
           <CircleHelp size={18} strokeWidth={1.9} aria-hidden /> Como usar
         </button>

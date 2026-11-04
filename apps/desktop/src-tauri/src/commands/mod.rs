@@ -7,6 +7,7 @@ pub mod backup;
 pub mod company;
 pub mod customers;
 pub mod finance;
+pub mod integrations;
 pub mod products;
 pub mod reports;
 pub mod sales;
