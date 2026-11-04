@@ -2,7 +2,9 @@ SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
 # Ferramentas locais: Rust (rustup) e Node >= 18. Não há servidor, banco externo nem Docker.
-CARGO := $(shell command -v cargo || echo $(HOME)/.cargo/bin/cargo)
+# rustup instala em ~/.cargo/bin; exporta para os filhos (o `tauri dev` procura o cargo no PATH)
+export PATH := $(HOME)/.cargo/bin:$(PATH)
+CARGO := cargo
 DESKTOP := apps/desktop
 # pasta de dados usada em desenvolvimento (o app instalado usa a pasta de dados do SO)
 DEV_DATA ?= $(CURDIR)/.dev-data

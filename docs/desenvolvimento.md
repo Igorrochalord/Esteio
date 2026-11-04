@@ -14,7 +14,7 @@ Linux / WSL (Ubuntu 24.04):
 ```bash
 sudo apt-get update
 sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
-  libxdo-dev libssl-dev pkg-config build-essential
+  libxdo-dev libssl-dev libdbus-1-dev pkg-config build-essential
 ```
 
 No WSL, a janela abre pelo WSLg. No Windows nativo, basta instalar o Rust (rustup), o
