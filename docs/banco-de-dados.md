@@ -81,6 +81,8 @@ precisar migrar dados depois, desde já:
 | `service_orders` | negócio | OS: número por filial, cliente, situação, equipamento, relato, diagnóstico, técnico, datas, desconto, venda gerada |
 | `service_order_items` | negócio | serviços e peças da OS (produto, descrição, qtd, preço, desconto); a lista é substituída a cada gravação |
 | `service_order_events` | negócio (só inclusão) | linha do tempo: abertura, mudanças de situação, anotações, faturamento |
+| `integrations` | negócio | um serviço on-line por linha: provedor, ambiente (teste/produção), ativada, configuração (JSON) e credenciais cifradas (BLOB) |
+| `integration_jobs` | negócio | fila de envios: tipo, dados (JSON), situação, falhas seguidas, próxima tentativa, erro, resultado e vínculo (ex.: `sales`) |
 | `audit_logs` | infra | histórico append-only |
 | `change_log` | infra | outbox do sync |
 

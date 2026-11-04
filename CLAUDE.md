@@ -2,7 +2,8 @@
 
 ## Projeto
 Núcleo ERP: ERP modular **instalável** (Tauri v2 + React na interface, Rust + SQLite no núcleo).
-Sem servidor, sem HTTP e com uma empresa por instalação. Decisão em `docs/adr/0002-executavel-local.md`.
+Sem servidor e com uma empresa por instalação (`docs/adr/0002-executavel-local.md`); internet só
+para integrações opcionais, por chamadas de saída (`docs/adr/0003-integracoes-online.md`).
 **Não mude a arquitetura sem perguntar ao usuário.** A documentação por tópico está em `docs/`
 (estrutura, arquitetura, desenvolvimento, banco-de-dados, seguranca-e-permissoes, backup, distribuicao,
 assinatura, roteiro).
@@ -61,7 +62,13 @@ assinatura, roteiro).
   SQL: não misture `?` e `?N` na mesma consulta (desloca as posições no SQLite).
 - **Fase 5 (ordens de serviço)**: pronta e testada; quadro + lista, itens (serviço = produto sem
   estoque), linha do tempo só de inclusão, faturar = `sales::service::create_in` na mesma transação.
-  Próxima: NFS-e (pesquisar a API do Emissor Nacional antes; provável ADR 0003, única parte online).
+- **Fase 6 (integrações online, ADR 0003)**: o app usa internet mas funciona sem ela. **6a pronta**
+  (aguardando validação): `modules/integrations` com `Provider` (info/check/run/on_done), fila
+  `integration_jobs` (`service::enqueue` na transação de quem chama; `tick` a cada 15 s no
+  `src-tauri/src/lib.rs`), credenciais cifradas por `secrets::Vault` (chave `integracoes.key` fora do
+  banco/backup; nunca na auditoria nem na interface), tela `/integracoes`. Próximas: 6b PIX (pesquisar
+  provedores antes), 6c NFS-e, 6d marketplaces. Só chamadas de saída; webhook exigiria novo ADR.
+  Testes de integração usam provedor falso, sem rede.
 - Página `/planos`, lembrete a cada 5 min (`PlansNudge`, dono/admin) e tutorial por papel (`Tour`):
   ao criar telas novas, acrescente o passo correspondente em `stepsFor()` do `Tour.tsx`.
 - Publicar versão: `make version v=X.Y.Z` → commit → tag → push (`docs/executar.md`).

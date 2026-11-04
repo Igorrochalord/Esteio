@@ -61,6 +61,22 @@ Os testes do núcleo (`make test`) só precisam do Rust. As libs do WebKit são 
    em `pages/`, rota em `App.tsx` e item de menu em `layouts/AppLayout.tsx`.
 6. **Testes** em `crates/nucleo-core/tests/<m>.rs`.
 
+## Criando uma integração (provedor de API)
+
+Base em `crates/nucleo-core/src/modules/integrations/` ([ADR 0003](adr/0003-integracoes-online.md)).
+
+1. Crie um tipo que implemente `provider::Provider`:
+   - `info()`: id, nome, tipo (`Kind`) e os campos da tela (`Field`; `secret: true` vai cifrado);
+   - `check(call)`: chamada leve que confirma as credenciais (botão "Testar conexão");
+   - `run(call, job)`: executa um trabalho da fila e devolve `Outcome::Done`, `Wait` ou `Error`;
+   - `on_done(conn, inst, job, result)`: efeito local, na transação que marca o trabalho como feito.
+2. Use `call.http.send(...)`: ele separa sem internet, credencial recusada e erro da API.
+3. Registre com `core.register_provider(Arc::new(...))` em `src-tauri/src/lib.rs` (o
+   provedor sai da lista "em breve" de `catalog.rs`).
+4. Quem gera o trabalho chama `integrations::service::enqueue(&mut tx, …)` **dentro da própria
+   transação**, para nunca depender da internet na hora da ação.
+5. Teste com um provedor falso, como em `tests/integrations.rs`; nada de rede nos testes.
+
 ## Regras de código
 
 - Regra de negócio **só no service**. O comando apenas chama `core.require(...)` e delega.

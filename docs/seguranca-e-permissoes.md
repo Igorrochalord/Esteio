@@ -34,6 +34,7 @@
 | reports (inclui custo, margem, vendedores) | manage | read | — |
 | finance (contas, a pagar/receber, DRE) | manage | manage | — |
 | service_orders (ordens de serviço) | manage | manage | write (abre, atualiza, fatura) |
+| integrations (serviços on-line, credenciais, fila) | manage | manage | — |
 
 Detalhes do comercial: quem não pode editar produtos não recebe o custo; lucro/custo da venda
 só para quem vê relatórios; alterar preço unitário na venda e lançar venda com data passada
@@ -59,6 +60,11 @@ Regras de pessoas (`users::service`):
 
 - **CSP** (`tauri.conf.json`): `connect-src` só para o IPC do Tauri, então a interface não
   consegue acessar a rede. Imagens só locais, `data:` ou `blob:`.
+- **Rede**: só o núcleo acessa a internet, e só por chamadas de saída das integrações
+  (`reqwest` + `rustls`, com tempo limite). Nenhuma porta é aberta.
+- **Credenciais das integrações**: cifradas (ChaCha20-Poly1305) no banco, com a chave em
+  `<pasta de dados>/integracoes.key`, fora do banco e fora do backup. Nunca voltam para a
+  interface nem entram no histórico (que registra só "credenciais: alteradas").
 - **Capabilities** (`src-tauri/capabilities/default.json`): `core:default` mais os diálogos
   de abrir, salvar e confirmar.
 - **Logo**: só PNG e JPEG, conferidos pela assinatura dos bytes, até 2 MB. SVG é recusado

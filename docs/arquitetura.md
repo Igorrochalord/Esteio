@@ -1,6 +1,7 @@
 # Arquitetura
 
-Decisão completa em [ADR 0002](adr/0002-executavel-local.md).
+Decisão completa em [ADR 0002](adr/0002-executavel-local.md); integrações online em
+[ADR 0003](adr/0003-integracoes-online.md).
 
 ## Visão geral
 
@@ -13,7 +14,9 @@ nucleo-erp.exe (Tauri v2)
 ```
 
 - **Um programa, uma empresa.** Cada instalação tem uma única empresa, gravada na tabela `company`.
-- **Sem servidor.** Não existe API, porta aberta ou acesso à internet. A CSP do app bloqueia rede.
+- **Sem servidor.** Não existe API nossa nem porta aberta. A CSP bloqueia rede na interface.
+- **Internet opcional.** O núcleo faz chamadas de saída para serviços on-line (PIX, NFS-e,
+  marketplaces) por uma fila que tolera ficar sem internet. Sem conexão, tudo o mais funciona.
 - **Pronto para filiais.** As tabelas já guardam o que um sync futuro vai precisar
   (ver [banco de dados](banco-de-dados.md#preparado-para-sincronizar)).
 
@@ -47,7 +50,8 @@ Exemplo: o dono troca a cor principal.
 - o pool do SQLite (trocado na restauração de backup);
 - a identidade da instalação (`device_id`, `branch_id`);
 - a sessão: o id do usuário logado, **só em memória**, que some ao fechar o app;
-- uma trava de manutenção, que serializa backup e restauração.
+- uma trava de manutenção, que serializa backup e restauração;
+- o cofre das credenciais (`secrets::Vault`), o cliente HTTP e o registro de provedores de integração.
 
 ## Módulos atuais
 
@@ -64,7 +68,14 @@ Exemplo: o dono troca a cor principal.
 | reports | `report_sales`, `report_products`, `report_stock`, `report_customers`, `report_sellers` | reports |
 | spreadsheet | `export_xlsx` (qualquer logado), `import_preview`, `import_products` (products write) | — |
 | service_orders | `os_list/get/create/update`, `os_set_items`, `os_change_status`, `os_add_note`, `os_invoice` (+ sales write), `os_cancel` (manage) | service_orders |
+| integrations | `integrations_catalog/save/test/remove`, `integrations_jobs/summary`, `integrations_job_retry/cancel`, `integrations_run_now` | integrations |
 | finance | `fin_accounts/…`, `fin_entries/…` (criar, baixar, estornar, cancelar), `fin_transactions/…`, `fin_transfer`, `fin_ofx_preview/import`, `fin_cash_flow`, `fin_dre`, `fin_summary` | finance |
+
+**Integrações** (`modules/integrations`, ADR 0003): `Provider` é o contrato de cada serviço
+(`info`, `check`, `run`, `on_done`); `service::enqueue` põe um trabalho na fila dentro da
+transação de quem chama; `service::tick` roda os vencidos (o app chama a cada 15 s). A fila
+separa concluído, aguardando (sem contar falha), erro transitório (repete com espera crescente) e
+erro definitivo (pede ação na tela).
 
 **Ponte vendas → financeiro** (`finance::service::on_sale_created/on_sale_canceled`, chamada dentro da
 transação da venda): à vista entra na conta padrão (cria "Caixa" se não houver conta); fiado vira

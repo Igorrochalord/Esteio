@@ -25,6 +25,13 @@ Só o proprietário pode restaurar (`backup: manage`), de uma cópia da lista ou
 4. Se a reabertura falhar, o estado anterior volta automaticamente.
 5. A sessão é encerrada e o histórico registra `backup.restore`.
 
+## Integrações
+
+A cópia leva a configuração das integrações, mas **não** as credenciais utilizáveis: elas
+ficam cifradas com a chave `integracoes.key`, que fica na pasta de dados e não entra na
+cópia. Restaurada no mesmo computador, nada muda. Em outro computador, a tela de
+Integrações pede os dados de acesso de novo.
+
 ## Recomendação ao cliente
 
 Guardar uma cópia **fora do computador** com frequência (botão "Salvar cópia em…"). As

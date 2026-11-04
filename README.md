@@ -15,8 +15,9 @@ O **Núcleo ERP** é um sistema de gestão para pequenas e médias empresas, com
 assistências técnicas e prestadores de serviço. Ele organiza vendas, estoque, clientes,
 dinheiro e serviços num só lugar.
 
-A ideia é ser **simples de ter**. Você não precisa de servidor nem de mensalidade de nuvem,
-e ele funciona sem internet. Basta instalar no computador da empresa, como qualquer outro
+A ideia é ser **simples de ter**. Você não precisa de servidor nem de mensalidade de nuvem.
+Ele usa a internet para falar com serviços on-line (PIX, nota fiscal, lojas virtuais), mas
+**continua funcionando sem ela**: o que depende da rede espera e segue quando a conexão voltar. Basta instalar no computador da empresa, como qualquer outro
 programa. Os dados ficam guardados ali mesmo, com cópia de segurança automática, e o
 sistema usa as cores e o logo da sua empresa.
 
@@ -62,6 +63,7 @@ traz a versão mais recente.
 | **Relatórios** | painel inicial, curva ABC, vendedores, comparar períodos, Excel e PDF |
 | **Pessoas e segurança** | usuários com papéis (dono, administrador, usuário), histórico de alterações |
 | **Cópias de segurança** | automáticas, mais cópia manual e restauração |
+| **Integrações** | conexão com serviços on-line, fila que espera a internet voltar; PIX, NFS-e e marketplaces a caminho |
 
 Tudo com modo claro e escuro, grades tipo planilha e um tutorial guiado na primeira vez.
 
