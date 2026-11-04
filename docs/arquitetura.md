@@ -63,11 +63,20 @@ Exemplo: o dono troca a cor principal.
 | sales | `sales_list/get/create`, `sales_cancel` (manage), `sellers_list` | sales |
 | reports | `report_sales`, `report_products`, `report_stock`, `report_customers`, `report_sellers` | reports |
 | spreadsheet | `export_xlsx` (qualquer logado), `import_preview`, `import_products` (products write) | — |
+| service_orders | `os_list/get/create/update`, `os_set_items`, `os_change_status`, `os_add_note`, `os_invoice` (+ sales write), `os_cancel` (manage) | service_orders |
 | finance | `fin_accounts/…`, `fin_entries/…` (criar, baixar, estornar, cancelar), `fin_transactions/…`, `fin_transfer`, `fin_ofx_preview/import`, `fin_cash_flow`, `fin_dre`, `fin_summary` | finance |
 
 **Ponte vendas → financeiro** (`finance::service::on_sale_created/on_sale_canceled`, chamada dentro da
 transação da venda): à vista entra na conta padrão (cria "Caixa" se não houver conta); fiado vira
 conta a receber em 30 dias; cancelar a venda remove a entrada e cancela o fiado em aberto.
+
+**Ordens de serviço** (`modules/service_orders`): aberta → em andamento → aguardando → concluída
+movem livremente (cada mudança vira evento na linha do tempo, que é só inclusão). Serviços são
+produtos sem controle de estoque; peças são produtos com estoque. **Faturar** (só OS concluída)
+chama `sales::service::create_in` **na mesma transação**: gera a venda com os itens e descontos
+da OS, baixa as peças do estoque e alimenta o financeiro pela ponte acima; se algo falhar (ex.:
+estoque insuficiente), nada é gravado. OS faturada ou cancelada fica travada; para desfazer o
+faturamento, cancela-se a venda.
 
 ## "Excel interno": a grade
 

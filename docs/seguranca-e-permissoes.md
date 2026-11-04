@@ -33,10 +33,15 @@
 | sales | manage | manage (cancela) | write (vende) |
 | reports (inclui custo, margem, vendedores) | manage | read | — |
 | finance (contas, a pagar/receber, DRE) | manage | manage | — |
+| service_orders (ordens de serviço) | manage | manage | write (abre, atualiza, fatura) |
 
 Detalhes do comercial: quem não pode editar produtos não recebe o custo; lucro/custo da venda
 só para quem vê relatórios; alterar preço unitário na venda e lançar venda com data passada
 exigem `sales: manage`; cancelar venda exige `sales: manage` e devolve o estoque.
+
+Ordens de serviço: o técnico (usuário) abre a OS, lança serviços e peças (inclusive o preço
+combinado), muda a situação e fatura; faturar também exige `sales: write`. Cancelar OS exige
+`service_orders: manage`.
 
 Os níveis se acumulam: `manage` inclui `write`, que inclui `read`. A matriz fica em
 `crates/nucleo-core/src/permissions.rs` (`granted`). O front recebe a matriz efetiva em

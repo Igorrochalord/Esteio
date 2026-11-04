@@ -171,12 +171,14 @@
     <div class="card"><h4>Dados protegidos</h4>Backup automático diário (7 cópias), backup manual e restauração com cópia de segurança.</div>
   </div>
 
-  <h3>Funcionalidades atuais (fases 1b a 3)</h3>
+  <h3>Funcionalidades atuais (fases 1b a 5)</h3>
   <ul>
     <li><strong>Visual:</strong> modo claro/escuro (automático ou escolhido no menu), ícones, animações curtas (desligadas em "reduzir movimento"); Início como painel com comparação hoje×ontem e mês×mês anterior, atalhos e alertas.</li>
     <li><strong>Vendas:</strong> nova venda com busca por nome/código/código de barras, desconto por item e na venda, vendedor, 6 formas de pagamento (fiado exige cliente), F9 finaliza; cancelamento devolve o estoque.</li>
     <li><strong>Produtos:</strong> planilha editável (código, nome, categoria, unidade, preço, custo, margem, estoque, mínimo), categorias, entrada/saída/ajuste de estoque, histórico por produto, importação de Excel/CSV.</li>
     <li><strong>Clientes:</strong> planilha editável com CPF/CNPJ validado, cidade e UF.</li>
+    <li><strong>Financeiro:</strong> contas bancárias e caixa, contas a pagar e a receber (parcelas, repetição mensal, baixa e estorno), extrato com importação OFX e conciliação, transferências, fluxo de caixa realizado e previsto, DRE por competência. Vendas à vista entram no caixa e o fiado vira conta a receber.</li>
+    <li><strong>Ordens de serviço:</strong> quadro com as etapas (aberta, em andamento, aguardando, concluída; arrastar o cartão muda a situação) e lista; cliente, equipamento, relato, diagnóstico, técnico, agenda e previsão (atrasadas em vermelho); serviços e peças; linha do tempo com anotações; faturar gera a venda, baixa as peças e lança no financeiro; impressão da OS com assinaturas.</li>
     <li><strong>Relatórios:</strong> vendas por dia/semana/mês e por hora, formas de pagamento, ranking e curva ABC, lucro por categoria, posição e cobertura de estoque, mapa de vendas por UF, cidades e melhores clientes, desempenho por vendedor. Tudo exporta para Excel.</li>
     <li><strong>Primeira abertura:</strong> assistente que cadastra a empresa (nome, CNPJ, cores, logo) e o proprietário.</li>
     <li><strong>Entrada:</strong> login com a marca da empresa, mostrar senha, aviso de Caps Lock, lembrar e-mail.</li>
@@ -360,6 +362,8 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td><code>SalesPage.tsx</code></td><td class="wrap">Vendas: lista em grade com período e situação; <em>Nova venda</em> (busca com leitor de código de barras, itens, desconto, cliente, vendedor, pagamento, F9); detalhes com itens e cancelamento.</td><td class="wrap"><code>salesApi</code>, <code>productsApi</code>, <code>customersApi</code></td></tr>
       <tr><td><code>ProductsPage.tsx</code></td><td class="wrap">Produtos: grade editável, filtros (categoria, abaixo do mínimo, inativos), novo produto, movimentar estoque, categorias, importar planilha, histórico do produto (Enter em célula não editável).</td><td class="wrap"><code>productsApi</code>, <code>sheetApi</code></td></tr>
       <tr><td><code>CustomersPage.tsx</code></td><td class="wrap">Clientes: grade editável e formulário (reusado na venda).</td><td class="wrap"><code>customersApi</code></td></tr>
+      <tr><td><code>ServiceOrdersPage.tsx</code></td><td class="wrap">Ordens de serviço: quadro (arrastar entre etapas) ou lista; nova OS; detalhe com etapas, dados do atendimento, serviços e peças, linha do tempo, faturar, cancelar e imprimir (folha própria via <code>body.printing-os</code>).</td><td class="wrap"><code>osApi</code>, <code>productsApi</code>, <code>salesApi.sellers</code></td></tr>
+      <tr><td><code>finance/*.tsx</code></td><td class="wrap">Financeiro em abas: visão geral, a receber, a pagar, extrato (OFX), fluxo de caixa, DRE, contas e categorias.</td><td class="wrap"><code>financeApi</code></td></tr>
       <tr><td><code>ReportsPage.tsx</code></td><td class="wrap">Relatórios em abas com um filtro de período comum: Vendas, Produtos, Estoque, Clientes e mapa, Vendedores.</td><td class="wrap"><code>reportsApi</code></td></tr>
       <tr><td><code>LoginPage.tsx</code></td><td class="wrap">Entrar: marca da empresa, mostrar senha, Caps Lock, "lembrar meu e-mail" (localStorage, nunca a senha), aviso após pedido de cadastro, links.</td><td class="wrap"><code>useAuth().login</code></td></tr>
       <tr><td><code>RegisterPage.tsx</code></td><td class="wrap">Pedir cadastro: nome, e-mail, senha, confirmação → volta ao login com aviso.</td><td class="wrap"><code>authApi.register</code></td></tr>
@@ -431,6 +435,7 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td><code>src/commands/products.rs</code></td><td class="wrap"><code>products_list/create/update, stock_move, stock_movements, categories_list/create/rename/delete</code>.</td><td class="wrap when">—</td></tr>
       <tr><td><code>src/commands/customers.rs</code> · <code>sales.rs</code></td><td class="wrap"><code>customers_list/create/update</code> · <code>sales_list/get/create/cancel, sellers_list</code>.</td><td class="wrap when">—</td></tr>
       <tr><td><code>src/commands/reports.rs</code> · <code>spreadsheet.rs</code></td><td class="wrap"><code>report_sales/products/stock/customers/sellers</code> · <code>export_xlsx, import_preview, import_products</code>.</td><td class="wrap when">—</td></tr>
+      <tr><td><code>src/commands/finance.rs</code> · <code>service_orders.rs</code></td><td class="wrap"><code>fin_*</code> (contas, títulos, extrato, OFX, fluxo, DRE, resumo) · <code>os_list/get/create/update/set_items/change_status/add_note/invoice/cancel</code>.</td><td class="wrap when">—</td></tr>
       <tr><td><code>src/commands/audit.rs</code> · <code>backup.rs</code></td><td class="wrap"><code>audit_list</code> · <code>backup_list, backup_create, backup_restore</code>.</td><td class="wrap when">—</td></tr>
     </tbody>
   </table>
@@ -470,9 +475,11 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td><code>0001_fundacao.sql</code></td><td class="wrap"><code>installation</code>, <code>change_log</code>, <code>company</code>, <code>users</code>, <code>audit_logs</code>; triggers de histórico de alterações, de bloqueio de DELETE e de auditoria imutável.</td></tr>
       <tr><td><code>0002_cadastro.sql</code></td><td class="wrap">Coluna <code>users.pending</code> (autocadastro aguardando aprovação).</td></tr>
       <tr><td><code>0003_comercial.sql</code></td><td class="wrap"><code>categories</code>, <code>products</code>, <code>stock_movements</code> (imutável), <code>customers</code>, <code>sales</code>, <code>sale_items</code>, com as regras de sync.</td></tr>
+      <tr><td><code>0004_financeiro.sql</code></td><td class="wrap"><code>bank_accounts</code>, <code>fin_categories</code> (com a linha da DRE), <code>fin_entries</code>, <code>bank_transactions</code>.</td></tr>
+      <tr><td><code>0005_ordens_servico.sql</code></td><td class="wrap"><code>service_orders</code>, <code>service_order_items</code>, <code>service_order_events</code> (linha do tempo, só inclusão).</td></tr>
     </tbody>
   </table>
-  <div class="warn"><strong>Nunca edite uma migração já distribuída.</strong> Crie a próxima (<code>0003_…sql</code>). Elas
+  <div class="warn"><strong>Nunca edite uma migração já distribuída.</strong> Crie a próxima (<code>0006_…sql</code>). Elas
   ficam embutidas no executável e rodam ao abrir o programa.</div>
 
   <h3>Módulos (<code>src/modules/&lt;m&gt;/</code>)</h3>
@@ -488,6 +495,8 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td><code>products</code></td><td class="wrap"><code>models.rs</code>: <code>Product</code> (custo só para quem edita), <code>ProductInput/Patch</code>, <code>StockInput</code>, <code>UNITS</code>. <code>repository.rs</code>: SQL e <code>apply_movement</code> (atualiza o saldo e grava a movimentação). <code>service.rs</code>: cadastro com código automático, edição parcial, entrada/saída/ajuste, categorias.</td></tr>
       <tr><td><code>customers</code></td><td class="wrap"><code>service.rs</code>: cadastro e edição com CPF/CNPJ único, e-mail e UF validados.</td></tr>
       <tr><td><code>sales</code></td><td class="wrap"><code>service.rs</code>: <code>create</code> (uma transação: valida, calcula totais e custo, baixa estoque, audita), <code>cancel</code> (estorna), <code>list/get</code>; <code>PAYMENT_METHODS</code> em <code>models.rs</code>.</td></tr>
+      <tr><td><code>finance</code></td><td class="wrap"><code>service.rs</code>: contas, categorias, títulos (parcelas, baixa, estorno, cancelamento), extrato, transferências e a ponte com vendas (<code>on_sale_created/on_sale_canceled</code>); <code>ofx.rs</code>: leitura e conciliação; <code>reports.rs</code>: fluxo de caixa e DRE.</td></tr>
+      <tr><td><code>service_orders</code></td><td class="wrap"><code>service.rs</code>: <code>create</code>, <code>update</code>, <code>set_items</code>, <code>change_status</code>, <code>add_note</code>, <code>invoice</code> (chama <code>sales::service::create_in</code> na mesma transação), <code>cancel</code>; <code>models.rs</code>: etapas (<code>WORK_STATUSES</code>).</td></tr>
       <tr><td><code>reports</code></td><td class="wrap"><code>service.rs</code>: <code>sales_summary</code> (totais, série por período local, pagamento, hora), <code>products</code> (ABC, categorias), <code>stock</code> (valor, cobertura), <code>customers</code> (UF, cidade, ranking), <code>sellers</code>.</td></tr>
       <tr><td><code>spreadsheet</code></td><td class="wrap"><code>service.rs</code>: <code>export_xlsx</code> (abas com formatos R$, %, data), <code>preview</code> e <code>import_products</code> (xlsx/xls/ods/csv, números brasileiros, sugestão de colunas, erros por linha).</td></tr>
       <tr><td><code>backup</code></td><td class="wrap"><code>service.rs</code>: <code>create</code>, <code>list</code>, <code>auto_daily</code> (24 h, guarda 7: <code>KEEP_AUTO</code>), <code>restore</code> (valida, guarda cópia do estado atual, troca o arquivo, desfaz se falhar).</td></tr>
@@ -504,6 +513,8 @@ Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</co
       <tr><td><code>registration.rs</code></td><td class="wrap">Autocadastro pendente, aprovação, recusa libera e-mail, só gestores aprovam, redefinição de senha, marca pública.</td></tr>
       <tr><td><code>commerce.rs</code></td><td class="wrap">Códigos, categorias, estoque e imutabilidade, quantidades fracionadas, totais/custo/lucro da venda, estoque insuficiente, fiado, cancelamento, operador sem custo.</td></tr>
       <tr><td><code>reports.rs</code></td><td class="wrap">Valores conferidos à mão: totais, dia local, pagamento, ABC, cobertura, UF, vendedores; exportar/importar planilha.</td></tr>
+      <tr><td><code>finance.rs</code></td><td class="wrap">Conta padrão e saldos, parcelas e fim de mês, baixa/estorno, ponte com vendas, transferências, OFX e conciliação, fluxo de caixa e DRE.</td></tr>
+      <tr><td><code>service_orders.rs</code></td><td class="wrap">Numeração, itens e totais, etapas e linha do tempo, faturar (venda, estoque, financeiro; nada gravado se faltar estoque), travas de OS faturada/cancelada, permissões.</td></tr>
       <tr><td><code>company_and_backup.rs</code></td><td class="wrap">Edição da empresa e auditoria só do que muda, cores e logo, paginação do histórico, backup e restauração, arquivo inválido, rotação automática.</td></tr>
     </tbody>
   </table>
@@ -664,6 +675,9 @@ pub async fn products_list(core: State&lt;'_, Core&gt;) -&gt; Res&lt;Vec&lt;Prod
       <tr><td><code>stock_movements</code></td><td>negócio</td><td class="wrap">entradas, saídas, ajustes, vendas e estornos; <strong>imutável</strong>; saldo após cada uma</td></tr>
       <tr><td><code>customers</code></td><td>negócio</td><td class="wrap">CPF/CNPJ, contato, cidade, UF</td></tr>
       <tr><td><code>sales</code> · <code>sale_items</code></td><td>negócio</td><td class="wrap">venda (número por filial, pagamento, totais, custo do momento) e itens (nome congelado)</td></tr>
+      <tr><td><code>bank_accounts</code> · <code>fin_categories</code></td><td>negócio</td><td class="wrap">contas (saldo inicial, padrão) e categorias de receita/despesa com a linha da DRE</td></tr>
+      <tr><td><code>fin_entries</code> · <code>bank_transactions</code></td><td>negócio</td><td class="wrap">a pagar/receber (parcelas, baixa, vínculo com venda) e extrato (valor com sinal, origem, FITID, conciliado)</td></tr>
+      <tr><td><code>service_orders</code> · <code>service_order_items</code> · <code>service_order_events</code></td><td>negócio</td><td class="wrap">OS (número por filial, situação, técnico, datas, venda gerada), serviços e peças, linha do tempo só de inclusão</td></tr>
       <tr><td><code>audit_logs</code></td><td>infra</td><td class="wrap">histórico append-only: autor, ação, entidade, antes/depois (JSON)</td></tr>
       <tr><td><code>change_log</code></td><td>infra</td><td class="wrap">fila de alterações para o sync futuro (preenchida por trigger)</td></tr>
       <tr><td><code>_sqlx_migrations</code></td><td>infra</td><td class="wrap">migrações já aplicadas (controle do sqlx)</td></tr>
@@ -701,6 +715,8 @@ pub async fn products_list(core: State&lt;'_, Core&gt;) -&gt; Res&lt;Vec&lt;Prod
       <tr><td>customers</td><td>manage</td><td>manage</td><td>write</td></tr>
       <tr><td>sales</td><td>manage</td><td>manage (cancela)</td><td>write (vende)</td></tr>
       <tr><td>reports</td><td>manage</td><td>read</td><td>—</td></tr>
+      <tr><td>finance</td><td>manage</td><td>manage</td><td>—</td></tr>
+      <tr><td>service_orders</td><td>manage</td><td>manage</td><td>write (abre, atualiza, fatura)</td></tr>
     </tbody>
   </table>
   <p>Níveis acumulam: <code>manage</code> ⊃ <code>write</code> ⊃ <code>read</code>. A interface só esconde menus;
@@ -755,6 +771,10 @@ pub async fn products_list(core: State&lt;'_, Core&gt;) -&gt; Res&lt;Vec&lt;Prod
       <tr><td><code>sales_create</code></td><td><code>data: {items[], payment_method, customer_id?, seller_id?, discount?, sold_at?}</code></td><td><code>Sale</code></td><td>sales write</td></tr>
       <tr><td><code>sales_list</code> · <code>sales_get</code></td><td><code>query</code> · <code>id</code></td><td><code>Sale[]</code> · <code>Sale</code></td><td>sales read</td></tr>
       <tr><td><code>sales_cancel</code></td><td><code>id, reason</code></td><td><code>Sale</code></td><td>sales manage</td></tr>
+      <tr><td><code>os_create</code> · <code>os_update</code> · <code>os_set_items</code></td><td><code>data: {customer_id, reported, equipment?, technician_id?, scheduled_date?, due_date?, items[]}</code> · <code>id, data</code> · <code>id, items[]</code></td><td><code>ServiceOrder</code></td><td>service_orders write</td></tr>
+      <tr><td><code>os_change_status</code> · <code>os_add_note</code></td><td><code>id, status, note?</code> · <code>id, note</code></td><td><code>ServiceOrder</code></td><td>service_orders write</td></tr>
+      <tr><td><code>os_invoice</code> · <code>os_cancel</code></td><td><code>id, data: {payment_method, seller_id?, tz_offset_minutes}</code> · <code>id, reason</code></td><td><code>ServiceOrder</code></td><td>write + sales write · manage</td></tr>
+      <tr><td><code>fin_*</code> (21)</td><td>ver <code>commands/finance.rs</code></td><td>contas, títulos, extrato, relatórios</td><td>finance</td></tr>
       <tr><td><code>report_*</code> (5)</td><td><code>query: {from, to, tz_offset_minutes, group?}</code></td><td>relatório</td><td>reports read</td></tr>
       <tr><td><code>export_xlsx</code></td><td><code>path, sheets[]</code></td><td>—</td><td>sessão</td></tr>
       <tr><td><code>import_preview</code> · <code>import_products</code></td><td><code>path</code> · <code>data: {path, mapping, update_existing}</code></td><td>prévia · resultado</td><td>products write</td></tr>
@@ -896,7 +916,9 @@ pub async fn products_list(core: State&lt;'_, Core&gt;) -&gt; Res&lt;Vec&lt;Prod
       <tr><td>1b</td><td class="wrap">Fundação local: núcleo Rust + SQLite, login, autocadastro, pessoas, empresa, histórico, backup, CI</td><td>em andamento</td></tr>
       <tr><td>2</td><td class="wrap">Comercial: produtos, estoque, clientes, vendas, relatórios, grade tipo planilha, Excel</td><td>em validação</td></tr>
       <tr><td>3</td><td class="wrap">Design moderno, modo escuro, animações, painel, comparação de períodos, PDF</td><td>em validação</td></tr>
-      <tr><td>4 · 5 · 6 · 7</td><td class="wrap">Financeiro · Ordens de serviço · NFS-e (Emissor Nacional) · Planos e cobrança</td><td>próximas</td></tr>
+      <tr><td>4</td><td class="wrap">Financeiro: contas, a pagar/receber, extrato OFX, fluxo de caixa, DRE</td><td>em validação</td></tr>
+      <tr><td>5</td><td class="wrap">Ordens de serviço: quadro, itens, linha do tempo, faturar, imprimir</td><td>em validação</td></tr>
+      <tr><td>6 · 7</td><td class="wrap">NFS-e (Emissor Nacional, certificado A1) · Planos e cobrança</td><td>próximas</td></tr>
       <tr><td>6</td><td class="wrap">Sincronização entre filiais (servidor + consumo do <code>change_log</code>)</td><td>—</td></tr>
       <tr><td>7</td><td class="wrap">Release: assinatura de código, atualização automática</td><td>—</td></tr>
       <tr><td>—</td><td class="wrap">Assinatura e licenciamento</td><td>proposta</td></tr>
