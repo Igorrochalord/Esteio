@@ -9,6 +9,7 @@ pub mod audit;
 pub mod db;
 pub mod error;
 pub mod modules;
+pub mod money;
 pub mod permissions;
 pub mod security;
 pub mod validate;

@@ -2,6 +2,9 @@ pub mod audit;
 pub mod auth;
 pub mod backup;
 pub mod company;
+pub mod customers;
+pub mod products;
+pub mod sales;
 pub mod users;
 
 use serde::{Deserialize, Deserializer};

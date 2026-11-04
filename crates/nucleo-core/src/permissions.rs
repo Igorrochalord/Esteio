@@ -40,10 +40,25 @@ pub enum Module {
     Audit,
     /// cópias de segurança do banco
     Backup,
+    /// catálogo de produtos, categorias e estoque
+    Products,
+    Customers,
+    Sales,
+    /// relatórios gerenciais (inclui custo, margem e desempenho de vendedores)
+    Reports,
 }
 
 impl Module {
-    pub const ALL: [Module; 4] = [Self::Settings, Self::Users, Self::Audit, Self::Backup];
+    pub const ALL: [Module; 8] = [
+        Self::Settings,
+        Self::Users,
+        Self::Audit,
+        Self::Backup,
+        Self::Products,
+        Self::Customers,
+        Self::Sales,
+        Self::Reports,
+    ];
 
     pub fn as_str(self) -> &'static str {
         match self {
@@ -51,6 +66,10 @@ impl Module {
             Self::Users => "users",
             Self::Audit => "audit",
             Self::Backup => "backup",
+            Self::Products => "products",
+            Self::Customers => "customers",
+            Self::Sales => "sales",
+            Self::Reports => "reports",
         }
     }
 }
@@ -79,12 +98,14 @@ pub fn granted(role: Role, module: Module) -> Option<Action> {
     match role {
         Role::Owner => Some(Manage),
         Role::Admin => match module {
-            Settings | Users => Some(Manage),
-            Audit => Some(Read),
+            Settings | Users | Products | Customers | Sales => Some(Manage),
+            Audit | Reports => Some(Read),
             Backup => Some(Write), // gera cópias; restaurar é só do dono
         },
+        // operador do dia a dia: vende, cadastra clientes, consulta produtos
         Role::User => match module {
-            Settings => Some(Read),
+            Settings | Products => Some(Read),
+            Customers | Sales => Some(Write),
             _ => None,
         },
     }
@@ -119,7 +140,9 @@ mod tests {
     #[test]
     fn user_menu_only_lists_granted_modules() {
         let p = permissions_for(Role::User);
-        assert_eq!(p.len(), 1);
+        assert_eq!(p.len(), 4);
         assert_eq!(p["settings"], "read");
+        assert_eq!(p["sales"], "write");
+        assert!(!p.contains_key("reports"));
     }
 }

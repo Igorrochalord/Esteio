@@ -37,6 +37,58 @@ pub fn cnpj(value: Option<&str>) -> Result<Option<String>, InvalidCnpj> {
     ))
 }
 
+/// Normaliza CPF (11 dígitos) ou CNPJ (14 dígitos) conforme o tamanho. `Ok(None)` = vazio.
+pub fn document(value: Option<&str>) -> Result<Option<String>, InvalidCnpj> {
+    let Some(v) = value.map(str::trim).filter(|v| !v.is_empty()) else {
+        return Ok(None);
+    };
+    let digits: Vec<u32> = v.chars().filter_map(|c| c.to_digit(10)).collect();
+    if digits.len() == 14 {
+        return cnpj(Some(v));
+    }
+    if digits.len() != 11 || digits.iter().all(|&d| d == digits[0]) {
+        return Err(InvalidCnpj);
+    }
+    let check = |len: usize| -> u32 {
+        let sum: u32 = digits[..len]
+            .iter()
+            .enumerate()
+            .map(|(i, d)| d * (len as u32 + 1 - i as u32))
+            .sum();
+        let rest = (sum * 10) % 11;
+        if rest == 10 {
+            0
+        } else {
+            rest
+        }
+    };
+    if digits[9] != check(9) || digits[10] != check(10) {
+        return Err(InvalidCnpj);
+    }
+    Ok(Some(
+        digits
+            .iter()
+            .map(|d| char::from_digit(*d, 10).unwrap_or('0'))
+            .collect(),
+    ))
+}
+
+pub const UFS: [&str; 27] = [
+    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR",
+    "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+];
+
+/// UF em maiúsculas se válida.
+pub fn uf(value: &str) -> Option<String> {
+    let v = value.trim().to_uppercase();
+    UFS.contains(&v.as_str()).then_some(v)
+}
+
+/// Texto opcional: `None` se vazio, senão sem espaços nas pontas.
+pub fn opt_text(value: Option<String>) -> Option<String> {
+    value.map(|v| v.trim().to_owned()).filter(|v| !v.is_empty())
+}
+
 /// Validação simples de formato; devolve o e-mail em minúsculas.
 pub fn email(value: &str) -> Option<String> {
     let v = value.trim().to_lowercase();
@@ -75,6 +127,23 @@ mod tests {
         assert_eq!(cnpj(None), Ok(None));
         assert!(cnpj(Some("11.222.333/0001-82")).is_err());
         assert!(cnpj(Some("11111111111111")).is_err());
+    }
+
+    #[test]
+    fn document_rules() {
+        assert_eq!(
+            document(Some("529.982.247-25")),
+            Ok(Some("52998224725".into()))
+        );
+        assert!(document(Some("529.982.247-24")).is_err());
+        assert!(document(Some("111.111.111-11")).is_err());
+        assert_eq!(
+            document(Some("11.222.333/0001-81")),
+            Ok(Some("11222333000181".into()))
+        );
+        assert_eq!(document(Some("")), Ok(None));
+        assert_eq!(uf(" sp ").as_deref(), Some("SP"));
+        assert!(uf("XX").is_none());
     }
 
     #[test]
