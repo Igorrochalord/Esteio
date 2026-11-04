@@ -50,6 +50,9 @@ docs/                    documentação por tópico + decisões (adr/)
 
 ## Documentação
 
+**Documentação Master em PDF:** [docs/Nucleo-ERP-Documentacao.pdf](docs/Nucleo-ERP-Documentacao.pdf), com o projeto inteiro,
+arquivo por arquivo, e onde alterar cada coisa (fonte: `docs/manual/manual.html`; regenerar com `make manual`).
+
 | Tópico | Conteúdo |
 |---|---|
 | [Estrutura de pastas](docs/estrutura.md) | o que cada pasta e arquivo principal faz |

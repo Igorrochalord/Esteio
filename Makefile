@@ -9,7 +9,7 @@ DESKTOP := apps/desktop
 # pasta de dados usada em desenvolvimento (o app instalado usa a pasta de dados do SO)
 DEV_DATA ?= $(CURDIR)/.dev-data
 
-.PHONY: help install test lint fmt check seed reset-data dev build web-build
+.PHONY: help install test lint fmt check seed reset-data dev build web-build manual
 
 help: ## lista os comandos
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -45,3 +45,13 @@ build: ## gera o instalador da plataforma atual (Windows: .msi/.exe; Linux: .deb
 
 web-build: ## só o build do frontend
 	cd $(DESKTOP) && npm run build
+
+# Chrome do Windows (WSL); em outro ambiente: make manual CHROME=/caminho/do/chrome
+CHROME ?= /mnt/c/Program Files/Google/Chrome/Application/chrome.exe
+MANUAL_PDF := docs/Nucleo-ERP-Documentacao.pdf
+
+manual: ## gera o PDF da documentação master a partir de docs/manual/manual.html
+	"$(CHROME)" --headless=new --disable-gpu --no-pdf-header-footer \
+		--print-to-pdf="$$(wslpath -w $(CURDIR)/$(MANUAL_PDF))" \
+		"file:///$$(wslpath -w $(CURDIR)/docs/manual/manual.html | tr '\\' '/')"
+	@echo "PDF: $(MANUAL_PDF)"

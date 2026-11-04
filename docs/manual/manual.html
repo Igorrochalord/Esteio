@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Núcleo ERP: Documentação Master</title>
+<!--
+  Fonte do PDF docs/Nucleo-ERP-Documentacao.pdf.
+  Para regenerar: `make manual` (WSL + Chrome do Windows). Mantenha em sincronia com docs/*.md.
+-->
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm;
+    @bottom-left { content: "Núcleo ERP · Documentação Master"; font: 8pt "Segoe UI", sans-serif; color: #7a8580; }
+    @bottom-right { content: counter(page) " / " counter(pages); font: 8pt "Segoe UI", sans-serif; color: #7a8580; }
+  }
+  @page :first { @bottom-left { content: none; } @bottom-right { content: none; } }
+
+  :root {
+    --ink: #1b2220; --muted: #5c6763; --line: #dce1de; --soft: #f3f5f4;
+    --accent: #1d4ed8; --accent-soft: #e8eefc; --deep: #0f172a; --warn: #92400e; --warn-soft: #fef3c7;
+  }
+  * { box-sizing: border-box; }
+  html { font-family: "Segoe UI", "Public Sans", system-ui, sans-serif; font-size: 9.6pt; color: var(--ink); line-height: 1.5; }
+  body { margin: 0; }
+  h1, h2, h3, h4 { line-height: 1.2; margin: 0; break-after: avoid; }
+  h2 { font-size: 17pt; color: var(--deep); margin: 0 0 10pt; padding-bottom: 5pt; border-bottom: 2pt solid var(--accent); }
+  h3 { font-size: 12pt; margin: 16pt 0 6pt; color: var(--deep); }
+  h4 { font-size: 10pt; margin: 12pt 0 4pt; }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 8pt; padding-left: 16pt; }
+  li { margin-bottom: 2pt; }
+  code, pre, .mono { font-family: "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace; font-size: 8.3pt; }
+  code { background: var(--soft); border: 0.5pt solid var(--line); border-radius: 3pt; padding: 0 3pt; white-space: nowrap; }
+  pre { background: #f7f8f7; border: 0.5pt solid var(--line); border-left: 3pt solid var(--accent); border-radius: 4pt; padding: 7pt 9pt; margin: 0 0 9pt; white-space: pre-wrap; line-height: 1.4; break-inside: avoid; }
+  pre code { background: none; border: 0; padding: 0; white-space: pre-wrap; }
+  a { color: var(--accent); text-decoration: none; }
+  strong { font-weight: 650; }
+
+  section.chapter { break-before: page; }
+  table { width: 100%; border-collapse: collapse; margin: 0 0 10pt; font-size: 8.8pt; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+  th { text-align: left; background: var(--deep); color: #fff; font-weight: 600; padding: 4pt 6pt; }
+  td { padding: 4pt 6pt; border-bottom: 0.5pt solid var(--line); vertical-align: top; }
+  tbody tr:nth-child(even) td { background: #fafbfa; }
+  td:first-child { white-space: nowrap; }
+  td.wrap { white-space: normal; }
+  .files td:first-child code { white-space: nowrap; }
+  .when { color: var(--muted); }
+
+  .note { background: var(--accent-soft); border-left: 3pt solid var(--accent); padding: 6pt 9pt; border-radius: 3pt; margin: 0 0 9pt; break-inside: avoid; }
+  .warn { background: var(--warn-soft); border-left: 3pt solid #d97706; padding: 6pt 9pt; border-radius: 3pt; margin: 0 0 9pt; color: #5b3a0a; break-inside: avoid; }
+  .muted { color: var(--muted); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; }
+  .card { border: 0.5pt solid var(--line); border-radius: 5pt; padding: 8pt 10pt; break-inside: avoid; }
+  .card h4 { margin-top: 0; }
+
+  /* capa */
+  .cover { height: 255mm; display: flex; flex-direction: column; justify-content: space-between; }
+  .cover-band { background: var(--deep); color: #fff; padding: 28mm 14mm 16mm; border-radius: 6pt; position: relative; overflow: hidden; }
+  .cover-band::after { content: ""; position: absolute; right: -30mm; bottom: -40mm; width: 110mm; height: 110mm; border-radius: 50%; background: var(--accent); opacity: .35; }
+  .cover-mark { display: inline-grid; place-items: center; width: 16mm; height: 16mm; border-radius: 3mm; background: var(--accent); font-weight: 700; font-size: 15pt; margin-bottom: 12mm; position: relative; z-index: 1; }
+  .cover h1 { font-size: 34pt; letter-spacing: -0.02em; position: relative; z-index: 1; }
+  .cover .subtitle { font-size: 15pt; opacity: .85; margin-top: 4mm; position: relative; z-index: 1; }
+  .cover-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8pt; }
+  .cover-meta div { border-top: 1.5pt solid var(--deep); padding-top: 5pt; }
+  .cover-meta b { display: block; font-size: 8pt; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+
+  /* sumário */
+  .toc ol { list-style: none; padding: 0; columns: 2; column-gap: 18pt; }
+  .toc li { break-inside: avoid; padding: 4pt 0; border-bottom: 0.5pt dotted var(--line); }
+  .toc li a { color: var(--ink); }
+  .toc .num { display: inline-block; width: 18pt; color: var(--accent); font-weight: 700; }
+
+  /* diagrama de camadas */
+  .layers { display: flex; flex-direction: column; gap: 5pt; margin: 4pt 0 12pt; }
+  .layer { display: grid; grid-template-columns: 34mm 1fr 52mm; align-items: center; border: 0.75pt solid var(--line); border-radius: 4pt; overflow: hidden; break-inside: avoid; }
+  .layer > div { padding: 6pt 8pt; }
+  .layer .tag { background: var(--deep); color: #fff; font-weight: 650; height: 100%; display: flex; align-items: center; }
+  .layer .where { background: var(--soft); height: 100%; font-family: Consolas, monospace; font-size: 8pt; display: flex; align-items: center; }
+  .arrow { text-align: center; color: var(--accent); font-size: 10pt; line-height: 1; }
+
+  .tree { font-family: "Cascadia Mono", Consolas, monospace; font-size: 8.4pt; line-height: 1.45; background: #f7f8f7; border: 0.5pt solid var(--line); border-radius: 4pt; padding: 8pt 10pt; white-space: pre; break-inside: avoid; }
+  .tree .c { color: var(--muted); }
+  .recipe { break-inside: avoid; margin-bottom: 8pt; }
+  .recipe h4 { color: var(--accent); }
+  .pill { display: inline-block; font-size: 7.5pt; font-weight: 650; padding: 0 5pt; border-radius: 8pt; background: var(--accent-soft); color: var(--accent); vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<!-- ============================== CAPA ============================== -->
+<section class="cover">
+  <div class="cover-band">
+    <div class="cover-mark">NE</div>
+    <h1>Núcleo ERP</h1>
+    <div class="subtitle">Documentação Master: o projeto inteiro, arquivo por arquivo,<br>e onde alterar cada coisa</div>
+  </div>
+  <div>
+    <p class="muted" style="font-size:10.5pt;max-width:150mm">
+      ERP modular para pequenas e médias empresas, distribuído como programa instalável.
+      Interface em React dentro do Tauri, regras de negócio em Rust e dados num arquivo SQLite no
+      computador do cliente. Sem servidor e sem internet.
+    </p>
+    <div class="cover-meta">
+      <div><b>Versão</b>0.1.0 · fase 1b</div>
+      <div><b>Data</b>3 de novembro de 2026</div>
+      <div><b>Repositório</b>github.com/Igorrochalord/Esteio</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SUMÁRIO ============================== -->
+<section class="chapter toc">
+  <h2>Sumário</h2>
+  <ol>
+    <li><a href="#visao"><span class="num">1</span>Visão geral</a></li>
+    <li><a href="#arquitetura"><span class="num">2</span>Como o sistema funciona</a></li>
+    <li><a href="#mapa"><span class="num">3</span>Mapa do repositório</a></li>
+    <li><a href="#raiz"><span class="num">4</span>Arquivos da raiz e CI</a></li>
+    <li><a href="#interface"><span class="num">5</span>Interface (apps/desktop/src)</a></li>
+    <li><a href="#tauri"><span class="num">6</span>Casca nativa (src-tauri)</a></li>
+    <li><a href="#nucleo"><span class="num">7</span>Núcleo (crates/nucleo-core)</a></li>
+    <li><a href="#onde"><span class="num">8</span>Onde alterar o quê</a></li>
+    <li><a href="#modulo"><span class="num">9</span>Passo a passo: novo módulo</a></li>
+    <li><a href="#banco"><span class="num">10</span>Banco de dados</a></li>
+    <li><a href="#seguranca"><span class="num">11</span>Segurança e permissões</a></li>
+    <li><a href="#comandos"><span class="num">12</span>Referência de comandos</a></li>
+    <li><a href="#dev"><span class="num">13</span>Ambiente e desenvolvimento</a></li>
+    <li><a href="#distribuicao"><span class="num">14</span>Distribuição e download</a></li>
+    <li><a href="#backup"><span class="num">15</span>Backup e restauração</a></li>
+    <li><a href="#roteiro"><span class="num">16</span>Roteiro, assinatura e pendências</a></li>
+    <li><a href="#problemas"><span class="num">17</span>Problemas comuns</a></li>
+    <li><a href="#glossario"><span class="num">18</span>Glossário</a></li>
+  </ol>
+  <div class="note" style="margin-top:14pt">
+    <strong>Como usar este documento.</strong> Para entender o sistema, leia os capítulos 1–3.
+    Para achar o arquivo de uma tarefa, vá direto ao <a href="#onde">capítulo 8</a>. Os
+    capítulos 4–7 descrevem cada arquivo do projeto. A versão sempre atualizada fica nos
+    arquivos <code>docs/*.md</code> do repositório.
+  </div>
+</section>
+
+<!-- ============================== 1 VISÃO ============================== -->
+<section class="chapter" id="visao">
+  <h2>1. Visão geral</h2>
+  <p>O <strong>Núcleo ERP</strong> é um sistema de gestão modular. Cada empresa instala o
+  programa no próprio computador (<code>.exe</code> no Windows); os dados ficam num arquivo local
+  e nada depende de servidor ou internet. O sistema assume o <strong>logo e as cores</strong> da
+  empresa desde a tela de entrada.</p>
+
+  <table>
+    <thead><tr><th>Parte</th><th>Tecnologia</th><th>Onde</th></tr></thead>
+    <tbody>
+      <tr><td>Interface</td><td class="wrap">React 19 + TypeScript + Vite, React Router (HashRouter)</td><td><code>apps/desktop/src</code></td></tr>
+      <tr><td>Casca nativa</td><td class="wrap">Tauri v2 (Rust): janela, diálogos do sistema, ponte para o núcleo</td><td><code>apps/desktop/src-tauri</code></td></tr>
+      <tr><td>Regras de negócio</td><td class="wrap">Rust: biblioteca <code>nucleo-core</code>, testável sem interface</td><td><code>crates/nucleo-core</code></td></tr>
+      <tr><td>Dados</td><td class="wrap">SQLite via sqlx (WAL, chaves estrangeiras), migrações SQL</td><td><code>nucleo.db</code> na pasta do app</td></tr>
+      <tr><td>Instalador</td><td class="wrap">Tauri bundler: NSIS (<code>-setup.exe</code>) e MSI, gerados no CI</td><td><code>.github/workflows/ci.yml</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Princípios</h3>
+  <div class="grid2">
+    <div class="card"><h4>Uma instalação, uma empresa</h4>A tabela <code>company</code> tem uma única linha. Não há multiempresa no mesmo arquivo.</div>
+    <div class="card"><h4>Sem rede</h4>A interface fala com o núcleo por <code>invoke</code> (no mesmo processo). A política de segurança (CSP) bloqueia acesso à internet.</div>
+    <div class="card"><h4>Regra só no núcleo</h4>A interface só mostra e coleta dados. Toda validação e permissão é decidida no Rust.</div>
+    <div class="card"><h4>Pronto para filiais</h4>As tabelas já guardam ids globais, filial, dispositivo e um registro de alterações para a sincronização futura.</div>
+    <div class="card"><h4>Tudo auditado</h4>Escritas relevantes viram histórico imutável: quem, quando e o que mudou.</div>
+    <div class="card"><h4>Dados protegidos</h4>Backup automático diário (7 cópias), backup manual e restauração com cópia de segurança.</div>
+  </div>
+
+  <h3>Funcionalidades atuais (fase 1b)</h3>
+  <ul>
+    <li><strong>Primeira abertura:</strong> assistente que cadastra a empresa (nome, CNPJ, cores, logo) e o proprietário.</li>
+    <li><strong>Entrada:</strong> login com a marca da empresa, mostrar senha, aviso de Caps Lock, lembrar e-mail.</li>
+    <li><strong>Pedir cadastro:</strong> a pessoa cria a conta, que aguarda aprovação de um administrador.</li>
+    <li><strong>Pessoas:</strong> adicionar, mudar papel, desativar/reativar, aprovar/recusar pedidos, redefinir senha.</li>
+    <li><strong>Empresa:</strong> dados, CNPJ, cores e logo (PNG/JPEG até 2 MB).</li>
+    <li><strong>Histórico:</strong> tudo que mudou, por quem e quando, paginado.</li>
+    <li><strong>Cópias de segurança:</strong> fazer cópia, salvar em outro lugar, restaurar.</li>
+  </ul>
+</section>
+
+<!-- ============================== 2 ARQUITETURA ============================== -->
+<section class="chapter" id="arquitetura">
+  <h2>2. Como o sistema funciona</h2>
+  <p>Tudo roda num único processo. A interface pede algo ao núcleo; o núcleo confere quem está
+  logado e se pode fazer aquilo, aplica a regra, grava no banco e devolve o resultado ou um
+  erro com mensagem pronta para o usuário.</p>
+
+  <div class="layers">
+    <div class="layer"><div class="tag">Tela</div><div>Páginas e componentes React: mostram dados, coletam formulários, exibem mensagens.</div><div class="where">src/pages, src/components</div></div>
+    <div class="arrow">▼ companyApi.updateBranding({...})</div>
+    <div class="layer"><div class="tag">Serviços do front</div><div><code>call(comando, args)</code> sobre <code>invoke</code> do Tauri; um método tipado por comando.</div><div class="where">src/services/api.ts, endpoints.ts</div></div>
+    <div class="arrow">▼ invoke("branding_update", { data })</div>
+    <div class="layer"><div class="tag">Comando Tauri</div><div>Camada fina: <code>core.require(Módulo, Ação)</code> e delega. <strong>Nenhuma regra aqui.</strong></div><div class="where">src-tauri/src/commands/*.rs</div></div>
+    <div class="arrow">▼ company::service::update_branding(&amp;ctx, data)</div>
+    <div class="layer"><div class="tag">Service</div><div>Valida, aplica a regra, abre transação, audita e faz <code>commit</code>.</div><div class="where">nucleo-core/src/modules/&lt;m&gt;/service.rs</div></div>
+    <div class="arrow">▼</div>
+    <div class="layer"><div class="tag">Repository</div><div>SQL do módulo (consultas e gravações).</div><div class="where">…/&lt;m&gt;/repository.rs</div></div>
+    <div class="arrow">▼</div>
+    <div class="layer"><div class="tag">SQLite</div><div>Tabelas, triggers de histórico de alterações e de proteção.</div><div class="where">migrations/*.sql → nucleo.db</div></div>
+  </div>
+
+  <h3>O estado em memória: <code>Core</code></h3>
+  <p>Criado ao abrir o programa (<code>src-tauri/src/lib.rs</code>), o <code>Core</code> guarda:</p>
+  <ul>
+    <li>a conexão com o banco (trocada na restauração de backup);</li>
+    <li>a identidade da instalação (<code>device_id</code>, <code>branch_id</code>);</li>
+    <li>a <strong>sessão</strong>: o id do usuário logado, só em memória, que some ao fechar o programa;</li>
+    <li>uma trava de manutenção, que impede backup e restauração ao mesmo tempo.</li>
+  </ul>
+  <p><code>core.current()</code> relê o usuário no banco a cada comando (desativar alguém corta o
+  acesso na hora); <code>core.require(m, a)</code> soma a checagem da matriz de permissões.</p>
+
+  <h3>Erros</h3>
+  <p>O núcleo devolve <code>CoreError</code> serializado como <code>{ code, message, fields }</code>.
+  A tela mostra <code>message</code>, que já vem em português para o usuário final, e destaca os campos de
+  <code>fields</code> (ex.: <code>owner.email</code>). Erro <code>unauthorized</code> faz a interface voltar ao login.</p>
+  <table>
+    <thead><tr><th>Código</th><th>Quando</th></tr></thead>
+    <tbody>
+      <tr><td><code>validation</code></td><td class="wrap">campos inválidos (vem com <code>fields</code>)</td></tr>
+      <tr><td><code>unauthorized</code></td><td class="wrap">sem sessão, senha errada, usuário desativado</td></tr>
+      <tr><td><code>forbidden</code></td><td class="wrap">o papel não permite a ação</td></tr>
+      <tr><td><code>business_rule</code></td><td class="wrap">regra de negócio (ex.: "o dono não pode ser desativado")</td></tr>
+      <tr><td><code>conflict</code></td><td class="wrap">duplicidade (e-mail já cadastrado, empresa já configurada)</td></tr>
+      <tr><td><code>not_found</code></td><td class="wrap">registro inexistente</td></tr>
+      <tr><td><code>internal</code></td><td class="wrap">erro inesperado; detalhe técnico só no log</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Fluxo de telas</h3>
+  <pre><code>Primeira abertura (sem empresa) → Onboarding → já entra como proprietário
+Aberturas seguintes             → Login  ⇄  Pedir cadastro (/cadastro)
+Logado                          → Início · Pessoas · Empresa · Histórico · Cópias de segurança
+Sessão encerrada (logout, usuário desativado, backup restaurado) → Login</code></pre>
+</section>
+
+<!-- ============================== 3 MAPA ============================== -->
+<section class="chapter" id="mapa">
+  <h2>3. Mapa do repositório</h2>
+<div class="tree">appIgor/
+├─ .github/workflows/ci.yml     <span class="c">CI: lint + testes (Ubuntu) e instalador (Windows)</span>
+├─ apps/desktop/                <span class="c">o programa que o cliente instala</span>
+│  ├─ index.html · vite.config.ts · package.json · tsconfig*.json · eslint.config.js
+│  ├─ public/                   <span class="c">estáticos (icon.png)</span>
+│  ├─ src/                      <span class="c">INTERFACE (React)</span>
+│  │  ├─ main.tsx · App.tsx · styles.css
+│  │  ├─ pages/                 <span class="c">uma tela por arquivo</span>
+│  │  ├─ components/            <span class="c">peças reutilizáveis</span>
+│  │  ├─ layouts/               <span class="c">molduras (menu lateral, área de entrada)</span>
+│  │  ├─ hooks/                 <span class="c">sessão (useAuth), carregamento (useAsync)</span>
+│  │  └─ services/              <span class="c">chamadas ao núcleo, tipos, textos, tema</span>
+│  └─ src-tauri/                <span class="c">CASCA NATIVA (Rust)</span>
+│     ├─ tauri.conf.json · Cargo.toml · build.rs
+│     ├─ capabilities/          <span class="c">o que a interface pode usar</span>
+│     ├─ icons/                 <span class="c">ícones do programa e do instalador</span>
+│     └─ src/  main.rs · lib.rs · commands/
+├─ crates/nucleo-core/          <span class="c">NÚCLEO: regras de negócio + banco (Rust)</span>
+│  ├─ migrations/               <span class="c">0001_fundacao.sql · 0002_cadastro.sql</span>
+│  ├─ src/                      <span class="c">lib · db · error · permissions · audit · security · validate</span>
+│  │  ├─ modules/               <span class="c">auth · company · users · audit · backup</span>
+│  │  └─ bin/seed.rs            <span class="c">empresa de demonstração</span>
+│  └─ tests/                    <span class="c">testes de integração (+ common/)</span>
+├─ docs/                        <span class="c">documentação por tópico, adr/ e este manual</span>
+├─ Cargo.toml · Cargo.lock      <span class="c">workspace Rust</span>
+├─ Makefile                     <span class="c">atalhos: test, lint, check, seed, dev, build, manual</span>
+├─ README.md · CLAUDE.md
+└─ target/ · .dev-data/         <span class="c">gerados localmente (fora do git)</span></div>
+
+  <h3>Pastas geradas (fora do git)</h3>
+  <table>
+    <thead><tr><th>Pasta</th><th>O que é</th><th>Pode apagar?</th></tr></thead>
+    <tbody>
+      <tr><td><code>target/</code></td><td class="wrap">compilação Rust; instaladores em <code>target/release/bundle/</code></td><td>sim (recompila)</td></tr>
+      <tr><td><code>.dev-data/</code></td><td class="wrap">banco e backups de desenvolvimento</td><td>sim (<code>make reset-data</code>)</td></tr>
+      <tr><td><code>apps/desktop/node_modules/</code></td><td class="wrap">bibliotecas da interface</td><td>sim (<code>make install</code>)</td></tr>
+      <tr><td><code>apps/desktop/dist/</code></td><td class="wrap">build da interface</td><td>sim</td></tr>
+      <tr><td><code>apps/desktop/src-tauri/gen/</code></td><td class="wrap">esquemas gerados pelo Tauri</td><td>sim</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================== 4 RAIZ ============================== -->
+<section class="chapter" id="raiz">
+  <h2>4. Arquivos da raiz e CI</h2>
+  <table class="files">
+    <thead><tr><th>Arquivo</th><th>O que faz</th><th>Quando mexer</th></tr></thead>
+    <tbody>
+      <tr><td><code>Cargo.toml</code></td><td class="wrap">Workspace Rust: junta núcleo e app; <strong>versão do produto</strong>; dependências compartilhadas; dependências otimizadas mesmo em debug (argon2/SQLite rápidos); release com LTO.</td><td class="wrap when">subir versão; dependência Rust compartilhada</td></tr>
+      <tr><td><code>Cargo.lock</code></td><td class="wrap">Versões exatas das bibliotecas Rust (build reproduzível). Gerado.</td><td class="wrap when">nunca à mão</td></tr>
+      <tr><td><code>Makefile</code></td><td class="wrap">Atalhos: <code>install, test, lint, fmt, check, seed, reset-data, dev, build, web-build, manual</code>. Coloca <code>~/.cargo/bin</code> no PATH.</td><td class="wrap when">novo atalho de desenvolvimento</td></tr>
+      <tr><td><code>README.md</code></td><td class="wrap">Porta de entrada: download, começar, estrutura, índice da documentação.</td><td class="wrap when">mudou algo visível do projeto</td></tr>
+      <tr><td><code>CLAUDE.md</code></td><td class="wrap">Regras para agentes de IA (arquitetura, convenções, estado da fase).</td><td class="wrap when">ao fim de cada fase</td></tr>
+      <tr><td><code>.editorconfig</code></td><td class="wrap">Padrão de formatação dos editores (UTF-8, LF, 2 espaços; tab no Makefile).</td><td class="wrap when">raramente</td></tr>
+      <tr><td><code>.gitignore</code></td><td class="wrap">Ignora <code>target/</code>, <code>node_modules/</code>, <code>dist/</code>, <code>.dev-data/</code>, <code>src-tauri/gen/</code>.</td><td class="wrap when">nova pasta gerada</td></tr>
+      <tr><td><code>.github/workflows/ci.yml</code></td><td class="wrap">Job <em>check</em> (Ubuntu): instala libs do WebKit, Rust 1.91, Node 22; roda <code>web-build</code>, <code>lint</code>, <code>test</code>. Job <em>windows</em>: gera <code>-setup.exe</code> e <code>.msi</code>, publica como artifact e, em tag <code>v*</code>, cria release em rascunho.</td><td class="wrap when">mudar versões de ferramentas, assinatura de código, novos alvos</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Documentação (<code>docs/</code>)</h3>
+  <table class="files">
+    <thead><tr><th>Arquivo</th><th>Conteúdo</th></tr></thead>
+    <tbody>
+      <tr><td><code>estrutura.md</code></td><td class="wrap">o que cada pasta faz</td></tr>
+      <tr><td><code>arquitetura.md</code></td><td class="wrap">camadas, caminho de uma ação, módulos e comandos</td></tr>
+      <tr><td><code>desenvolvimento.md</code></td><td class="wrap">ambiente, comandos, testes, como criar módulo, regras de código</td></tr>
+      <tr><td><code>banco-de-dados.md</code></td><td class="wrap">SQLite, migrações, regras de tabela, sync, auditoria</td></tr>
+      <tr><td><code>seguranca-e-permissoes.md</code></td><td class="wrap">login, sessão, papéis, cadastro, CSP</td></tr>
+      <tr><td><code>backup.md</code></td><td class="wrap">cópias automáticas/manuais e restauração</td></tr>
+      <tr><td><code>distribuicao.md</code></td><td class="wrap">instalador, atalhos, publicar e baixar pelo GitHub</td></tr>
+      <tr><td><code>assinatura.md</code></td><td class="wrap">pesquisa sobre planos, cobrança e licença offline</td></tr>
+      <tr><td><code>roteiro.md</code></td><td class="wrap">fases e pendências</td></tr>
+      <tr><td><code>adr/0001…, 0002…</code></td><td class="wrap">decisões de arquitetura (0002 substitui o SaaS pelo executável local)</td></tr>
+      <tr><td><code>manual/manual.html</code></td><td class="wrap">fonte deste PDF (<code>make manual</code>)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================== 5 INTERFACE ============================== -->
+<section class="chapter" id="interface">
+  <h2>5. Interface (<code>apps/desktop/src</code>)</h2>
+
+  <h3>Configuração do app desktop (<code>apps/desktop/</code>)</h3>
+  <table class="files">
+    <thead><tr><th>Arquivo</th><th>O que faz</th><th>Quando mexer</th></tr></thead>
+    <tbody>
+      <tr><td><code>package.json</code></td><td class="wrap">Dependências da interface (React, React Router, Tauri API, plugin de diálogo, fonte Public Sans) e scripts (<code>dev, build, lint, tauri</code>). Versão = a do produto.</td><td class="wrap when">nova biblioteca JS; versão</td></tr>
+      <tr><td><code>package-lock.json</code></td><td class="wrap">Versões exatas das bibliotecas JS. Gerado pelo npm.</td><td class="wrap when">nunca à mão</td></tr>
+      <tr><td><code>index.html</code></td><td class="wrap">Página que o programa carrega; título e <code>&lt;div id="root"&gt;</code>.</td><td class="wrap when">raramente</td></tr>
+      <tr><td><code>vite.config.ts</code></td><td class="wrap">Build da interface; porta fixa 1420 (usada pelo <code>tauri dev</code>).</td><td class="wrap when">raramente</td></tr>
+      <tr><td><code>tsconfig*.json</code></td><td class="wrap">Regras do TypeScript (app e arquivos de configuração).</td><td class="wrap when">raramente</td></tr>
+      <tr><td><code>eslint.config.js</code></td><td class="wrap">Regras de lint (TypeScript + hooks do React).</td><td class="wrap when">ajustar regra de estilo</td></tr>
+      <tr><td><code>public/icon.png</code></td><td class="wrap">Ícone da aba/janela durante o desenvolvimento.</td><td class="wrap when">trocar identidade</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Entrada e rotas</h3>
+  <table class="files">
+    <thead><tr><th>Arquivo</th><th>O que faz</th><th>Quando mexer</th></tr></thead>
+    <tbody>
+      <tr><td><code>main.tsx</code></td><td class="wrap">Carrega fontes e CSS, aplica o tema padrão e monta o <code>App</code>.</td><td class="wrap when">raramente</td></tr>
+      <tr><td><code>App.tsx</code></td><td class="wrap"><strong>Rotas</strong> e quem pode abrir cada uma: <code>/login</code>, <code>/cadastro</code>, <code>/onboarding</code> (anônimos); <code>/</code>, <code>/usuarios</code>, <code>/empresa</code>, <code>/auditoria</code>, <code>/backup</code> (logados, com <code>RequirePermission</code>).</td><td class="wrap when">nova tela</td></tr>
+      <tr><td><code>styles.css</code></td><td class="wrap">Todo o visual. Tokens no topo (<code>--paper, --ink, --line…</code>); cores da empresa via <code>--brand, --brand-ink, --brand-deep, --brand-deep-ink</code>. Seções: shell, formulários, botões, avisos, tabelas, diálogo, entrada, onboarding, responsivo.</td><td class="wrap when">qualquer ajuste visual</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Páginas (<code>pages/</code>)</h3>
+  <table class="files">
+    <thead><tr><th>Arquivo</th><th>Tela</th><th>Usa</th></tr></thead>
+    <tbody>
+      <tr><td><code>LoginPage.tsx</code></td><td class="wrap">Entrar: marca da empresa, mostrar senha, Caps Lock, "lembrar meu e-mail" (localStorage, nunca a senha), aviso após pedido de cadastro, links.</td><td class="wrap"><code>useAuth().login</code></td></tr>
+      <tr><td><code>RegisterPage.tsx</code></td><td class="wrap">Pedir cadastro: nome, e-mail, senha, confirmação → volta ao login com aviso.</td><td class="wrap"><code>authApi.register</code></td></tr>
+      <tr><td><code>OnboardingPage.tsx</code></td><td class="wrap">Primeira abertura em 3 etapas (empresa, identidade visual, acesso) com prévia ao vivo; envia logo ao final.</td><td class="wrap"><code>companyApi.onboard</code>, <code>uploadLogo</code></td></tr>
+      <tr><td><code>DashboardPage.tsx</code></td><td class="wrap">Início: saudação, pedidos de acesso pendentes, primeiros passos (logo, backup, pessoas).</td><td class="wrap"><code>usersApi.list</code></td></tr>
+      <tr><td><code>UsersPage.tsx</code></td><td class="wrap">Pessoas: aguardando aprovação (aprovar/recusar), lista com papel, desativar/reativar, redefinir senha; diálogo de adicionar.</td><td class="wrap"><code>usersApi.*</code></td></tr>
+      <tr><td><code>CompanyPage.tsx</code></td><td class="wrap">Empresa: nome/CNPJ, cores, logo.</td><td class="wrap"><code>companyApi.*</code></td></tr>
+      <tr><td><code>AuditPage.tsx</code></td><td class="wrap">Histórico paginado; traduz ações e campos via <code>labels.ts</code>.</td><td class="wrap"><code>auditApi.list</code></td></tr>
+      <tr><td><code>BackupPage.tsx</code></td><td class="wrap">Cópias de segurança: fazer agora, salvar em…, restaurar (só proprietário); usa diálogos nativos.</td><td class="wrap"><code>backupApi.*</code>, plugin-dialog</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Componentes (<code>components/</code>)</h3>
+  <table class="files">
+    <thead><tr><th>Arquivo</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td><code>AuthProvider.tsx</code></td><td class="wrap">Guarda a sessão na interface: <code>status</code> (loading/setup/anonymous/authenticated), <code>me</code>, <code>login</code>, <code>logout</code>, <code>can()</code>; aplica a marca; volta ao login quando o núcleo diz <code>unauthorized</code>.</td></tr>
+      <tr><td><code>guards.tsx</code></td><td class="wrap"><code>RequireAuth</code>, <code>RequireAnonymous</code> (onboarding só sem empresa), <code>RequirePermission</code> (tela "Sem acesso").</td></tr>
+      <tr><td><code>AuthFrame.tsx</code></td><td class="wrap">Moldura do login/cadastro: painel com logo, nome e cores da empresa + cartão do formulário.</td></tr>
+      <tr><td><code>Field.tsx</code></td><td class="wrap">Campo com rótulo, erro, dica e botão interno opcional (<code>action</code>).</td></tr>
+      <tr><td><code>PasswordField.tsx</code></td><td class="wrap">Campo de senha com "Mostrar/Ocultar" e aviso de Caps Lock.</td></tr>
+      <tr><td><code>ColorField.tsx</code></td><td class="wrap">Seletor de cor + campo hexadecimal.</td></tr>
+      <tr><td><code>BrandMark.tsx</code></td><td class="wrap">Logo da empresa ou iniciais sobre a cor principal.</td></tr>
+      <tr><td><code>Dialog.tsx</code></td><td class="wrap">Janela modal com <code>&lt;dialog&gt;</code> nativo (foco preso, Esc fecha).</td></tr>
+      <tr><td><code>Notice.tsx</code></td><td class="wrap">Faixa de aviso de erro ou sucesso.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Layouts, hooks e serviços</h3>
+  <table class="files">
+    <thead><tr><th>Arquivo</th><th>O que faz</th><th>Quando mexer</th></tr></thead>
+    <tbody>
+      <tr><td><code>layouts/AppLayout.tsx</code></td><td class="wrap">Menu lateral (itens filtrados por permissão), empresa, usuário, botão Sair.</td><td class="wrap when">novo item de menu</td></tr>
+      <tr><td><code>layouts/AuthLayout.tsx</code></td><td class="wrap">Contêiner das rotas anônimas (cada página define sua moldura).</td><td class="wrap when">raramente</td></tr>
+      <tr><td><code>hooks/useAuth.ts</code> · <code>authContext.ts</code></td><td class="wrap">Acesso ao estado de sessão / tipo desse estado.</td><td class="wrap when">novo dado de sessão</td></tr>
+      <tr><td><code>hooks/useAsync.ts</code></td><td class="wrap">Carrega dados ao abrir a tela, com <code>loading</code>, <code>error</code>, <code>reload</code>.</td><td class="wrap when">raramente</td></tr>
+      <tr><td><code>services/api.ts</code></td><td class="wrap"><code>call(comando, args)</code> sobre <code>invoke</code>; converte erros em <code>ApiError</code>; avisa sessão expirada.</td><td class="wrap when">raramente</td></tr>
+      <tr><td><code>services/endpoints.ts</code></td><td class="wrap">Um método por comando: <code>authApi, companyApi, usersApi, auditApi, backupApi</code>. Argumentos em snake_case.</td><td class="wrap when">todo comando novo</td></tr>
+      <tr><td><code>services/types.ts</code></td><td class="wrap">Tipos espelhando o núcleo (<code>User, Me, Branding, Company, AuditEntry, BackupInfo, Module…</code>).</td><td class="wrap when">campo/tipo novo; módulo novo</td></tr>
+      <tr><td><code>services/labels.ts</code></td><td class="wrap">Textos: nomes de papéis, ações do histórico, nomes de campos; formatação de data e CNPJ.</td><td class="wrap when">ação nova na auditoria; texto</td></tr>
+      <tr><td><code>services/theme.ts</code></td><td class="wrap">Cores padrão, <code>applyBranding()</code>, contraste automático do texto, iniciais.</td><td class="wrap when">cores padrão</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================== 6 TAURI ============================== -->
+<section class="chapter" id="tauri">
+  <h2>6. Casca nativa (<code>apps/desktop/src-tauri</code>)</h2>
+  <table class="files">
+    <thead><tr><th>Arquivo</th><th>O que faz</th><th>Quando mexer</th></tr></thead>
+    <tbody>
+      <tr><td><code>tauri.conf.json</code></td><td class="wrap"><strong>Nome do produto</strong> (<code>Nucleo ERP</code>), versão, identificador (<code>br.com.nucleoerp.desktop</code>, define a pasta de dados), janela (1280×800, mín. 960×640), <strong>CSP</strong> (sem rede), ícones, instalador NSIS (pt-BR, por usuário).</td><td class="wrap when">nome, versão, tamanho de janela, segurança, instalador</td></tr>
+      <tr><td><code>Cargo.toml</code></td><td class="wrap">Dependências: <code>nucleo-core</code>, <code>tauri</code>, <code>tauri-plugin-dialog</code>.</td><td class="wrap when">novo plugin Tauri</td></tr>
+      <tr><td><code>build.rs</code></td><td class="wrap">Etapa de build exigida pelo Tauri.</td><td class="wrap when">nunca</td></tr>
+      <tr><td><code>capabilities/default.json</code></td><td class="wrap">Permissões da interface: <code>core:default</code> e diálogos (abrir, salvar, perguntar, mensagem).</td><td class="wrap when">usar outro recurso nativo</td></tr>
+      <tr><td><code>icons/</code></td><td class="wrap">Ícones em todos os tamanhos (<code>icon.ico</code> no Windows: atalhos e instalador).</td><td class="wrap when">trocar ícone (<code>npx tauri icon arquivo.png</code>)</td></tr>
+      <tr><td><code>src/main.rs</code></td><td class="wrap">Inicia o programa; sem janela de console no Windows em release.</td><td class="wrap when">nunca</td></tr>
+      <tr><td><code>src/lib.rs</code></td><td class="wrap">Abre o <code>Core</code> na pasta de dados (ou <code>NUCLEO_DATA_DIR</code>), dispara o backup diário, registra os comandos em <code>generate_handler!</code>.</td><td class="wrap when">todo comando novo</td></tr>
+      <tr><td><code>src/commands/mod.rs</code></td><td class="wrap">Lista dos arquivos de comando e o tipo <code>Res&lt;T&gt;</code>.</td><td class="wrap when">módulo novo</td></tr>
+      <tr><td><code>src/commands/auth.rs</code></td><td class="wrap"><code>setup_status, login_branding, register, onboard, login, logout, me</code>.</td><td class="wrap when">—</td></tr>
+      <tr><td><code>src/commands/company.rs</code></td><td class="wrap"><code>company_get, company_update, branding_update, logo_upload, logo_remove</code>.</td><td class="wrap when">—</td></tr>
+      <tr><td><code>src/commands/users.rs</code></td><td class="wrap"><code>users_list, users_create, users_update, users_approve, users_reject, users_reset_password</code>.</td><td class="wrap when">—</td></tr>
+      <tr><td><code>src/commands/audit.rs</code> · <code>backup.rs</code></td><td class="wrap"><code>audit_list</code> · <code>backup_list, backup_create, backup_restore</code>.</td><td class="wrap when">—</td></tr>
+    </tbody>
+  </table>
+  <div class="note">Cada comando tem 2–3 linhas: <code>let ctx = core.require(Module::X, Action::Y).await?;</code> e
+  a chamada ao service. Se você estiver escrevendo um <code>if</code> de regra de negócio num comando, ele
+  pertence ao <code>service.rs</code>.</div>
+</section>
+
+<!-- ============================== 7 NÚCLEO ============================== -->
+<section class="chapter" id="nucleo">
+  <h2>7. Núcleo (<code>crates/nucleo-core</code>)</h2>
+  <p>Biblioteca Rust sem interface: dá para testar tudo sem abrir o programa.</p>
+
+  <h3>Base</h3>
+  <table class="files">
+    <thead><tr><th>Arquivo</th><th>O que faz</th><th>Quando mexer</th></tr></thead>
+    <tbody>
+      <tr><td><code>Cargo.toml</code></td><td class="wrap">Dependências: sqlx (SQLite), tokio, serde, thiserror, uuid v7, chrono, argon2, base64.</td><td class="wrap when">nova biblioteca</td></tr>
+      <tr><td><code>src/lib.rs</code></td><td class="wrap"><code>Core</code> (banco, instalação, sessão, trava), <code>Ctx</code> (banco + usuário logado), <code>current()</code> e <code>require()</code>.</td><td class="wrap when">raramente</td></tr>
+      <tr><td><code>src/db.rs</code></td><td class="wrap">Abre o SQLite (WAL, foreign keys, busy timeout), roda migrações, <code>new_id()</code> (UUID v7), <code>now()</code>, identidade da instalação.</td><td class="wrap when">raramente</td></tr>
+      <tr><td><code>src/error.rs</code></td><td class="wrap"><code>CoreError</code> e sua serialização; <code>Validator</code> (acumula erros por campo).</td><td class="wrap when">novo tipo de erro</td></tr>
+      <tr><td><code>src/permissions.rs</code></td><td class="wrap"><code>Role</code>, <code>Module</code>, <code>Action</code>, <strong>matriz</strong> <code>granted()</code>, mapa para o menu.</td><td class="wrap when">módulo novo; mudar permissões</td></tr>
+      <tr><td><code>src/audit.rs</code></td><td class="wrap"><code>snapshot</code>, <code>diff</code>, <code>record</code>, <code>record_changes</code> (só grava se mudou).</td><td class="wrap when">raramente</td></tr>
+      <tr><td><code>src/security.rs</code></td><td class="wrap">Hash/verificação argon2 em thread separada; hash "falso" para tempo constante.</td><td class="wrap when">política de senha</td></tr>
+      <tr><td><code>src/validate.rs</code></td><td class="wrap">CNPJ (dígitos verificadores), e-mail, cor hexadecimal, tamanho de texto.</td><td class="wrap when">nova validação comum (CPF, CEP…)</td></tr>
+      <tr><td><code>src/modules/mod.rs</code></td><td class="wrap">Lista de módulos; <code>double_option</code> (diferencia campo ausente de <code>null</code>).</td><td class="wrap when">módulo novo</td></tr>
+      <tr><td><code>src/bin/seed.rs</code></td><td class="wrap">Cria empresa de demonstração (padaria ou techparts) com logo e usuários; senha <code>nucleo123</code>.</td><td class="wrap when">dados de demonstração</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Migrações (<code>migrations/</code>)</h3>
+  <table class="files">
+    <thead><tr><th>Arquivo</th><th>O que cria</th></tr></thead>
+    <tbody>
+      <tr><td><code>0001_fundacao.sql</code></td><td class="wrap"><code>installation</code>, <code>change_log</code>, <code>company</code>, <code>users</code>, <code>audit_logs</code>; triggers de histórico de alterações, de bloqueio de DELETE e de auditoria imutável.</td></tr>
+      <tr><td><code>0002_cadastro.sql</code></td><td class="wrap">Coluna <code>users.pending</code> (autocadastro aguardando aprovação).</td></tr>
+    </tbody>
+  </table>
+  <div class="warn"><strong>Nunca edite uma migração já distribuída.</strong> Crie a próxima (<code>0003_…sql</code>). Elas
+  ficam embutidas no executável e rodam ao abrir o programa.</div>
+
+  <h3>Módulos (<code>src/modules/&lt;m&gt;/</code>)</h3>
+  <p>Padrão: <code>models.rs</code> (structs do banco e de entrada/saída), <code>repository.rs</code> (SQL),
+  <code>service.rs</code> (regras), <code>mod.rs</code> (declara os três).</p>
+  <table class="files">
+    <thead><tr><th>Módulo</th><th>Arquivos e responsabilidade</th></tr></thead>
+    <tbody>
+      <tr><td><code>auth</code></td><td class="wrap"><code>service.rs</code>: <code>login</code> (tempo constante, mensagem única, aviso de pendente só com senha certa), <code>logout</code>, <code>me</code>; struct <code>Me</code> (usuário + empresa + permissões).</td></tr>
+      <tr><td><code>company</code></td><td class="wrap"><code>models.rs</code>: <code>Company</code> (logo em BLOB, <code>logo_url</code> em data URL), <code>Branding</code>, entradas de onboarding/edição. <code>service.rs</code>: <code>status</code>, <code>public_branding</code>, <code>onboard</code>, <code>get</code>, <code>update</code>, <code>update_branding</code>, <code>upload_logo</code> (PNG/JPEG por assinatura, 2 MB), <code>remove_logo</code>.</td></tr>
+      <tr><td><code>users</code></td><td class="wrap"><code>models.rs</code>: <code>User</code> (hash e <code>deleted_at</code> nunca serializados), <code>UserCreate</code>, <code>UserUpdate</code>, <code>RegisterInput</code>. <code>service.rs</code>: <code>list</code>, <code>create</code>, <code>update</code> (protege dono e a si mesmo), <code>register</code>, <code>approve</code>, <code>reject</code>, <code>reset_password</code>.</td></tr>
+      <tr><td><code>audit</code></td><td class="wrap"><code>models.rs</code>: <code>AuditEntry</code> (com nome do autor), <code>AuditQuery</code>, <code>Page</code>. <code>repository.rs</code>: busca paginada com filtros. <code>service.rs</code>: <code>list</code> (limite 1–200).</td></tr>
+      <tr><td><code>backup</code></td><td class="wrap"><code>service.rs</code>: <code>create</code>, <code>list</code>, <code>auto_daily</code> (24 h, guarda 7: <code>KEEP_AUTO</code>), <code>restore</code> (valida, guarda cópia do estado atual, troca o arquivo, desfaz se falhar).</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Testes (<code>tests/</code>)</h3>
+  <table class="files">
+    <thead><tr><th>Arquivo</th><th>Garante</th></tr></thead>
+    <tbody>
+      <tr><td><code>common/mod.rs</code></td><td class="wrap">Atalhos: <code>setup()</code>, <code>onboarded()</code>, <code>create_member()</code>, <code>login_as()</code>; banco novo em pasta temporária por teste.</td></tr>
+      <tr><td><code>foundation.rs</code></td><td class="wrap">Toda tabela de negócio tem colunas de sync e triggers; histórico de alterações alimentado; DELETE bloqueado; auditoria imutável; ids UUID v7.</td></tr>
+      <tr><td><code>auth_and_permissions.rs</code></td><td class="wrap">Onboarding, validações, login, logout, desativação imediata, matriz de papéis, regras de pessoas, e-mail duplicado.</td></tr>
+      <tr><td><code>registration.rs</code></td><td class="wrap">Autocadastro pendente, aprovação, recusa libera e-mail, só gestores aprovam, redefinição de senha, marca pública.</td></tr>
+      <tr><td><code>company_and_backup.rs</code></td><td class="wrap">Edição da empresa e auditoria só do que muda, cores e logo, paginação do histórico, backup e restauração, arquivo inválido, rotação automática.</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">Testes de unidade ficam dentro dos próprios arquivos (<code>#[cfg(test)]</code>): permissões, validações e diff da auditoria.</p>
+</section>
+
+<!-- ============================== 8 ONDE ALTERAR ============================== -->
+<section class="chapter" id="onde">
+  <h2>8. Onde alterar o quê</h2>
+  <p>Tabela de consulta rápida: a tarefa à esquerda, os arquivos à direita (caminhos a partir da raiz).
+  <span class="muted"><code>front/</code> = <code>apps/desktop/src/</code> · <code>tauri/</code> = <code>apps/desktop/src-tauri/</code> · <code>core/</code> = <code>crates/nucleo-core/</code></span></p>
+
+  <h3>Visual e textos</h3>
+  <table>
+    <thead><tr><th>Quero…</th><th>Onde</th></tr></thead>
+    <tbody>
+      <tr><td class="wrap">mudar um texto de tela</td><td class="wrap">a página em <code>front/pages/*.tsx</code></td></tr>
+      <tr><td class="wrap">mudar nome de papel, ação do histórico ou campo exibido</td><td class="wrap"><code>front/services/labels.ts</code></td></tr>
+      <tr><td class="wrap">mudar uma mensagem de erro/validação</td><td class="wrap">o <code>service.rs</code> do módulo em <code>core/src/modules/</code> (ou <code>core/src/error.rs</code> para as genéricas)</td></tr>
+      <tr><td class="wrap">mudar cores, espaçamentos, fontes</td><td class="wrap"><code>front/styles.css</code> (tokens no topo); cores da marca vêm da empresa</td></tr>
+      <tr><td class="wrap">mudar cores padrão de empresa nova</td><td class="wrap"><code>front/services/theme.ts</code> e <code>default_primary/secondary</code> em <code>core/src/modules/company/models.rs</code></td></tr>
+      <tr><td class="wrap">mudar a tela de login / cadastro</td><td class="wrap"><code>front/pages/LoginPage.tsx</code>, <code>RegisterPage.tsx</code>, moldura em <code>front/components/AuthFrame.tsx</code></td></tr>
+      <tr><td class="wrap">adicionar item no menu lateral</td><td class="wrap"><code>front/layouts/AppLayout.tsx</code> (lista <code>links</code>)</td></tr>
+      <tr><td class="wrap">trocar nome do programa / atalho</td><td class="wrap"><code>productName</code> em <code>tauri/tauri.conf.json</code></td></tr>
+      <tr><td class="wrap">trocar ícone do programa / atalho</td><td class="wrap"><code>tauri/icons/</code> (gerar com <code>npx tauri icon arquivo.png</code> em <code>apps/desktop</code>)</td></tr>
+      <tr><td class="wrap">tamanho da janela</td><td class="wrap"><code>app.windows</code> em <code>tauri/tauri.conf.json</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Regras e dados</h3>
+  <table>
+    <thead><tr><th>Quero…</th><th>Onde</th></tr></thead>
+    <tbody>
+      <tr><td class="wrap">mudar o que cada papel pode fazer</td><td class="wrap"><code>granted()</code> em <code>core/src/permissions.rs</code> (+ teste em <code>tests/auth_and_permissions.rs</code>)</td></tr>
+      <tr><td class="wrap">mudar regra de pessoas (quem edita quem)</td><td class="wrap"><code>core/src/modules/users/service.rs</code></td></tr>
+      <tr><td class="wrap">tamanho mínimo de senha</td><td class="wrap"><code>check_person</code> e <code>reset_password</code> em <code>users/service.rs</code> + <code>minLength</code> nas telas</td></tr>
+      <tr><td class="wrap">desligar o autocadastro</td><td class="wrap">remover a rota <code>/cadastro</code> (<code>front/App.tsx</code>), o link em <code>LoginPage.tsx</code> e o comando <code>register</code> (<code>tauri/src/lib.rs</code>)</td></tr>
+      <tr><td class="wrap">tamanho/formatos do logo</td><td class="wrap"><code>LOGO_MAX_BYTES</code> e <code>LOGO_TYPES</code> em <code>core/src/modules/company/service.rs</code></td></tr>
+      <tr><td class="wrap">quantas cópias automáticas guardar / frequência</td><td class="wrap"><code>KEEP_AUTO</code> e <code>AUTO_EVERY</code> em <code>core/src/modules/backup/service.rs</code></td></tr>
+      <tr><td class="wrap">novo campo numa tabela existente</td><td class="wrap">nova migração <code>core/migrations/000N_*.sql</code> → <code>models.rs</code> → <code>repository.rs</code> (COLUMNS, insert, update) → <code>service.rs</code> → <code>front/services/types.ts</code> → tela</td></tr>
+      <tr><td class="wrap">nova tabela de negócio</td><td class="wrap">migração com as <a href="#banco">regras de tabela</a> (cap. 10); o teste <code>foundation.rs</code> confere</td></tr>
+      <tr><td class="wrap">nova validação (CPF, CEP…)</td><td class="wrap"><code>core/src/validate.rs</code> (com teste no próprio arquivo)</td></tr>
+      <tr><td class="wrap">registrar algo no histórico</td><td class="wrap"><code>audit::record</code> / <code>record_changes</code> no service; texto em <code>labels.ts</code></td></tr>
+      <tr><td class="wrap">dados de demonstração</td><td class="wrap"><code>core/src/bin/seed.rs</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Telas e comandos</h3>
+  <table>
+    <thead><tr><th>Quero…</th><th>Onde</th></tr></thead>
+    <tbody>
+      <tr><td class="wrap">nova tela</td><td class="wrap"><code>front/pages/NovaPage.tsx</code> + rota em <code>front/App.tsx</code> + menu em <code>AppLayout.tsx</code></td></tr>
+      <tr><td class="wrap">nova ação que a tela chama</td><td class="wrap">service no núcleo → comando em <code>tauri/src/commands/&lt;m&gt;.rs</code> → registrar em <code>tauri/src/lib.rs</code> → método em <code>front/services/endpoints.ts</code></td></tr>
+      <tr><td class="wrap">usar recurso nativo (arquivos, notificação…)</td><td class="wrap">plugin Tauri em <code>tauri/Cargo.toml</code> + <code>package.json</code>, <code>.plugin(...)</code> em <code>tauri/src/lib.rs</code>, permissão em <code>tauri/capabilities/default.json</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Build, versão e publicação</h3>
+  <table>
+    <thead><tr><th>Quero…</th><th>Onde</th></tr></thead>
+    <tbody>
+      <tr><td class="wrap">subir a versão</td><td class="wrap"><code>Cargo.toml</code> (raiz), <code>tauri/tauri.conf.json</code>, <code>apps/desktop/package.json</code>: as três iguais</td></tr>
+      <tr><td class="wrap">publicar instalador para download</td><td class="wrap"><code>git tag vX.Y.Z &amp;&amp; git push origin main --tags</code> → publicar o rascunho em Releases (cap. 14)</td></tr>
+      <tr><td class="wrap">mudar o CI</td><td class="wrap"><code>.github/workflows/ci.yml</code></td></tr>
+      <tr><td class="wrap">novo atalho de desenvolvimento</td><td class="wrap"><code>Makefile</code></td></tr>
+      <tr><td class="wrap">atualizar esta documentação</td><td class="wrap"><code>docs/*.md</code> e <code>docs/manual/manual.html</code>, depois <code>make manual</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================== 9 NOVO MÓDULO ============================== -->
+<section class="chapter" id="modulo">
+  <h2>9. Passo a passo: novo módulo</h2>
+  <p>Exemplo: módulo <strong>estoque</strong> (<code>inventory</code>) com a tabela <code>products</code>.</p>
+
+  <div class="recipe"><h4>1 · Migração: <code>core/migrations/0003_estoque.sql</code></h4>
+<pre><code>CREATE TABLE products (
+    id          TEXT PRIMARY KEY,        -- db::new_id() (UUID v7)
+    name        TEXT NOT NULL,
+    price_cents INTEGER NOT NULL,        -- dinheiro em centavos, nunca float
+    branch_id   TEXT NOT NULL,
+    device_id   TEXT NOT NULL,
+    created_at  TEXT NOT NULL,
+    updated_at  TEXT NOT NULL,
+    deleted_at  TEXT
+);
+-- copie de users: products_cl_insert, products_cl_update, products_no_delete</code></pre></div>
+
+  <div class="recipe"><h4>2 · Código: <code>core/src/modules/inventory/</code></h4>
+  <ul>
+    <li><code>models.rs</code>: <code>Product</code> (<code>#[derive(Serialize, sqlx::FromRow)]</code>) e as entradas (<code>Deserialize</code>).</li>
+    <li><code>repository.rs</code>: <code>list</code>, <code>get</code>, <code>insert</code>, <code>update</code>, sempre com <code>deleted_at IS NULL</code>.</li>
+    <li><code>service.rs</code>: valida com <code>Validator</code>, abre <code>ctx.db.begin()</code>, grava, <code>audit::record</code>, <code>tx.commit()</code>.</li>
+    <li><code>mod.rs</code> e linha <code>pub mod inventory;</code> em <code>core/src/modules/mod.rs</code>.</li>
+  </ul></div>
+
+  <div class="recipe"><h4>3 · Permissão: <code>core/src/permissions.rs</code></h4>
+  <p><code>Module::Inventory</code> (+ <code>ALL</code> e <code>as_str</code> = <code>"inventory"</code>) e o nível de cada papel em <code>granted()</code>.
+  No front: <code>"inventory"</code> no tipo <code>Module</code> de <code>front/services/types.ts</code>.</p></div>
+
+  <div class="recipe"><h4>4 · Comandos: <code>tauri/src/commands/inventory.rs</code></h4>
+<pre><code>#[tauri::command(rename_all = "snake_case")]
+pub async fn products_list(core: State&lt;'_, Core&gt;) -&gt; Res&lt;Vec&lt;Product&gt;&gt; {
+    let ctx = core.require(Module::Inventory, Action::Read).await?;
+    inventory::service::list(&amp;ctx).await
+}</code></pre>
+  <p><code>pub mod inventory;</code> em <code>commands/mod.rs</code> e <code>commands::inventory::products_list</code> no <code>generate_handler!</code> de <code>tauri/src/lib.rs</code>.</p></div>
+
+  <div class="recipe"><h4>5 · Interface</h4>
+  <ul>
+    <li>Tipo <code>Product</code> em <code>types.ts</code>; <code>inventoryApi</code> em <code>endpoints.ts</code>.</li>
+    <li><code>pages/ProductsPage.tsx</code>; rota com <code>RequirePermission module="inventory"</code> em <code>App.tsx</code>; item em <code>AppLayout.tsx</code>.</li>
+    <li>Textos das ações (<code>product.create</code>…) em <code>labels.ts</code>.</li>
+  </ul></div>
+
+  <div class="recipe"><h4>6 · Testes: <code>core/tests/inventory.rs</code></h4>
+  <p>Regras, permissão por papel (quem não pode recebe <code>Forbidden</code>) e auditoria. Rode <code>make check</code>.</p></div>
+</section>
+
+<!-- ============================== 10 BANCO ============================== -->
+<section class="chapter" id="banco">
+  <h2>10. Banco de dados</h2>
+  <h3>Onde fica o arquivo</h3>
+  <table>
+    <thead><tr><th>Situação</th><th>Pasta</th></tr></thead>
+    <tbody>
+      <tr><td>Windows (instalado)</td><td><code>%APPDATA%\br.com.nucleoerp.desktop\nucleo.db</code> (+ <code>backups\</code>)</td></tr>
+      <tr><td>Linux (instalado)</td><td><code>~/.local/share/br.com.nucleoerp.desktop/</code></td></tr>
+      <tr><td>Desenvolvimento</td><td><code>.dev-data/</code> (variável <code>NUCLEO_DATA_DIR</code>)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Tabelas</h3>
+  <table>
+    <thead><tr><th>Tabela</th><th>Tipo</th><th>Conteúdo</th></tr></thead>
+    <tbody>
+      <tr><td><code>installation</code></td><td>infra</td><td class="wrap">uma linha: <code>device_id</code> e <code>branch_id</code> desta instalação</td></tr>
+      <tr><td><code>company</code></td><td>negócio</td><td class="wrap">uma linha: nome, CNPJ, cores, logo (BLOB + tipo + <code>logo_id</code>)</td></tr>
+      <tr><td><code>users</code></td><td>negócio</td><td class="wrap">nome, e-mail (único, minúsculas), hash argon2, papel, ativo, <code>pending</code>, último acesso</td></tr>
+      <tr><td><code>audit_logs</code></td><td>infra</td><td class="wrap">histórico append-only: autor, ação, entidade, antes/depois (JSON)</td></tr>
+      <tr><td><code>change_log</code></td><td>infra</td><td class="wrap">fila de alterações para o sync futuro (preenchida por trigger)</td></tr>
+      <tr><td><code>_sqlx_migrations</code></td><td>infra</td><td class="wrap">migrações já aplicadas (controle do sqlx)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Regras para toda tabela de negócio</h3>
+  <ul>
+    <li><code>id TEXT</code> com UUID v7 (único entre computadores, ordenado no tempo), nunca autoincremento.</li>
+    <li><code>branch_id</code>, <code>device_id</code>, <code>created_at</code>, <code>updated_at</code>, <code>deleted_at</code> (datas UTC <code>AAAA-MM-DDTHH:MM:SS.sssZ</code>).</li>
+    <li>Triggers <code>&lt;t&gt;_cl_insert</code>, <code>&lt;t&gt;_cl_update</code> (alimentam <code>change_log</code>) e <code>&lt;t&gt;_no_delete</code> (exclusão só lógica).</li>
+    <li>Consultas filtram <code>deleted_at IS NULL</code>; índices únicos com <code>WHERE deleted_at IS NULL</code>.</li>
+    <li>Dinheiro em <code>INTEGER</code> (centavos).</li>
+  </ul>
+  <div class="note">O teste <code>tests/foundation.rs</code> falha se uma tabela nova esquecer alguma dessas regras.</div>
+
+  <h3>Auditoria</h3>
+  <p>Toda escrita relevante grava autor, ação, entidade e só os campos alterados (sem <code>updated_at</code>).
+  Campos marcados com <code>#[serde(skip_serializing)]</code> (senha, bytes do logo) nunca entram. Triggers
+  impedem UPDATE e DELETE em <code>audit_logs</code>.</p>
+</section>
+
+<!-- ============================== 11 SEGURANÇA ============================== -->
+<section class="chapter" id="seguranca">
+  <h2>11. Segurança e permissões</h2>
+  <h3>Papéis</h3>
+  <table>
+    <thead><tr><th>Módulo</th><th>Proprietário</th><th>Administrador</th><th>Usuário</th></tr></thead>
+    <tbody>
+      <tr><td>settings (empresa, cores, logo)</td><td>manage</td><td>manage</td><td>read</td></tr>
+      <tr><td>users (pessoas)</td><td>manage</td><td>manage</td><td>—</td></tr>
+      <tr><td>audit (histórico)</td><td>manage</td><td>read</td><td>—</td></tr>
+      <tr><td>backup</td><td>manage (restaura)</td><td>write (faz cópia)</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p>Níveis acumulam: <code>manage</code> ⊃ <code>write</code> ⊃ <code>read</code>. A interface só esconde menus;
+  <strong>quem decide é o núcleo</strong> (<code>core.require</code>).</p>
+
+  <h3>Regras de acesso</h3>
+  <ul>
+    <li><strong>Senhas</strong> com argon2; login com tempo constante e mensagem única ("E-mail ou senha inválidos").</li>
+    <li><strong>Sessão</strong> só na memória do processo; nada de token em disco; fechar o programa encerra.</li>
+    <li><strong>Autocadastro</strong> nasce inativo e pendente; só gestores aprovam (escolhendo o papel) ou recusam.
+      O aviso "aguardando aprovação" só aparece para quem acertou a senha.</li>
+    <li><strong>Redefinir senha</strong>: por quem gerencia pessoas; ninguém redefine a própria por ali; só o
+      proprietário mexe no proprietário; o histórico registra o fato, nunca a senha.</li>
+    <li>O proprietário não é rebaixado nem desativado; ninguém altera o próprio papel/status; o papel
+      <code>owner</code> só nasce no onboarding.</li>
+    <li><strong>CSP</strong>: a interface não acessa a rede; imagens só locais/<code>data:</code>/<code>blob:</code>.</li>
+    <li><strong>Logo</strong>: PNG/JPEG conferidos pelos bytes, até 2 MB; SVG recusado (pode conter script).</li>
+  </ul>
+  <div class="warn">Pendências antes de distribuir: certificado de assinatura de código (evita o alerta do
+  SmartScreen). O banco não é criptografado; se for exigido, avaliar SQLCipher.</div>
+</section>
+
+<!-- ============================== 12 COMANDOS ============================== -->
+<section class="chapter" id="comandos">
+  <h2>12. Referência de comandos</h2>
+  <p>Chamados pela interface via <code>call("nome", { args })</code> (argumentos em snake_case).</p>
+  <table>
+    <thead><tr><th>Comando</th><th>Argumentos</th><th>Retorna</th><th>Permissão</th></tr></thead>
+    <tbody>
+      <tr><td><code>setup_status</code></td><td>—</td><td><code>{ configured }</code></td><td>livre</td></tr>
+      <tr><td><code>login_branding</code></td><td>—</td><td><code>Branding | null</code></td><td>livre</td></tr>
+      <tr><td><code>register</code></td><td><code>data: {name, email, password}</code></td><td>—</td><td>livre</td></tr>
+      <tr><td><code>onboard</code></td><td><code>data: {company, owner}</code></td><td><code>Me</code></td><td>livre (só sem empresa)</td></tr>
+      <tr><td><code>login</code></td><td><code>email, password</code></td><td><code>Me</code></td><td>livre</td></tr>
+      <tr><td><code>logout</code> · <code>me</code></td><td>—</td><td>— · <code>Me</code></td><td>sessão</td></tr>
+      <tr><td><code>company_get</code></td><td>—</td><td><code>Company</code></td><td>settings read</td></tr>
+      <tr><td><code>company_update</code></td><td><code>data: {name?, cnpj?}</code></td><td><code>Company</code></td><td>settings manage</td></tr>
+      <tr><td><code>branding_update</code></td><td><code>data: {primary_color?, secondary_color?}</code></td><td><code>Branding</code></td><td>settings manage</td></tr>
+      <tr><td><code>logo_upload</code> · <code>logo_remove</code></td><td><code>content</code> (data URL) · —</td><td><code>Branding</code></td><td>settings manage</td></tr>
+      <tr><td><code>users_list</code></td><td>—</td><td><code>User[]</code></td><td>users read</td></tr>
+      <tr><td><code>users_create</code></td><td><code>data: {name, email, password, role}</code></td><td><code>User</code></td><td>users manage</td></tr>
+      <tr><td><code>users_update</code></td><td><code>user_id, data: {name?, role?, is_active?}</code></td><td><code>User</code></td><td>users manage</td></tr>
+      <tr><td><code>users_approve</code></td><td><code>user_id, role</code></td><td><code>User</code></td><td>users manage</td></tr>
+      <tr><td><code>users_reject</code></td><td><code>user_id</code></td><td>—</td><td>users manage</td></tr>
+      <tr><td><code>users_reset_password</code></td><td><code>user_id, password</code></td><td>—</td><td>users manage</td></tr>
+      <tr><td><code>audit_list</code></td><td><code>query: {limit, offset, entity?}</code></td><td><code>Page&lt;AuditEntry&gt;</code></td><td>audit read</td></tr>
+      <tr><td><code>backup_list</code></td><td>—</td><td><code>BackupInfo[]</code></td><td>backup write</td></tr>
+      <tr><td><code>backup_create</code></td><td><code>dest?</code></td><td><code>BackupInfo</code></td><td>backup write</td></tr>
+      <tr><td><code>backup_restore</code></td><td><code>path</code></td><td><code>BackupInfo</code> (cópia do estado anterior)</td><td>backup manage</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================== 13 DEV ============================== -->
+<section class="chapter" id="dev">
+  <h2>13. Ambiente e desenvolvimento</h2>
+  <h3>Pré-requisitos</h3>
+  <table>
+    <thead><tr><th>Ferramenta</th><th>Para quê</th></tr></thead>
+    <tbody>
+      <tr><td>Rust 1.91+ (rustup)</td><td class="wrap">núcleo e app</td></tr>
+      <tr><td>Node 18+ (22 recomendado)</td><td class="wrap">interface e CLI do Tauri</td></tr>
+      <tr><td>Libs do WebKit (Linux/WSL)</td><td class="wrap">compilar e abrir o app; não são necessárias para <code>make test</code></td></tr>
+    </tbody>
+  </table>
+<pre><code>sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
+  libxdo-dev libssl-dev libdbus-1-dev pkg-config build-essential</code></pre>
+  <p class="muted">No Windows nativo: Rust (rustup), Visual Studio Build Tools (C++) e Node. O WebView2 já vem no Windows 10/11.</p>
+
+  <h3>Comandos do dia a dia</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td><code>make install</code></td><td class="wrap">instala dependências da interface</td></tr>
+      <tr><td><code>make test</code></td><td class="wrap">testes do núcleo (<code>args=nome</code> filtra)</td></tr>
+      <tr><td><code>make lint</code></td><td class="wrap">fmt, clippy (avisos viram erro), tsc, eslint</td></tr>
+      <tr><td><code>make check</code></td><td class="wrap">lint + test: obrigatório antes de commit</td></tr>
+      <tr><td><code>make seed</code></td><td class="wrap">empresa demo em <code>.dev-data/</code> (<code>empresa=techparts</code> para a outra)</td></tr>
+      <tr><td><code>make reset-data</code></td><td class="wrap">apaga <code>.dev-data/</code></td></tr>
+      <tr><td><code>make dev</code></td><td class="wrap">abre o programa em modo desenvolvimento (recarrega ao salvar)</td></tr>
+      <tr><td><code>make build</code></td><td class="wrap">instalador da plataforma atual</td></tr>
+      <tr><td><code>make manual</code></td><td class="wrap">regenera este PDF (WSL + Chrome do Windows)</td></tr>
+    </tbody>
+  </table>
+  <p>Usuários do seed (senha <code>nucleo123</code>): <code>dono@paodourado.com.br</code> (proprietário),
+  <code>admin@paodourado.com.br</code> (administrador), <code>caixa@paodourado.com.br</code> (usuário).</p>
+
+  <h3>Convenções</h3>
+  <ul>
+    <li>Regra de negócio só no <code>service.rs</code>; comandos só checam permissão e delegam.</li>
+    <li>Services devolvem <code>CoreError</code> com mensagem em pt-BR para o usuário final; validação com <code>Validator</code> e chave = caminho do campo.</li>
+    <li>Escrita: <code>begin()</code> → alterações → auditoria → <code>commit()</code>.</li>
+    <li>Interface: textos em pt-BR sem jargão técnico; cores da marca só por <code>--brand*</code>.</li>
+    <li>Commits pequenos em Conventional Commits: <code>feat(módulo): …</code>, <code>fix</code>, <code>test</code>, <code>build</code>, <code>docs</code>.</li>
+    <li>Trabalho em fases: ao fim, <code>make check</code> verde, docs atualizadas, aprovação para seguir.</li>
+  </ul>
+</section>
+
+<!-- ============================== 14 DISTRIBUIÇÃO ============================== -->
+<section class="chapter" id="distribuicao">
+  <h2>14. Distribuição e download</h2>
+  <h3>Gerar o instalador</h3>
+  <table>
+    <thead><tr><th>Onde</th><th>Como</th><th>Resultado</th></tr></thead>
+    <tbody>
+      <tr><td>CI (recomendado)</td><td class="wrap">push na <code>main</code> ou tag <code>v*</code></td><td class="wrap">artifact <code>nucleo-erp-windows</code> no GitHub Actions</td></tr>
+      <tr><td>Windows local</td><td class="wrap"><code>make build</code></td><td class="wrap"><code>target/release/bundle/nsis/…-setup.exe</code> e <code>msi/…msi</code></td></tr>
+      <tr><td>Linux / WSL</td><td class="wrap"><code>make build</code></td><td class="wrap"><code>.deb</code> e <code>.AppImage</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Publicar para download (GitHub Releases)</h3>
+  <ol>
+    <li>Suba a versão nos três arquivos (cap. 8) e faça o commit.</li>
+    <li><code>git tag v0.2.0 &amp;&amp; git push origin main --tags</code></li>
+    <li>O CI testa, gera o instalador e cria um <strong>release em rascunho</strong> com o <code>-setup.exe</code> e o <code>.msi</code>.</li>
+    <li>Em <strong>Releases</strong> no GitHub: revisar, escrever as novidades, <strong>Publish release</strong>.</li>
+  </ol>
+  <div class="note"><strong>Link para os clientes</strong> (sempre a última versão publicada):<br>
+  <code>https://github.com/Igorrochalord/Esteio/releases/latest</code></div>
+
+  <h3>Instalação pelo cliente</h3>
+  <ol>
+    <li>Baixar <code>Nucleo ERP_&lt;versão&gt;_x64-setup.exe</code> no link acima.</li>
+    <li>Sem assinatura digital, o Windows mostra "O Windows protegeu o computador": <strong>Mais informações → Executar assim mesmo</strong>.</li>
+    <li>Seguir o instalador; na última tela, marcar <strong>"Criar atalho na área de trabalho"</strong>.</li>
+    <li>Abrir o Nucleo ERP; na primeira vez, cadastrar empresa e proprietário.</li>
+  </ol>
+
+  <h3>Atalhos</h3>
+  <table>
+    <thead><tr><th>Instalador</th><th>Menu Iniciar</th><th>Área de trabalho</th></tr></thead>
+    <tbody>
+      <tr><td><code>-setup.exe</code> (NSIS)</td><td>sempre</td><td class="wrap">caixa na última tela; automático em instalação silenciosa (<code>/S</code>); <code>/NS</code> = sem atalhos</td></tr>
+      <tr><td><code>.msi</code></td><td>sempre</td><td>sempre</td></tr>
+    </tbody>
+  </table>
+
+  <h3>No computador do cliente</h3>
+  <table>
+    <thead><tr><th>O quê</th><th>Onde</th></tr></thead>
+    <tbody>
+      <tr><td>Programa (NSIS, por usuário)</td><td><code>%LOCALAPPDATA%\Nucleo ERP\</code></td></tr>
+      <tr><td>Programa (MSI)</td><td><code>C:\Program Files\Nucleo ERP\</code></td></tr>
+      <tr><td>Dados</td><td><code>%APPDATA%\br.com.nucleoerp.desktop\nucleo.db</code></td></tr>
+      <tr><td>Cópias de segurança</td><td><code>%APPDATA%\br.com.nucleoerp.desktop\backups\</code></td></tr>
+    </tbody>
+  </table>
+  <p class="muted">Programa e dados ficam separados: reinstalar ou atualizar não apaga dados.</p>
+</section>
+
+<!-- ============================== 15 BACKUP ============================== -->
+<section class="chapter" id="backup">
+  <h2>15. Backup e restauração</h2>
+  <table>
+    <thead><tr><th>Tipo</th><th>Quando</th><th>Arquivo</th></tr></thead>
+    <tbody>
+      <tr><td>Automática</td><td class="wrap">ao abrir, se a última tiver mais de 24 h; guarda as 7 mais novas</td><td><code>auto-AAAAMMDD-HHMMSS-mmm.db</code></td></tr>
+      <tr><td>Manual</td><td class="wrap">"Fazer cópia agora"</td><td><code>manual-….db</code></td></tr>
+      <tr><td>Salvar em…</td><td class="wrap">pen drive, pasta da nuvem</td><td class="wrap">onde o usuário escolher</td></tr>
+      <tr><td>Antes de restaurar</td><td class="wrap">sempre, automaticamente</td><td><code>pre-restore-….db</code></td></tr>
+    </tbody>
+  </table>
+  <h3>Como a restauração funciona</h3>
+  <ol>
+    <li>O arquivo é copiado para uma área temporária e conferido: SQLite íntegro, tabelas do Núcleo, versão não mais nova que o programa.</li>
+    <li>O estado atual é salvo em <code>pre-restore-….db</code>.</li>
+    <li>O banco é fechado, substituído e reaberto (migrações aplicadas).</li>
+    <li>Se a reabertura falhar, o estado anterior volta sozinho.</li>
+    <li>A sessão é encerrada (os usuários podem ser outros) e o histórico registra <code>backup.restore</code>.</li>
+  </ol>
+  <div class="warn">Oriente o cliente a guardar cópias <strong>fora do computador</strong> com frequência: as automáticas ficam no mesmo disco.</div>
+</section>
+
+<!-- ============================== 16 ROTEIRO ============================== -->
+<section class="chapter" id="roteiro">
+  <h2>16. Roteiro, assinatura e pendências</h2>
+  <table>
+    <thead><tr><th>Fase</th><th>Escopo</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td class="wrap">Fundação SaaS (FastAPI + Postgres), preservada na tag <code>v0.1-saas</code></td><td>substituída</td></tr>
+      <tr><td>1b</td><td class="wrap">Fundação local: núcleo Rust + SQLite, login, autocadastro, pessoas, empresa, histórico, backup, CI</td><td>em andamento</td></tr>
+      <tr><td>2</td><td class="wrap">Estoque: categorias, fornecedores, produtos, movimentações imutáveis, alerta de mínimo</td><td>próxima</td></tr>
+      <tr><td>3 · 4 · 5</td><td class="wrap">Vendas/PDV · Financeiro · Relatórios</td><td>—</td></tr>
+      <tr><td>6</td><td class="wrap">Sincronização entre filiais (servidor + consumo do <code>change_log</code>)</td><td>—</td></tr>
+      <tr><td>7</td><td class="wrap">Release: assinatura de código, atualização automática</td><td>—</td></tr>
+      <tr><td>—</td><td class="wrap">Assinatura e licenciamento</td><td>proposta</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Pendências da fase 1b</h3>
+  <ul>
+    <li>Roteiro manual na interface: onboarding → login → pedir cadastro → aprovar → redefinir senha → cores/logo → histórico → backup/restauração → fechar e reabrir.</li>
+    <li>Primeiro instalador gerado pelo CI (exige <code>git push</code>) e testado numa máquina Windows limpa.</li>
+  </ul>
+
+  <h3>Assinatura: resumo da proposta (<code>docs/assinatura.md</code>)</h3>
+  <ul>
+    <li><strong>Planos por módulos</strong> com limite de usuários; depois, adicional por filial quando houver sync.</li>
+    <li><strong>Teste de 14–30 dias sem cartão</strong>; ao vencer, <strong>modo somente leitura</strong>, nunca bloqueio dos dados.</li>
+    <li>Mensal e anual (com desconto); cobrança com <strong>Pix, boleto e cartão</strong> (ex.: Asaas, com assinaturas e Pix Automático).</li>
+    <li>Como o programa funciona sem internet: <strong>licença assinada digitalmente</strong> (Ed25519) com plano, limites e validade, conferida offline, renovada por um pequeno servidor que recebe o webhook de pagamento, com carência offline.</li>
+    <li>Falta decidir: planos, preços, duração do teste e gateway.</li>
+  </ul>
+</section>
+
+<!-- ============================== 17 PROBLEMAS ============================== -->
+<section class="chapter" id="problemas">
+  <h2>17. Problemas comuns</h2>
+  <table>
+    <thead><tr><th>Sintoma</th><th>Causa e solução</th></tr></thead>
+    <tbody>
+      <tr><td class="wrap"><code>cargo metadata … Permission denied</code> no <code>tauri dev</code></td><td class="wrap">O terminal não tem <code>~/.cargo/bin</code> no PATH. Use <code>make dev</code> (já corrige) ou abra um terminal novo.</td></tr>
+      <tr><td class="wrap">Erro de <code>pkg-config</code>, <code>dbus</code> ou <code>webkit2gtk</code> ao compilar</td><td class="wrap">Faltam as libs do sistema (cap. 13).</td></tr>
+      <tr><td class="wrap">Janela em branco no WSL; avisos <code>libEGL</code>/<code>ZINK</code></td><td class="wrap">O WSL não expõe a GPU ao WebKit. <code>make dev</code> já usa <code>WEBKIT_DISABLE_DMABUF_RENDERER=1</code>.</td></tr>
+      <tr><td class="wrap">Docker não sobe</td><td class="wrap">O projeto <strong>não usa Docker</strong>. (Disco C: cheio derruba o Docker Desktop.)</td></tr>
+      <tr><td class="wrap">"Este computador já tem uma empresa configurada"</td><td class="wrap">Onboarding só na primeira abertura. Em dev: <code>make reset-data</code>.</td></tr>
+      <tr><td class="wrap">Login diz "aguardando aprovação"</td><td class="wrap">Autocadastro pendente: aprovar em Pessoas (proprietário/administrador).</td></tr>
+      <tr><td class="wrap">Clippy falha no CI</td><td class="wrap">Avisos viram erro; rode <code>make check</code> antes do push.</td></tr>
+      <tr><td class="wrap">Alerta do SmartScreen no cliente</td><td class="wrap">Instalador sem assinatura digital: "Mais informações → Executar assim mesmo" (definitivo: certificado de código).</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================== 18 GLOSSÁRIO ============================== -->
+<section class="chapter" id="glossario">
+  <h2>18. Glossário</h2>
+  <table>
+    <thead><tr><th>Termo</th><th>Significado</th></tr></thead>
+    <tbody>
+      <tr><td>Tauri</td><td class="wrap">Framework que transforma uma interface web num programa nativo leve, com núcleo em Rust.</td></tr>
+      <tr><td><code>invoke</code> / comando</td><td class="wrap">Chamada da interface para uma função Rust do programa (no mesmo processo, sem rede).</td></tr>
+      <tr><td><code>Core</code> / <code>Ctx</code></td><td class="wrap">Estado do programa (banco + sessão) / contexto de um comando com o usuário logado.</td></tr>
+      <tr><td>Service · Repository · Model</td><td class="wrap">Regras · SQL · estruturas de dados, as três camadas de cada módulo.</td></tr>
+      <tr><td>Migração</td><td class="wrap">Script SQL numerado que cria/altera tabelas; roda sozinho ao abrir o programa.</td></tr>
+      <tr><td>Exclusão lógica</td><td class="wrap">Marcar <code>deleted_at</code> em vez de apagar a linha.</td></tr>
+      <tr><td><code>change_log</code> / outbox</td><td class="wrap">Fila de alterações que a sincronização entre filiais vai consumir.</td></tr>
+      <tr><td>UUID v7</td><td class="wrap">Identificador único global e ordenado no tempo.</td></tr>
+      <tr><td>Auditoria / histórico</td><td class="wrap">Registro imutável de quem mudou o quê e quando.</td></tr>
+      <tr><td>CSP</td><td class="wrap">Política de segurança do conteúdo: limita o que a interface pode carregar/acessar.</td></tr>
+      <tr><td>NSIS / MSI</td><td class="wrap">Formatos de instalador do Windows (<code>-setup.exe</code> / <code>.msi</code>).</td></tr>
+      <tr><td>CI / Release</td><td class="wrap">Automação no GitHub que testa e gera instaladores / página de download de uma versão.</td></tr>
+      <tr><td>ADR</td><td class="wrap">Architecture Decision Record: registro de uma decisão de arquitetura.</td></tr>
+      <tr><td>WAL</td><td class="wrap">Modo de gravação do SQLite que permite ler enquanto grava, com mais segurança contra queda.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</body>
+</html>
