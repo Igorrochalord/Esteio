@@ -53,9 +53,9 @@ Exemplo: o dono troca a cor principal.
 
 | Módulo | Comandos | Permissão |
 |---|---|---|
-| auth | `setup_status`, `onboard`, `login`, `logout`, `me` | sem login (exceto `me`) |
+| auth | `setup_status`, `login_branding`, `register`, `onboard`, `login`, `logout`, `me` | sem login (exceto `me`) |
 | company | `company_get`, `company_update`, `branding_update`, `logo_upload`, `logo_remove` | settings |
-| users | `users_list`, `users_create`, `users_update` | users |
+| users | `users_list`, `users_create`, `users_update`, `users_approve`, `users_reject`, `users_reset_password` | users |
 | audit | `audit_list` | audit |
 | backup | `backup_list`, `backup_create`, `backup_restore` | backup |
 
@@ -64,5 +64,6 @@ Exemplo: o dono troca a cor principal.
 - `HashRouter`: o app carrega arquivos locais, então não há servidor para resolver as rotas.
 - `useAuth()` expõe `status` (`loading` · `setup` · `anonymous` · `authenticated`), `me` e
   `can(módulo, nível)`. As rotas são protegidas por `RequireAuth` e `RequirePermission` em `App.tsx`.
-- Primeira abertura (`setup`): só o onboarding fica acessível, depois só o login.
+- Primeira abertura (`setup`): só o onboarding fica acessível. Depois: login e "Pedir cadastro"
+  (`/cadastro`), ambos dentro do `AuthFrame`, que já mostra nome, logo e cores da empresa.
 - Tema: `applyBranding()` define `--brand`, `--brand-ink`, `--brand-deep` e `--brand-deep-ink`.

@@ -6,17 +6,18 @@ O projeto avança em fases. Ao fim de cada fase, `make check` precisa estar verd
 | Fase | Escopo | Estado |
 |---|---|---|
 | 1 | Fundação SaaS (FastAPI + Postgres): substituída, preservada na tag `v0.1-saas` | substituída |
-| 1b | Fundação local: núcleo Rust + SQLite, login, pessoas, empresa, histórico, backup, CI | em andamento |
+| 1b | Fundação local: núcleo Rust + SQLite, login, autocadastro, pessoas, empresa, histórico, backup, CI | em andamento |
 | 2 | Estoque: categorias, fornecedores, produtos, movimentações imutáveis, alerta de mínimo | próxima |
 | 3 | Vendas / PDV | — |
 | 4 | Financeiro | — |
 | 5 | Relatórios | — |
 | 6 | Sincronização entre filiais (serviço na nuvem + consumo do `change_log`) | — |
 | 7 | Release: assinatura de código, atualização automática | — |
+| — | Assinatura e licenciamento ([pesquisa](assinatura.md)): encaixar quando os planos forem decididos | proposta |
 
 ## Fase 1b: pendências
 
 - [x] Compilar o app Tauri no WSL (`make check` verde, `make dev` abre).
-- [ ] Roteiro manual na interface: onboarding → login → pessoas → cores/logo → histórico →
-      backup/restauração → fechar e reabrir.
+- [ ] Roteiro manual na interface: onboarding → login → pedir cadastro → aprovar → redefinir senha →
+      cores/logo → histórico → backup/restauração → fechar e reabrir.
 - [ ] Primeiro instalador gerado pelo CI e testado numa máquina Windows limpa.

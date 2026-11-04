@@ -63,7 +63,7 @@ precisar migrar dados depois, desde já:
 |---|---|---|
 | `installation` | infra | uma linha: `device_id` e `branch_id` desta instalação |
 | `company` | negócio | uma linha: dados, cores e logo (BLOB) |
-| `users` | negócio | pessoas, papel, hash argon2, status |
+| `users` | negócio | pessoas, papel, hash argon2, status, `pending` (autocadastro) |
 | `audit_logs` | infra | histórico append-only |
 | `change_log` | infra | outbox do sync |
 

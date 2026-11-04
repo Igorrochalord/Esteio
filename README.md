@@ -11,6 +11,12 @@ local. Não há servidor nem internet envolvidos, e o sistema assume as cores e 
 | Dados | SQLite local (sqlx), com backup automático |
 | Instalador | Tauri bundler: NSIS/MSI no Windows, gerado no CI |
 
+## Baixar
+
+Instalador para Windows na página de versões:
+**[github.com/Igorrochalord/Esteio/releases/latest](https://github.com/Igorrochalord/Esteio/releases/latest)**
+(baixe o `…-setup.exe`). Passo a passo e atalhos em [distribuição](docs/distribuicao.md).
+
 ## Começando
 
 Pré-requisitos e instalação do ambiente: [docs/desenvolvimento.md](docs/desenvolvimento.md).
@@ -28,6 +34,8 @@ Para a outra empresa de exemplo: `make reset-data && make seed empresa=techparts
 
 ## Estrutura
 
+Resumo abaixo; explicação de cada pasta em [docs/estrutura.md](docs/estrutura.md).
+
 ```
 apps/desktop/            app instalável
   src/                   interface React (pages, components, layouts, services, hooks)
@@ -44,11 +52,13 @@ docs/                    documentação por tópico + decisões (adr/)
 
 | Tópico | Conteúdo |
 |---|---|
+| [Estrutura de pastas](docs/estrutura.md) | o que cada pasta e arquivo principal faz |
 | [Arquitetura](docs/arquitetura.md) | camadas, caminho de uma ação da tela ao banco, módulos |
 | [Desenvolvimento](docs/desenvolvimento.md) | ambiente, comandos, testes, como criar um módulo |
 | [Banco de dados](docs/banco-de-dados.md) | SQLite, migrações, regras de tabela, sync, auditoria |
 | [Segurança e permissões](docs/seguranca-e-permissoes.md) | login, sessão, papéis, CSP |
 | [Backup e restauração](docs/backup.md) | cópias automáticas e manuais, restauração |
-| [Distribuição](docs/distribuicao.md) | gerar o instalador, onde ficam programa e dados, release |
+| [Distribuição](docs/distribuicao.md) | instalador, atalhos, publicar e baixar pelo GitHub |
+| [Assinatura](docs/assinatura.md) | pesquisa: modelos de plano, cobrança e licença offline |
 | [Roteiro](docs/roteiro.md) | fases concluídas e próximas |
 | [Decisões (ADR)](docs/adr/) | registro das decisões de arquitetura |

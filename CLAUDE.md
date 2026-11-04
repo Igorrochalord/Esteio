@@ -4,7 +4,8 @@
 Núcleo ERP: ERP modular **instalável** (Tauri v2 + React na interface, Rust + SQLite no núcleo).
 Sem servidor, sem HTTP e com uma empresa por instalação. Decisão em `docs/adr/0002-executavel-local.md`.
 **Não mude a arquitetura sem perguntar ao usuário.** A documentação por tópico está em `docs/`
-(arquitetura, desenvolvimento, banco-de-dados, seguranca-e-permissoes, backup, distribuicao, roteiro).
+(estrutura, arquitetura, desenvolvimento, banco-de-dados, seguranca-e-permissoes, backup, distribuicao,
+assinatura, roteiro).
 
 ## Fluxo de trabalho
 - Desenvolvido em fases (`docs/roteiro.md`). Ao fim de cada fase: `make check` verde, atualizar

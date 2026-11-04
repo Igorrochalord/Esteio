@@ -4,6 +4,13 @@
 
 - O primeiro usuário é o **proprietário**, criado no onboarding junto com a empresa. Os demais são
   cadastrados por quem tem `users: manage`.
+- **Autocadastro:** em "Pedir cadastro", a pessoa cria a própria conta, que nasce **inativa e
+  aguardando aprovação** (`pending`). Quem tem `users: manage` aprova (escolhendo o papel) ou
+  recusa em Pessoas. A recusa é uma exclusão lógica e libera o e-mail para um novo pedido. O aviso
+  "aguardando aprovação" só aparece para quem acertou a senha.
+- **Esqueci a senha:** um administrador define uma senha provisória em Pessoas → "Redefinir senha".
+  Ninguém redefine a própria senha por ali, e só o proprietário redefine a do proprietário.
+  O histórico registra o fato, nunca a senha.
 - O e-mail é único (sem diferenciar maiúsculas) e é gravado em minúsculas.
 - As senhas usam **argon2**. A verificação roda fora do executor async e leva o mesmo tempo
   quando o e-mail não existe, para não revelar quais e-mails estão cadastrados.
@@ -26,12 +33,13 @@ Os níveis se acumulam: `manage` inclui `write`, que inclui `read`. A matriz fic
 `crates/nucleo-core/src/permissions.rs` (`granted`). O front recebe a matriz efetiva em
 `me.permissions` para montar o menu, mas **quem decide é o núcleo**.
 
-Regras de pessoas (`users::service::update`):
+Regras de pessoas (`users::service`):
 
 - o proprietário não pode ser rebaixado nem desativado;
 - ninguém altera o próprio papel ou status;
 - só o proprietário edita os próprios dados;
-- o papel `owner` não pode ser atribuído depois do onboarding.
+- o papel `owner` não pode ser atribuído depois do onboarding;
+- cadastro pendente só muda por Aprovar/Recusar (não dá para "reativar" e pular a aprovação).
 
 ## Superfície do app
 
