@@ -32,6 +32,12 @@ pub async fn status(core: &Core) -> CoreResult<SetupStatus> {
     })
 }
 
+/// Sem login: nome, cores e logo para a tela de entrada (nada sensível).
+pub async fn public_branding(core: &Core) -> CoreResult<Option<Branding>> {
+    let mut conn = core.pool().acquire().await?;
+    Ok(repository::get(&mut conn).await?.map(|c| c.branding()))
+}
+
 /// Primeira abertura: cria empresa + dono numa transação e já entra como dono.
 pub async fn onboard(core: &Core, data: OnboardingInput) -> CoreResult<Me> {
     let mut v = Validator::default();
@@ -86,9 +92,11 @@ pub async fn onboard(core: &Core, data: OnboardingInput) -> CoreResult<Me> {
         password_hash,
         role: Role::Owner.as_str().into(),
         is_active: true,
+        pending: false,
         last_login_at: Some(now.clone()),
         created_at: now.clone(),
         updated_at: now,
+        deleted_at: None,
     };
     repository::insert(&mut tx, &inst, &company).await?;
     users_repo::insert(&mut tx, &inst, &owner).await?;

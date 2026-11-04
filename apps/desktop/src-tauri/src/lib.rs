@@ -39,6 +39,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::auth::setup_status,
+            commands::auth::login_branding,
+            commands::auth::register,
             commands::auth::onboard,
             commands::auth::login,
             commands::auth::logout,
@@ -51,6 +53,9 @@ pub fn run() {
             commands::users::users_list,
             commands::users::users_create,
             commands::users::users_update,
+            commands::users::users_approve,
+            commands::users::users_reject,
+            commands::users::users_reset_password,
             commands::audit::audit_list,
             commands::backup::backup_list,
             commands::backup::backup_create,

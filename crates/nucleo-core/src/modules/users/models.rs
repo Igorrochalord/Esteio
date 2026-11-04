@@ -11,9 +11,14 @@ pub struct User {
     pub password_hash: String,
     pub role: String,
     pub is_active: bool,
+    /// autocadastro aguardando aprovação de um administrador
+    pub pending: bool,
     pub last_login_at: Option<String>,
     pub created_at: String,
     pub updated_at: String,
+    /// recusa de autocadastro = exclusão lógica
+    #[serde(skip_serializing)]
+    pub deleted_at: Option<String>,
 }
 
 impl User {
@@ -35,6 +40,14 @@ pub struct UserCreate {
     pub password: String,
     #[serde(default = "default_role")]
     pub role: String,
+}
+
+/// Autocadastro pela tela de login (sem sessão).
+#[derive(Debug, Deserialize)]
+pub struct RegisterInput {
+    pub name: String,
+    pub email: String,
+    pub password: String,
 }
 
 #[derive(Debug, Default, Deserialize)]

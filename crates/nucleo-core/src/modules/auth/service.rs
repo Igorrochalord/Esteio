@@ -17,6 +17,8 @@ use crate::validate;
 use crate::{Core, Ctx};
 
 pub const INVALID_CREDENTIALS: &str = "E-mail ou senha inválidos";
+pub const PENDING_APPROVAL: &str =
+    "Seu cadastro ainda está aguardando a aprovação de um administrador";
 
 #[derive(Debug, Serialize)]
 pub struct MeCompany {
@@ -54,6 +56,10 @@ pub async fn login(core: &Core, email: &str, password: String) -> CoreResult<Me>
         security::verify_password(password, found.as_ref().map(|u| u.password_hash.clone())).await;
     let mut user = match found {
         Some(u) if password_ok && u.is_active => u,
+        // só revela a situação a quem acertou a senha
+        Some(u) if password_ok && u.pending => {
+            return Err(CoreError::Unauthorized(PENDING_APPROVAL.into()))
+        }
         _ => return Err(CoreError::Unauthorized(INVALID_CREDENTIALS.into())),
     };
     let company = company_repo::get(&mut tx)

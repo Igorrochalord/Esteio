@@ -1,6 +1,8 @@
 use nucleo_core::modules::auth::service::{self as auth, Me};
-use nucleo_core::modules::company::models::{OnboardingInput, SetupStatus};
+use nucleo_core::modules::company::models::{Branding, OnboardingInput, SetupStatus};
 use nucleo_core::modules::company::service as company;
+use nucleo_core::modules::users::models::RegisterInput;
+use nucleo_core::modules::users::service as users;
 use nucleo_core::Core;
 use tauri::State;
 
@@ -10,6 +12,18 @@ use super::Res;
 #[tauri::command(rename_all = "snake_case")]
 pub async fn setup_status(core: State<'_, Core>) -> Res<SetupStatus> {
     company::status(&core).await
+}
+
+/// Sem login: nome, cores e logo da empresa para a tela de entrada.
+#[tauri::command(rename_all = "snake_case")]
+pub async fn login_branding(core: State<'_, Core>) -> Res<Option<Branding>> {
+    company::public_branding(&core).await
+}
+
+/// Sem login: pedido de acesso, que fica aguardando aprovação.
+#[tauri::command(rename_all = "snake_case")]
+pub async fn register(core: State<'_, Core>, data: RegisterInput) -> Res<()> {
+    users::register(&core, data).await
 }
 
 #[tauri::command(rename_all = "snake_case")]
