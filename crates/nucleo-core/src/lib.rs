@@ -66,7 +66,7 @@ impl Core {
         std::fs::create_dir_all(data_dir)?;
         let pool = db::open(&data_dir.join("nucleo.db")).await?;
         let inst = db::ensure_installation(&pool).await?;
-        Ok(Self {
+        let core = Self {
             data_dir: data_dir.to_path_buf(),
             pool: RwLock::new(pool),
             inst: RwLock::new(inst),
@@ -75,7 +75,9 @@ impl Core {
             vault: Vault::open(data_dir)?,
             http: Http::new(),
             providers: RwLock::new(Registry::default()),
-        })
+        };
+        modules::integrations::providers::register_builtin(&core);
+        Ok(core)
     }
 
     pub fn vault(&self) -> &Vault {

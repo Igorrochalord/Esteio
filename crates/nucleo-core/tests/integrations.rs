@@ -26,39 +26,52 @@ struct Fake {
 impl Provider for Fake {
     fn info(&self) -> ProviderInfo {
         ProviderInfo {
-            id: "teste",
-            name: "Provedor de teste",
-            kind: Kind::Other,
-            description: "usado nos testes",
             fields: vec![
-                Field {
-                    key: "conta",
-                    label: "a conta",
-                    secret: false,
-                    required: true,
-                    help: None,
-                },
-                Field {
-                    key: "token",
-                    label: "o token",
-                    secret: true,
-                    required: true,
-                    help: None,
-                },
+                Field::text("conta", "a conta", true),
+                Field::secret("token", "o token", true),
+                Field::file("certificado", "o certificado", false),
             ],
-            available: true,
-            phase: None,
+            oauth: true,
+            ..ProviderInfo::new(
+                "teste",
+                "Provedor de teste",
+                Kind::Other,
+                "usado nos testes",
+            )
         }
     }
 
     async fn check(&self, call: &Call<'_>) -> Result<String, ProviderError> {
-        match call.secret("token") {
+        match call.secret("token").as_deref() {
             Some("bom") => Ok(format!(
                 "Conta: {}",
                 call.config_str("conta").unwrap_or("?")
             )),
+            // token vencido: renova sozinho (como um refresh de OAuth)
+            Some("vencido") => {
+                let mut m = Map::new();
+                m.insert("token".into(), json!("bom"));
+                call.set_secrets(m);
+                Ok("token renovado".into())
+            }
             _ => Err(ProviderError::Auth("401".into())),
         }
+    }
+
+    fn authorize_url(&self, call: &Call<'_>) -> Option<String> {
+        call.config_str("conta")
+            .map(|c| format!("https://exemplo.invalid/autorizar?conta={c}"))
+    }
+
+    async fn exchange_code(&self, call: &Call<'_>, code: &str) -> Result<String, ProviderError> {
+        if code != "codigo-certo" {
+            return Err(ProviderError::Rejected("código inválido".into()));
+        }
+        let mut m = Map::new();
+        m.insert("token".into(), json!("bom"));
+        m.insert("refresh".into(), json!("r1"));
+        call.set_secrets(m);
+        Ok("autorizado".into())
     }
 
     async fn run(&self, _call: &Call<'_>, job: &Job) -> Outcome {
@@ -67,6 +80,7 @@ impl Provider for Fake {
             "wait" => Outcome::Wait {
                 secs: 60,
                 note: Some("aguardando pagamento".into()),
+                payload: Some(json!({ "cursor": 2 })),
             },
             "offline" => Outcome::Error(ProviderError::Offline),
             _ => Outcome::Error(ProviderError::Rejected("dados inválidos".into())),
@@ -410,4 +424,191 @@ async fn permissions_by_role() {
         core.require(Module::Integrations, Action::Read).await,
         Err(CoreError::Forbidden(_))
     ));
+}
+
+#[tokio::test]
+async fn wait_can_update_payload_and_run_job_runs_now() {
+    let (_dir, core, _) = configured().await;
+    let wait = enqueue(&core, "wait").await;
+    let step = integrations::run_job(&core, &wait).await.unwrap();
+    assert_eq!(step, Some(integrations::Step::Waiting));
+    let payload: String = sqlx::query_scalar("SELECT payload FROM integration_jobs WHERE id = ?")
+        .bind(&wait)
+        .fetch_one(&core.pool())
+        .await
+        .unwrap();
+    assert_eq!(payload, r#"{"cursor":2}"#);
+
+    let ok = enqueue(&core, "ok").await;
+    assert_eq!(
+        integrations::run_job(&core, &ok).await.unwrap(),
+        Some(integrations::Step::Done)
+    );
+    // já concluído: não roda de novo
+    assert_eq!(integrations::run_job(&core, &ok).await.unwrap(), None);
+}
+
+#[tokio::test]
+async fn renewed_tokens_are_saved_encrypted() {
+    let (_dir, core, _) = configured().await;
+    let ctx = core
+        .require(Module::Integrations, Action::Manage)
+        .await
+        .unwrap();
+    integrations::save(&core, &ctx, input("vencido"))
+        .await
+        .unwrap();
+    let first = integrations::test(&core, &ctx, "teste").await.unwrap();
+    assert_eq!(first.status_detail.as_deref(), Some("token renovado"));
+    // o provedor trocou "vencido" por "bom": o próximo teste já usa o novo
+    let out = integrations::test(&core, &ctx, "teste").await.unwrap();
+    assert_eq!(out.status_detail.as_deref(), Some("Conta: Loja 1"));
+    let raw: Vec<u8> = sqlx::query_scalar("SELECT secrets FROM integrations")
+        .fetch_one(&core.pool())
+        .await
+        .unwrap();
+    assert!(!String::from_utf8_lossy(&raw).contains("bom"));
+}
+
+#[tokio::test]
+async fn oauth_authorize_and_exchange() {
+    let (_dir, core, _) = configured().await;
+    let ctx = core
+        .require(Module::Integrations, Action::Manage)
+        .await
+        .unwrap();
+    let url = integrations::authorize_url(&core, &ctx, "teste")
+        .await
+        .unwrap();
+    assert!(url.contains("conta=Loja 1"));
+
+    let bad = integrations::oauth_exchange(&core, &ctx, "teste", "errado")
+        .await
+        .unwrap();
+    assert_eq!(bad.status, "error");
+    assert!(matches!(
+        integrations::oauth_exchange(&core, &ctx, "teste", "  ").await,
+        Err(CoreError::Validation(_))
+    ));
+    let ok = integrations::oauth_exchange(&core, &ctx, "teste", "codigo-certo")
+        .await
+        .unwrap();
+    assert_eq!(ok.status, "ok");
+    assert!(ok.secrets_set.contains(&"refresh".to_string()));
+    // código vazio nem chega a registrar: só as duas tentativas reais
+    let audit: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM audit_logs WHERE action = 'integration.authorize'",
+    )
+    .fetch_one(&core.pool())
+    .await
+    .unwrap();
+    assert_eq!(audit, 2);
+}
+
+#[tokio::test]
+async fn file_fields_are_validated_and_certificates_parse() {
+    use base64::Engine;
+    use nucleo_core::modules::integrations::http::Pkcs12Pem;
+    let (_dir, core, _) = configured().await;
+    let ctx = core
+        .require(Module::Integrations, Action::Manage)
+        .await
+        .unwrap();
+    let mut bad = input("");
+    bad.secrets
+        .insert("certificado".into(), json!("isto não é base64!"));
+    let Err(CoreError::Validation(f)) = integrations::save(&core, &ctx, bad).await else {
+        panic!("esperava validação do arquivo");
+    };
+    assert!(f.contains_key("secrets.certificado"));
+
+    let b64 = base64::engine::general_purpose::STANDARD;
+    // moderno (AES/PBKDF2) e legado (3DES, comum em certificados A1)
+    for name in ["teste.p12", "teste-legado.p12"] {
+        let path = format!("{}/tests/fixtures/{name}", env!("CARGO_MANIFEST_DIR"));
+        let der = std::fs::read(path).unwrap();
+        let mut good = input("");
+        good.secrets
+            .insert("certificado".into(), json!(b64.encode(&der)));
+        integrations::save(&core, &ctx, good).await.unwrap();
+
+        let cert = Pkcs12Pem::parse(&der, "teste123").unwrap_or_else(|_| panic!("{name}"));
+        assert!(
+            cert.subject.contains("Certificado de Teste"),
+            "{}",
+            cert.subject
+        );
+        assert!(cert.pem.contains("BEGIN PRIVATE KEY") && cert.pem.contains("BEGIN CERTIFICATE"));
+        assert!(core.http().with_pkcs12(&der, "teste123").is_ok(), "{name}");
+        assert!(Pkcs12Pem::parse(&der, "senha-errada").is_err());
+    }
+}
+
+#[tokio::test]
+async fn simulator_runs_pix_without_network_and_only_in_sandbox() {
+    let (_dir, core, _) = onboarded().await;
+    let ctx = core
+        .require(Module::Integrations, Action::Manage)
+        .await
+        .unwrap();
+    // vem registrado de fábrica
+    let items = integrations::catalog(&core, &ctx).await.unwrap();
+    let sim = items.iter().find(|i| i.info.id == "simulador").unwrap();
+    assert!(sim.info.sandbox_only && sim.info.capabilities.contains(&"pix"));
+
+    let simulator = |env: &str| {
+        let mut config = Map::new();
+        config.insert("segundos_para_pagar".into(), json!("3600"));
+        IntegrationSave {
+            provider: "simulador".into(),
+            environment: env.into(),
+            enabled: true,
+            config,
+            secrets: Map::new(),
+        }
+    };
+    assert!(matches!(
+        integrations::save(&core, &ctx, simulator("production")).await,
+        Err(CoreError::Validation(_))
+    ));
+    integrations::save(&core, &ctx, simulator("sandbox"))
+        .await
+        .unwrap();
+    assert_eq!(
+        integrations::test(&core, &ctx, "simulador")
+            .await
+            .unwrap()
+            .status,
+        "ok"
+    );
+
+    let pool = core.pool();
+    let inst = core.installation();
+    let now = nucleo_core::db::now();
+    let mut tx = pool.begin().await.unwrap();
+    let mut add = async |kind: &str, payload: Value| {
+        integrations::enqueue(&mut tx, &inst, "simulador", kind, &payload, None)
+            .await
+            .unwrap()
+    };
+    let create = add("pix.create", json!({ "amount_cents": 1990 })).await;
+    let poll = add("pix.poll", json!({ "created_at": now })).await;
+    let forced = add(
+        "pix.poll",
+        json!({ "created_at": now, "simular_pago": true }),
+    )
+    .await;
+    tx.commit().await.unwrap();
+
+    let r = integrations::tick(&core).await.unwrap();
+    assert_eq!((r.done, r.waiting), (2, 1));
+    let result: String = sqlx::query_scalar("SELECT result FROM integration_jobs WHERE id = ?")
+        .bind(&create)
+        .fetch_one(&core.pool())
+        .await
+        .unwrap();
+    let result: Value = serde_json::from_str(&result).unwrap();
+    assert!(result["copy_paste"].as_str().unwrap().contains("540519.90"));
+    assert_eq!(job_row(&core, &poll).await.0, "pending");
+    assert_eq!(job_row(&core, &forced).await.0, "done");
 }

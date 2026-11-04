@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use base64::Engine;
 use serde_json::{Map, Value};
 
 use crate::audit::{self, Entry};
@@ -9,8 +10,8 @@ use crate::{Core, Ctx};
 
 use super::catalog::{self, ProviderInfo};
 use super::models::{
-    CatalogItem, Integration, IntegrationOut, IntegrationSave, JobFilter, JobOut, QueueSummary,
-    TickReport,
+    CatalogItem, Integration, IntegrationOut, IntegrationSave, Job, JobFilter, JobOut,
+    QueueSummary, TickReport,
 };
 use super::provider::{Call, Outcome, Provider, ProviderError};
 use super::repository::{self as repo, JobUpdate, NewJob};
@@ -21,6 +22,10 @@ pub const MAX_ATTEMPTS: i64 = 8;
 const BATCH: i64 = 20;
 
 const NOT_FOUND: &str = "Integração não encontrada.";
+const FOREIGN_SECRETS: &str =
+    "As credenciais desta integração foram salvas em outro computador. Informe-as de novo.";
+/// Tamanho máximo de um arquivo de integração (certificado).
+pub const FILE_MAX_BYTES: usize = 64 * 1024;
 
 // ---------- tela ----------
 
@@ -113,15 +118,35 @@ pub async fn save(core: &Core, ctx: &Ctx, data: IntegrationSave) -> CoreResult<I
         "environment",
         "Escolha teste ou produção",
     );
+    v.check(
+        !info.sandbox_only || data.environment == "sandbox",
+        "environment",
+        "Este serviço só funciona no ambiente de teste",
+    );
     let mut config = Map::new();
     for f in info.fields.iter() {
         let key = f.key;
-        if f.secret {
+        if f.is_sealed() {
             if let Some(val) = data.secrets.get(key).filter(|v| non_empty(Some(v))) {
                 let val = match val {
                     Value::String(s) => Value::String(s.trim().to_owned()),
                     other => other.clone(),
                 };
+                if f.kind == super::catalog::FieldKind::File {
+                    let bytes = val
+                        .as_str()
+                        .and_then(|b| base64::engine::general_purpose::STANDARD.decode(b).ok());
+                    match bytes {
+                        Some(b) if !b.is_empty() && b.len() <= FILE_MAX_BYTES => {}
+                        Some(b) if b.len() > FILE_MAX_BYTES => {
+                            v.add(
+                                &format!("secrets.{key}"),
+                                "Arquivo grande demais (máx. 64 KB)",
+                            );
+                        }
+                        _ => v.add(&format!("secrets.{key}"), "Arquivo inválido"),
+                    }
+                }
                 secrets.insert(key.to_owned(), val);
             }
             v.check(
@@ -241,30 +266,59 @@ fn audit_view(i: &Integration, secrets_changed: bool) -> Value {
     v
 }
 
-/// Testa as credenciais agora e guarda o resultado.
-pub async fn test(core: &Core, ctx: &Ctx, provider_id: &str) -> CoreResult<IntegrationOut> {
+/// Cifra e grava os segredos que o provedor trocou durante a chamada (ex.: token renovado).
+async fn persist_updated(
+    core: &Core,
+    conn: &mut Conn,
+    i: &mut Integration,
+    call: &Call<'_>,
+) -> CoreResult<()> {
+    if let Some(updated) = call.take_updated() {
+        i.secrets = Some(
+            core.vault()
+                .seal(Value::Object(updated).to_string().as_bytes())?,
+        );
+        sqlx::query("UPDATE integrations SET secrets = ?, updated_at = ? WHERE id = ?")
+            .bind(&i.secrets)
+            .bind(db::now())
+            .bind(&i.id)
+            .execute(&mut *conn)
+            .await?;
+    }
+    Ok(())
+}
+
+/// Provedor + integração + segredos legíveis, ou o erro certo para a tela.
+async fn load(
+    core: &Core,
+    ctx: &Ctx,
+    provider_id: &str,
+) -> CoreResult<(Arc<dyn Provider>, Integration, Value)> {
     let provider = core
         .provider(provider_id)
         .ok_or_else(|| CoreError::NotFound(NOT_FOUND.into()))?;
     let mut conn = ctx.db.acquire().await?;
-    let mut i = repo::by_provider(&mut conn, provider_id)
+    let i = repo::by_provider(&mut conn, provider_id)
         .await?
         .ok_or_else(|| CoreError::NotFound(NOT_FOUND.into()))?;
-    drop(conn);
-    let secrets = read_secrets(core, &i).ok_or_else(|| {
-        CoreError::BusinessRule(
-            "As credenciais desta integração foram salvas em outro computador. Informe-as de novo."
-                .into(),
-        )
-    })?;
-    let secrets = Value::Object(secrets);
-    let call = Call {
-        http: core.http(),
-        production: i.environment == "production",
-        config: &i.config,
-        secrets: &secrets,
-    };
+    let secrets =
+        read_secrets(core, &i).ok_or_else(|| CoreError::BusinessRule(FOREIGN_SECRETS.into()))?;
+    Ok((provider, i, Value::Object(secrets)))
+}
+
+/// Testa as credenciais agora e guarda o resultado.
+pub async fn test(core: &Core, ctx: &Ctx, provider_id: &str) -> CoreResult<IntegrationOut> {
+    let (provider, mut i, secrets) = load(core, ctx, provider_id).await?;
+    let config = i.config.clone();
+    let call = Call::new(
+        core.http(),
+        i.environment == "production",
+        &config,
+        &secrets,
+    );
     let result = provider.check(&call).await;
+    let mut conn = ctx.db.acquire().await?;
+    persist_updated(core, &mut conn, &mut i, &call).await?;
     let now = db::now();
     match result {
         Ok(detail) => {
@@ -279,8 +333,77 @@ pub async fn test(core: &Core, ctx: &Ctx, provider_id: &str) -> CoreResult<Integ
     }
     i.checked_at = Some(now.clone());
     i.updated_at = now;
-    let mut conn = ctx.db.acquire().await?;
     repo::update(&mut conn, &i).await?;
+    Ok(to_out(core, &i))
+}
+
+/// Endereço para autorizar o app no navegador (provedores OAuth).
+pub async fn authorize_url(core: &Core, ctx: &Ctx, provider_id: &str) -> CoreResult<String> {
+    let (provider, i, secrets) = load(core, ctx, provider_id).await?;
+    let call = Call::new(
+        core.http(),
+        i.environment == "production",
+        &i.config,
+        &secrets,
+    );
+    provider.authorize_url(&call).ok_or_else(|| {
+        CoreError::BusinessRule("Salve os dados do aplicativo antes de autorizar.".into())
+    })
+}
+
+/// Troca o código de autorização por tokens e guarda-os cifrados.
+pub async fn oauth_exchange(
+    core: &Core,
+    ctx: &Ctx,
+    provider_id: &str,
+    code: &str,
+) -> CoreResult<IntegrationOut> {
+    let code = code.trim();
+    if code.is_empty() {
+        return Err(CoreError::Validation(
+            [("code".to_owned(), "Cole o código de autorização".to_owned())].into(),
+        ));
+    }
+    let (provider, mut i, secrets) = load(core, ctx, provider_id).await?;
+    let config = i.config.clone();
+    let call = Call::new(
+        core.http(),
+        i.environment == "production",
+        &config,
+        &secrets,
+    );
+    let result = provider.exchange_code(&call, code).await;
+    let mut tx = ctx.db.begin().await?;
+    persist_updated(core, &mut tx, &mut i, &call).await?;
+    let now = db::now();
+    match result {
+        Ok(detail) => {
+            i.status = "ok".into();
+            i.status_detail = Some(detail);
+        }
+        Err(e) => {
+            log::warn!("integração {provider_id}: autorização falhou: {e:?}");
+            i.status = "error".into();
+            i.status_detail = Some(e.message());
+        }
+    }
+    i.checked_at = Some(now.clone());
+    i.updated_at = now;
+    repo::update(&mut tx, &i).await?;
+    audit::record(
+        &mut tx,
+        &ctx.inst,
+        Entry {
+            actor_id: Some(&ctx.user.id),
+            action: "integration.authorize",
+            entity: "integrations",
+            entity_id: Some(&i.id),
+            before: None,
+            after: Some(serde_json::json!({ "provider": i.provider, "status": i.status })),
+        },
+    )
+    .await?;
+    tx.commit().await?;
     Ok(to_out(core, &i))
 }
 
@@ -460,7 +583,6 @@ fn after_secs(secs: i64) -> String {
 /// e não segura transação durante a chamada à API.
 pub async fn tick(core: &Core) -> CoreResult<TickReport> {
     let pool = core.pool();
-    let inst = core.installation();
     let mut report = TickReport::default();
     let mut conn = pool.acquire().await?;
     let stale = (chrono::Utc::now() - chrono::Duration::minutes(10))
@@ -471,107 +593,165 @@ pub async fn tick(core: &Core) -> CoreResult<TickReport> {
     drop(conn);
 
     for job in due {
-        let mut conn = pool.acquire().await?;
-        if !repo::claim(&mut conn, &job.id).await? {
-            continue;
-        }
-        let integration = repo::get(&mut conn, &job.integration_id).await?;
-        drop(conn);
-        report.ran += 1;
-
-        let outcome = match integration.as_ref().filter(|i| i.enabled) {
-            None => Outcome::Error(ProviderError::Rejected(
-                "a integração foi desativada ou removida".into(),
-            )),
-            Some(i) => match (core.provider(&i.provider), read_secrets(core, i)) {
-                (None, _) => Outcome::Error(ProviderError::Rejected(
-                    "provedor indisponível nesta versão".into(),
-                )),
-                (_, None) => Outcome::Error(ProviderError::Auth(
-                    "credenciais salvas em outro computador".into(),
-                )),
-                (Some(p), Some(secrets)) => {
-                    let secrets = Value::Object(secrets);
-                    let call = Call {
-                        http: core.http(),
-                        production: i.environment == "production",
-                        config: &i.config,
-                        secrets: &secrets,
-                    };
-                    p.run(&call, &job).await
-                }
-            },
-        };
-
-        let mut tx = pool.begin().await?;
-        let now = db::now();
-        match outcome {
-            Outcome::Done(result) => {
-                if let Some(p) = integration
-                    .as_ref()
-                    .and_then(|i| core.provider(&i.provider))
-                {
-                    p.on_done(&mut tx, &inst, &job, &result).await?;
-                }
-                repo::update_job(
-                    &mut tx,
-                    &job.id,
-                    JobUpdate {
-                        status: "done",
-                        attempts: 0,
-                        next_run_at: &job.next_run_at,
-                        last_error: None,
-                        result: Some(&result),
-                        finished_at: Some(&now),
-                    },
-                )
-                .await?;
-                report.done += 1;
-            }
-            Outcome::Wait { secs, note } => {
-                repo::update_job(
-                    &mut tx,
-                    &job.id,
-                    JobUpdate {
-                        status: "pending",
-                        attempts: 0,
-                        next_run_at: &after_secs(secs),
-                        last_error: note.as_deref(),
-                        result: None,
-                        finished_at: None,
-                    },
-                )
-                .await?;
-                report.waiting += 1;
-            }
-            Outcome::Error(e) => {
-                log::warn!("fila {} ({}): {e:?}", job.kind, job.id);
-                let attempts = job.attempts + 1;
-                let give_up = !e.transient() || attempts >= MAX_ATTEMPTS;
-                let message = e.message();
-                repo::update_job(
-                    &mut tx,
-                    &job.id,
-                    JobUpdate {
-                        status: if give_up { "failed" } else { "pending" },
-                        attempts,
-                        next_run_at: &after_secs(backoff_secs(attempts)),
-                        last_error: Some(&message),
-                        result: None,
-                        finished_at: give_up.then_some(now.as_str()),
-                    },
-                )
-                .await?;
-                if give_up {
-                    report.failed += 1;
-                } else {
-                    report.retrying += 1;
-                }
+        if let Some(step) = process_one(core, job).await? {
+            report.ran += 1;
+            match step {
+                Step::Done => report.done += 1,
+                Step::Waiting => report.waiting += 1,
+                Step::Retrying => report.retrying += 1,
+                Step::Failed => report.failed += 1,
             }
         }
-        tx.commit().await?;
     }
     Ok(report)
+}
+
+/// O que aconteceu com um trabalho numa rodada.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Step {
+    Done,
+    Waiting,
+    Retrying,
+    Failed,
+}
+
+/// Roda um trabalho pendente agora, sem esperar a rodada (ex.: o caixa conferindo o PIX).
+/// `None` = não estava pendente (já concluído, cancelado ou rodando em outra rodada).
+pub async fn run_job(core: &Core, job_id: &str) -> CoreResult<Option<Step>> {
+    let mut conn = core.pool().acquire().await?;
+    let job = repo::get_job(&mut conn, job_id).await?;
+    drop(conn);
+    match job {
+        Some(job) if job.status == "pending" => process_one(core, job).await,
+        _ => Ok(None),
+    }
+}
+
+async fn process_one(core: &Core, job: Job) -> CoreResult<Option<Step>> {
+    let pool = core.pool();
+    let inst = core.installation();
+    let mut conn = pool.acquire().await?;
+    if !repo::claim(&mut conn, &job.id).await? {
+        return Ok(None);
+    }
+    let mut integration = repo::get(&mut conn, &job.integration_id).await?;
+    drop(conn);
+
+    let mut updated_secrets = None;
+    let outcome = match integration.as_ref().filter(|i| i.enabled) {
+        None => Outcome::Error(ProviderError::Rejected(
+            "a integração foi desativada ou removida".into(),
+        )),
+        Some(i) => match (core.provider(&i.provider), read_secrets(core, i)) {
+            (None, _) => Outcome::Error(ProviderError::Rejected(
+                "provedor indisponível nesta versão".into(),
+            )),
+            (_, None) => Outcome::Error(ProviderError::Auth(
+                "credenciais salvas em outro computador".into(),
+            )),
+            (Some(p), Some(secrets)) => {
+                let secrets = Value::Object(secrets);
+                let call = Call::new(
+                    core.http(),
+                    i.environment == "production",
+                    &i.config,
+                    &secrets,
+                );
+                let out = p.run(&call, &job).await;
+                updated_secrets = call.take_updated();
+                out
+            }
+        },
+    };
+
+    let mut tx = pool.begin().await?;
+    if let (Some(i), Some(updated)) = (integration.as_mut(), updated_secrets) {
+        i.secrets = Some(
+            core.vault()
+                .seal(Value::Object(updated).to_string().as_bytes())?,
+        );
+        sqlx::query("UPDATE integrations SET secrets = ?, updated_at = ? WHERE id = ?")
+            .bind(&i.secrets)
+            .bind(db::now())
+            .bind(&i.id)
+            .execute(&mut *tx)
+            .await?;
+    }
+    let now = db::now();
+    let step = match outcome {
+        Outcome::Done(result) => {
+            if let Some(p) = integration
+                .as_ref()
+                .and_then(|i| core.provider(&i.provider))
+            {
+                p.on_done(&mut tx, &inst, &job, &result).await?;
+            }
+            repo::update_job(
+                &mut tx,
+                &job.id,
+                JobUpdate {
+                    status: "done",
+                    attempts: 0,
+                    next_run_at: &job.next_run_at,
+                    last_error: None,
+                    result: Some(&result),
+                    finished_at: Some(&now),
+                },
+            )
+            .await?;
+            Step::Done
+        }
+        Outcome::Wait {
+            secs,
+            note,
+            payload,
+        } => {
+            if let Some(payload) = payload {
+                repo::set_job_payload(&mut tx, &job.id, &payload).await?;
+            }
+            repo::update_job(
+                &mut tx,
+                &job.id,
+                JobUpdate {
+                    status: "pending",
+                    attempts: 0,
+                    next_run_at: &after_secs(secs),
+                    last_error: note.as_deref(),
+                    result: None,
+                    finished_at: None,
+                },
+            )
+            .await?;
+            Step::Waiting
+        }
+        Outcome::Error(e) => {
+            log::warn!("fila {} ({}): {e:?}", job.kind, job.id);
+            let attempts = job.attempts + 1;
+            let give_up = !e.transient() || attempts >= MAX_ATTEMPTS;
+            let message = e.message();
+            repo::update_job(
+                &mut tx,
+                &job.id,
+                JobUpdate {
+                    status: if give_up { "failed" } else { "pending" },
+                    attempts,
+                    next_run_at: &after_secs(backoff_secs(attempts)),
+                    last_error: Some(&message),
+                    result: None,
+                    finished_at: give_up.then_some(now.as_str()),
+                },
+            )
+            .await?;
+            if give_up {
+                Step::Failed
+            } else {
+                Step::Retrying
+            }
+        }
+    };
+    tx.commit().await?;
+    Ok(Some(step))
 }
 
 /// Registro de provedores do `Core`.

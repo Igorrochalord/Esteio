@@ -195,6 +195,15 @@ pub async fn update_job(conn: &mut Conn, id: &str, u: JobUpdate<'_>) -> CoreResu
     Ok(())
 }
 
+pub async fn set_job_payload(conn: &mut Conn, id: &str, payload: &Value) -> CoreResult<()> {
+    sqlx::query("UPDATE integration_jobs SET payload = ? WHERE id = ?")
+        .bind(payload.to_string())
+        .bind(id)
+        .execute(conn)
+        .await?;
+    Ok(())
+}
+
 pub async fn list_jobs(
     conn: &mut Conn,
     status: Option<&str>,
