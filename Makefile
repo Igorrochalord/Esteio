@@ -36,8 +36,9 @@ seed: ## cria empresa de demonstração em .dev-data (ex.: make seed empresa=tec
 reset-data: ## APAGA os dados de desenvolvimento (.dev-data)
 	rm -rf $(DEV_DATA)
 
+# WSL não expõe a GPU ao WebKitGTK (avisos libEGL/ZINK, janela em branco): renderiza sem DMA-BUF
 dev: ## abre o app em modo desenvolvimento usando .dev-data
-	cd $(DESKTOP) && NUCLEO_DATA_DIR=$(DEV_DATA) npm run tauri dev
+	cd $(DESKTOP) && NUCLEO_DATA_DIR=$(DEV_DATA) WEBKIT_DISABLE_DMABUF_RENDERER=1 npm run tauri dev
 
 build: ## gera o instalador da plataforma atual (Windows: .msi/.exe; Linux: .deb/.AppImage)
 	cd $(DESKTOP) && npm run tauri build
